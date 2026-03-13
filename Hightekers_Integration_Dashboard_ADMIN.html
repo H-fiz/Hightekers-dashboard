@@ -677,7 +677,7 @@ function WSDash({ws,onUpdate,markDirty}){
 // ─────────────────────────────────────────────────────────────────────────────
 // PROPOSALS REVIEW PANEL
 // ─────────────────────────────────────────────────────────────────────────────
-function ProposalsPanel({wsList,onUpdate,markDirty,accessToken}){
+function ProposalsPanel({wsList,onUpdate,markDirty,accessToken,onTokenRefresh}){
   const [proposals,setProposals]=useState([]);
   const [loading,setLoading]=useState(true);
   const [acting,setActing]=useState({}); // rowIndex -> "approving"|"rejecting"
@@ -694,6 +694,14 @@ function ProposalsPanel({wsList,onUpdate,markDirty,accessToken}){
   useEffect(()=>{load();},[]);
 
   const showMsg=m=>{setMsg(m);setTimeout(()=>setMsg(null),3500);};
+
+  // Get a valid token — use stored one or trigger sign-in if missing
+  const getToken=async()=>{
+    if(accessToken) return accessToken;
+    const token=await signInWithGoogle();
+    onTokenRefresh(token);
+    return token;
+  };
 
   const handleApprove=async(p)=>{
     setActing(prev=>({...prev,[p.rowIndex]:"approving"}));
@@ -712,7 +720,8 @@ function ProposalsPanel({wsList,onUpdate,markDirty,accessToken}){
       });
       if(!applied){setError(`Project ${p.projectId} not found in master data — approve after refreshing.`);return;}
       // 2. Mark row as Approved in sheet
-      await updateProposalStatus(p.rowIndex,"Approved",accessToken);
+      const token=await getToken();
+      await updateProposalStatus(p.rowIndex,"Approved",token);
       // 3. Update local state
       onUpdate(updated.find(w=>w.code===p.wsCode));
       markDirty();
@@ -725,7 +734,8 @@ function ProposalsPanel({wsList,onUpdate,markDirty,accessToken}){
   const handleReject=async(p)=>{
     setActing(prev=>({...prev,[p.rowIndex]:"rejecting"}));
     try{
-      await updateProposalStatus(p.rowIndex,"Rejected",accessToken);
+      const token=await getToken();
+      await updateProposalStatus(p.rowIndex,"Rejected",token);
       setProposals(prev=>prev.filter(x=>x.rowIndex!==p.rowIndex));
       showMsg(`✗ Rejected: ${p.projectName}`);
     }catch(e){setError(e.message);}
@@ -1034,20 +1044,6 @@ function App(){
               })}
             </nav>
 
-            {/* Proposals shortcut button */}
-            <div style={{padding:"6px 7px",borderTop:"1px solid rgba(255,255,255,0.04)"}}>
-              <div onClick={()=>setAdminView(adminView==="proposals"?"dashboard":"proposals")} style={{display:"flex",alignItems:"center",gap:8,padding:"9px 10px",borderRadius:7,cursor:"pointer",background:adminView==="proposals"?"rgba(201,168,76,0.15)":"transparent",border:`1px solid ${adminView==="proposals"?"rgba(201,168,76,0.35)":"transparent"}`,transition:"all 0.13s"}}
-                onMouseEnter={e=>{if(adminView!=="proposals")e.currentTarget.style.background="rgba(255,255,255,0.032)";}}
-                onMouseLeave={e=>{if(adminView!=="proposals")e.currentTarget.style.background="transparent";}}>
-                <span style={{fontSize:14,flexShrink:0}}>📬</span>
-                <div style={{flex:1}}>
-                  <div style={{fontSize:11,fontWeight:adminView==="proposals"?600:400,color:adminView==="proposals"?"#fff":"rgba(255,255,255,0.55)"}}>Review Proposals</div>
-                  <div style={{fontSize:9,color:"rgba(255,255,255,0.25)",fontFamily:"DM Mono,monospace"}}>Lead submissions</div>
-                </div>
-                {adminView==="proposals"&&<span style={{fontSize:9,color:"#C9A84C",fontFamily:"DM Mono,monospace"}}>●</span>}
-              </div>
-            </div>
-
             {/* Sidebar footer — action buttons */}
             <div style={{padding:"10px 11px",borderTop:"1px solid rgba(255,255,255,0.048)",display:"flex",flexDirection:"column",gap:7}}>
               <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:3}}>
@@ -1090,7 +1086,7 @@ function App(){
             {/* Content */}
             <div style={{flex:1,overflowY:"auto",padding:"20px 24px"}}>
               {adminView==="proposals"
-                ?<ProposalsPanel wsList={wsList} onUpdate={update} markDirty={markDirty} accessToken={accessToken}/>
+                ?<ProposalsPanel wsList={wsList} onUpdate={update} markDirty={markDirty} accessToken={accessToken} onTokenRefresh={setAccessToken}/>
                 :active===0
                   ?<Master wsList={wsList} onSelect={setActive} lastRefresh={lastRefresh}/>
                   :currentWS&&<WSDash ws={currentWS} onUpdate={update} markDirty={markDirty}/>
