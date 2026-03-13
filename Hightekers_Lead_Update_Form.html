@@ -129,9 +129,9 @@ async function submitProposals(proposals, accessToken, submitterEmail, wsCode){
   ]);
   // If a Web App webhook URL is configured, POST to it (triggers email notification)
   if(WEBHOOK_URL&&WEBHOOK_URL!=="YOUR_WEBHOOK_URL_HERE"){
-    const res=await fetch(WEBHOOK_URL,{
+   const res=await fetch(WEBHOOK_URL,{
       method:"POST",
-      headers:{"Content-Type":"application/json"},
+      redirect:"follow",
       body:JSON.stringify({rows,submitterEmail,wsCode}),
     });
     if(!res.ok) throw new Error(`Webhook error ${res.status}`);
