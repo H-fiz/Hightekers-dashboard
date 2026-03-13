@@ -129,12 +129,12 @@ async function submitProposals(proposals, accessToken, submitterEmail, wsCode){
   ]);
   // If a Web App webhook URL is configured, POST to it (triggers email notification)
   if(WEBHOOK_URL&&WEBHOOK_URL!=="YOUR_WEBHOOK_URL_HERE"){
-   const res=await fetch(WEBHOOK_URL,{
+   const res=// no-cors bypasses CORS preflight — Google Apps Script does not support OPTIONS requests
+    await fetch(WEBHOOK_URL,{
       method:"POST",
-      redirect:"follow",
+      mode:"no-cors",
       body:JSON.stringify({rows,submitterEmail,wsCode}),
     });
-    if(!res.ok) throw new Error(`Webhook error ${res.status}`);
     return rows.length;
   }
   // Fallback: write directly via Sheets API (no email notification)
