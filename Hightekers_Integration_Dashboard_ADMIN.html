@@ -1044,6 +1044,20 @@ function App(){
               })}
             </nav>
 
+            {/* Proposals button */}
+            <div style={{padding:"6px 7px",borderTop:"1px solid rgba(255,255,255,0.04)"}}>
+              <div onClick={()=>setAdminView(adminView==="proposals"?"dashboard":"proposals")} style={{display:"flex",alignItems:"center",gap:8,padding:"9px 10px",borderRadius:7,cursor:"pointer",background:adminView==="proposals"?"rgba(201,168,76,0.15)":"transparent",border:`1px solid ${adminView==="proposals"?"rgba(201,168,76,0.35)":"transparent"}`,transition:"all 0.13s"}}
+                onMouseEnter={e=>{if(adminView!=="proposals")e.currentTarget.style.background="rgba(255,255,255,0.032)";}}
+                onMouseLeave={e=>{if(adminView!=="proposals")e.currentTarget.style.background="transparent";}}>
+                <span style={{fontSize:14,flexShrink:0}}>📬</span>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:11,fontWeight:adminView==="proposals"?600:400,color:adminView==="proposals"?"#fff":"rgba(255,255,255,0.55)"}}>Review Proposals</div>
+                  <div style={{fontSize:9,color:"rgba(255,255,255,0.25)",fontFamily:"DM Mono,monospace"}}>Lead submissions</div>
+                </div>
+                {adminView==="proposals"&&<span style={{fontSize:9,color:"#C9A84C",fontFamily:"DM Mono,monospace"}}>●</span>}
+              </div>
+            </div>
+
             {/* Sidebar footer — action buttons */}
             <div style={{padding:"10px 11px",borderTop:"1px solid rgba(255,255,255,0.048)",display:"flex",flexDirection:"column",gap:7}}>
               <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:3}}>
