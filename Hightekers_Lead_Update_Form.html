@@ -38,6 +38,9 @@ const CONFIG = {
   OAUTH_CLIENT_ID: "687744761187-itmnd1nhhtjv53t5ce8gopgnva68lrjv.apps.googleusercontent.com",
   SHEET_TAB:       "Dashboard",
   PROPOSALS_TAB:   "Proposals",
+  // Web App URL from Apps Script deployment — enables email notifications
+  // See setup guide for how to get this URL
+  WEBHOOK_URL:     "https://script.google.com/macros/s/AKfycbz3Dw51sq6u45sUV612igPxdqOpusQaA85k996Z8JP27eoa3c-azJ3D6lopoAeOa3k8/exec",
   ADMIN_EMAIL:     "hafiz.ladha@hightekers.com",
 };
 
@@ -107,7 +110,7 @@ function parseRowsForWS(rows, wsCode){
 // A=Timestamp B=SubmittedBy C=LeadEmail D=WSCode E=ProjectID F=ProjectName
 // G=Old% H=New% I=OldRAG J=NewRAG K=OldRisk L=NewRisk M=Status(Pending)
 async function submitProposals(proposals, accessToken, submitterEmail, wsCode){
-  const {SHEET_ID,PROPOSALS_TAB}=CONFIG;
+  const {SHEET_ID,PROPOSALS_TAB,WEBHOOK_URL}=CONFIG;
   const ts=new Date().toISOString();
   const rows=proposals.map(p=>[
     ts,
@@ -124,7 +127,17 @@ async function submitProposals(proposals, accessToken, submitterEmail, wsCode){
     p.newRisk||"",
     "Pending",
   ]);
-  // Append to proposals tab
+  // If a Web App webhook URL is configured, POST to it (triggers email notification)
+  if(WEBHOOK_URL&&WEBHOOK_URL!=="YOUR_WEBHOOK_URL_HERE"){
+    const res=await fetch(WEBHOOK_URL,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({rows,submitterEmail,wsCode}),
+    });
+    if(!res.ok) throw new Error(`Webhook error ${res.status}`);
+    return rows.length;
+  }
+  // Fallback: write directly via Sheets API (no email notification)
   const url=`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(PROPOSALS_TAB+"!A1")}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`;
   const res=await fetch(url,{
     method:"POST",
@@ -185,6 +198,46 @@ function RAGPicker({value,onChange}){
           {RAG[r].label}
         </button>
       ))}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WORKSTREAM PICKER — shown when a user is assigned to multiple workstreams
+// ─────────────────────────────────────────────────────────────────────────────
+function WSPickerScreen({user,wsCodes,onPick,onSignOut}){
+  return(
+    <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"#0a0d12",padding:20}}>
+      <div style={{maxWidth:480,width:"100%"}}>
+        <div style={{textAlign:"center",marginBottom:28}}>
+          <div style={{fontSize:11,color:"rgba(255,255,255,0.3)",fontFamily:"DM Mono,monospace",letterSpacing:"0.14em",textTransform:"uppercase",marginBottom:6}}>Post-Acquisition Integration</div>
+          <div style={{fontSize:28,fontFamily:"Playfair Display,serif",color:"#fff",marginBottom:4}}>Hightekers</div>
+          <div style={{fontSize:12,color:"rgba(255,255,255,0.4)"}}>Signed in as {user.name}</div>
+        </div>
+        <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.09)",borderRadius:14,padding:"24px"}}>
+          <div style={{fontSize:13,color:"rgba(255,255,255,0.6)",marginBottom:18,textAlign:"center"}}>You have access to multiple workstreams. Which would you like to update?</div>
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+            {wsCodes.map(code=>{
+              const ws=WS_META[code];
+              return(
+                <div key={code} onClick={()=>onPick(code)} style={{display:"flex",alignItems:"center",gap:12,padding:"13px 16px",borderRadius:9,border:`1px solid ${ws.color}30`,background:`${ws.color}0A`,cursor:"pointer",transition:"all .15s"}}
+                  onMouseEnter={e=>{e.currentTarget.style.background=`${ws.color}18`;e.currentTarget.style.borderColor=`${ws.color}55`;}}
+                  onMouseLeave={e=>{e.currentTarget.style.background=`${ws.color}0A`;e.currentTarget.style.borderColor=`${ws.color}30`;}}>
+                  <span style={{fontSize:18,color:ws.color,flexShrink:0}}>{ws.icon}</span>
+                  <div>
+                    <div style={{fontSize:9,color:ws.color,fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",marginBottom:2}}>{ws.code}</div>
+                    <div style={{fontSize:13,fontWeight:600,color:"#fff"}}>{ws.name}</div>
+                  </div>
+                  <span style={{marginLeft:"auto",fontSize:12,color:"rgba(255,255,255,0.25)"}}>→</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        <div style={{textAlign:"center",marginTop:16}}>
+          <button onClick={onSignOut} style={{padding:"5px 14px",borderRadius:6,background:"transparent",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.35)",fontSize:11,cursor:"pointer"}}>Sign out</button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -437,6 +490,7 @@ function App(){
   const [phase,setPhase]=useState("signin"); // signin | loading | unauth | form | success
   const [user,setUser]=useState(null);
   const [wsCode,setWsCode]=useState(null);
+  const [wsCodes,setWsCodes]=useState([]);
   const [wsData,setWsData]=useState([]);
   const [error,setError]=useState(null);
   const [successCount,setSuccessCount]=useState(0);
@@ -446,16 +500,29 @@ function App(){
     try{
       const u=await signIn();
       // Check which workstream this email belongs to
-      const matched=Object.entries(LEAD_EMAILS).find(([ws,emails])=>emails.map(e=>e.toLowerCase()).includes(u.email.toLowerCase()));
-      if(!matched){setUser(u);setPhase("unauth");return;}
-      const code=matched[0];
-      // Load their workstream data
-      const rows=await loadDashboard();
-      const initiatives=parseRowsForWS(rows,code);
-      setUser(u);setWsCode(code);setWsData(initiatives);setPhase("form");
+      const allMatched=Object.entries(LEAD_EMAILS).filter(([ws,emails])=>emails.map(e=>e.toLowerCase()).includes(u.email.toLowerCase()));
+      if(!allMatched.length){setUser(u);setPhase("unauth");return;}
+      setUser(u);
+      if(allMatched.length===1){
+        const code=allMatched[0][0];
+        const rows=await loadDashboard();
+        const initiatives=parseRowsForWS(rows,code);
+        setWsCode(code);setWsData(initiatives);setPhase("form");
+      } else {
+        // Multiple workstreams — show picker
+        setWsCodes(allMatched.map(([ws])=>ws));setPhase("pick");
+      }
     }catch(e){setError(e.message);setPhase("signin");}
   };
 
+  const handlePickWS=async(code)=>{
+    setError(null);setPhase("loading");
+    try{
+      const rows=await loadDashboard();
+      const initiatives=parseRowsForWS(rows,code);
+      setWsCode(code);setWsData(initiatives);setPhase("form");
+    }catch(e){setError(e.message);setPhase("pick");}
+  };
   const handleSubmitDone=count=>{setSuccessCount(count);setPhase("success");};
   const handleBack=()=>{setPhase("form");};
   const handleSignOut=()=>{setUser(null);setWsCode(null);setWsData([]);setPhase("signin");};
@@ -463,6 +530,7 @@ function App(){
   if(phase==="signin"||phase==="loading") return <SignInScreen onSignIn={handleSignIn} loading={phase==="loading"} error={error}/>;
   if(phase==="unauth") return <UnauthorisedScreen email={user.email} onSignOut={handleSignOut}/>;
   if(phase==="success") return <SuccessScreen count={successCount} wsName={WS_META[wsCode]?.name} onBack={handleBack}/>;
+  if(phase==="pick") return <WSPickerScreen user={user} wsCodes={wsCodes} onPick={handlePickWS} onSignOut={handleSignOut}/>;
   if(phase==="form") return <UpdateForm user={user} wsCode={wsCode} wsData={wsData} onSubmitDone={handleSubmitDone} onSignOut={handleSignOut}/>;
   return null;
 }
