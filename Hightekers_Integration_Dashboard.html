@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Hightekers Integration Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0a0d12;color:#fff;font-family:"DM Sans",sans-serif}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:4px}
+.spin{animation:spin 1s linear infinite}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useCallback} = React;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CONFIGURATION — paste your Sheet ID and API key here before sharing
+// ─────────────────────────────────────────────────────────────────────────────
+const CONFIG = {
+  SHEET_ID: "1iMDERwbcOxZU9QBLbCGU3sr1fk1hm1g2QFv0urm9q2M",
+  API_KEY:  "AIzaSyBCMuPUGiry60b7rSFNb0yRSOMrBf3N014",
+  SHEET_TAB: "Dashboard",
+  REFRESH_INTERVAL: 300000, // ms — set to 0 to disable auto-refresh
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WORKSTREAM VISUAL METADATA — colours and icons only; leads come from the sheet
+// ─────────────────────────────────────────────────────────────────────────────
+const WS_META = {
+  WS1:{id:1,code:"WS1",icon:"▲",color:"#4C9AC9",name:"Revenue Continuity & Growth Acceleration",subtitle:"Commercial strategy, pipeline & client retention"},
+  WS2:{id:2,code:"WS2",icon:"◉",color:"#C94C7A",name:"Brand, Marketing & External Communications",subtitle:"Brand architecture, identity & market presence"},
+  WS3:{id:3,code:"WS3",icon:"⬡",color:"#4CC98A",name:"EOR Operations & Service Delivery",subtitle:"Global workflows, SLAs & client servicing"},
+  WS4:{id:4,code:"WS4",icon:"⬟",color:"#9A4CC9",name:"Legal & Contractual Harmonization",subtitle:"Global MSA, legal library & contract alignment"},
+  WS5:{id:5,code:"WS5",icon:"◆",color:"#C97A4C",name:"Financial Integration",subtitle:"Reporting, systems, stabilization & SAP"},
+  WS6:{id:6,code:"WS6",icon:"⬢",color:"#4C7AC9",name:"Systems & Data Integration",subtitle:"CRM, EOR platform, data & systems rationalization"},
+  WS7:{id:7,code:"WS7",icon:"◎",color:"#C9C44C",name:"Organization, Workforce & Culture",subtitle:"TOM, restructuring, culture & internal comms"},
+  WS8:{id:8,code:"WS8",icon:"◇",color:"#C94C4C",name:"Integration Governance",subtitle:"Programme management & oversight"},
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FALLBACK DATA — shown when Sheets is not yet configured
+// Each project carries wsLead and initOwner so the UI always has all three names
+// ─────────────────────────────────────────────────────────────────────────────
+const FALLBACK_DATA = [
+  {id:1,code:"WS1",icon:"▲",color:"#4C9AC9",name:"Revenue Continuity & Growth Acceleration",subtitle:"Commercial strategy, pipeline & client retention",lead:"Will Benson",initiatives:[
+    {id:"1.1",name:"Unified Commercial Strategy",owner:"—",projects:[
+      {id:"1.1.1",name:"ICP Segmentation & Prioritization",owner:"—",progress:0,rag:"G",risk:null,start:"2026-03-01",end:"2026-03-31"},
+      {id:"1.1.2",name:"Unified EOR Pricing Framework",owner:"—",progress:0,rag:"G",risk:null,start:"2026-03-01",end:"2026-04-30"},
+      {id:"1.1.3",name:"Outbound vs Inbound Strategy Definition",owner:"—",progress:0,rag:"G",risk:null,start:"2026-03-01",end:"2026-03-31"},
+    ]},
+    {id:"1.2",name:"Lead Flow & Routing Model",owner:"—",projects:[
+      {id:"1.2.1",name:"Rivermate Digital Gateway Model",owner:"—",progress:0,rag:"G",risk:null,start:"2026-03-01",end:"2026-03-31"},
+      {id:"1.2.2",name:"Lead Qualification Criteria",owner:"—",progress:0,rag:"G",risk:null,start:"2026-03-01",end:"2026-03-31"},
+      {id:"1.2.3",name:"Geo Allocation Logic",owner:"—",progress:0,rag:"G",risk:null,start:"2026-03-01",end:"2026-03-31"},
+      {id:"1.2.4",name:"Lead Handover SLA",owner:"—",progress:0,rag:"G",risk:null,start:"2026-03-01",end:"2026-04-15"},
+    ]},
+    {id:"1.3",name:"Sales Process Integration",owner:"—",projects:[
+      {id:"1.3.1",name:"Unified Pipeline Stages",owner:"—",progress:0,rag:"G",risk:null,start:"2026-03-01",end:"2026-03-31"},
+      {id:"1.3.2",name:"Deal Governance & Approval Model",owner:"—",progress:0,rag:"G",risk:null,start:"2026-03-01",end:"2026-04-30"},
+      {id:"1.3.3",name:"Sales Compensation Harmonization",owner:"—",progress:0,rag:"G",risk:null,start:"2026-03-01",end:"2026-04-30"},
+    ]},
+    {id:"1.4",name:"Client Transition & Retention",owner:"—",projects:[
+      {id:"1.4.1",name:"Client Communication Plan",owner:"—",progress:0,rag:"G",risk:null,start:"2026-03-01",end:"2026-04-30"},
+      {id:"1.4.2",name:"Key Account Review & Executive Sponsorship",owner:"—",progress:0,rag:"G",risk:null,start:"2026-03-01",end:"2026-04-30"},
+      {id:"1.4.3",name:"Contract Reconciliation",owner:"—",progress:0,rag:"G",risk:null,start:"2026-04-01",end:"2026-08-31"},
+      {id:"1.4.4",name:"Client Data Migration",owner:"—",progress:0,rag:"G",risk:null,start:"2026-04-01",end:"2026-08-31"},
+    ]},
+    {id:"1.5",name:"Revenue Protection Taskforce",owner:"—",projects:[
+      {id:"1.5.1",name:"Weekly Revenue Review",owner:"—",progress:0,rag:"G",risk:null,start:"2026-03-01",end:"2026-04-30"},
+      {id:"1.5.2",name:"Early Churn Detection",owner:"—",progress:0,rag:"G",risk:null,start:"2026-03-01",end:"2026-04-30"},
+    ]},
+  ]},
+  {id:2,code:"WS2",icon:"◉",color:"#C94C7A",name:"Brand, Marketing & External Communications",subtitle:"Brand architecture, identity & market presence",lead:"Wouter Jansen",initiatives:[
+    {id:"2.1",name:"Brand Architecture",owner:"—",projects:[
+      {id:"2.1.1",name:"Brand Hierarchy Definition",owner:"—",progress:0,rag:"G",risk:null,start:"2026-02-01",end:"2026-04-30"},
+      {id:"2.1.2",name:"Brand Narrative & Positioning",owner:"—",progress:0,rag:"G",risk:null,start:"2026-02-01",end:"2026-04-15"},
+    ]},
+    {id:"2.2",name:"Website Consolidation",owner:"—",projects:[
+      {id:"2.2.1",name:"Domain Consolidation",owner:"—",progress:0,rag:"G",risk:null,start:"2026-02-01",end:"2026-04-30"},
+      {id:"2.2.2",name:"SEO Preservation",owner:"—",progress:0,rag:"G",risk:null,start:"2026-02-01",end:"2026-04-30"},
+      {id:"2.2.3",name:"Content Harmonization",owner:"—",progress:0,rag:"G",risk:null,start:"2026-02-01",end:"2026-04-30"},
+    ]},
+    {id:"2.3",name:"Identity Migration",owner:"—",projects:[
+      {id:"2.3.1",name:"Email Domain Migration",owner:"—",progress:0,rag:"G",risk:null,start:"2026-02-01",end:"2026-04-30"},
+      {id:"2.3.2",name:"Corporate Identity Toolkit",owner:"—",progress:0,rag:"G",risk:null,start:"2026-02-01",end:"2026-04-30"},
+    ]},
+    {id:"2.4",name:"External Communications",owner:"—",projects:[
+      {id:"2.4.1",name:"Client Announcement Campaign",owner:"—",progress:0,rag:"G",risk:null,start:"2026-03-01",end:"2026-05-31"},
+      {id:"2.4.2",name:"Partner Briefing",owner:"—",progress:0,rag:"G",risk:null,start:"2026-03-01",end:"2026-05-31"},
+    ]},
+  ]},
+  {id:3,code:"WS3",icon:"⬡",color:"#4CC98A",name:"EOR Operations & Service Delivery",subtitle:"Global workflows, SLAs & client servicing",lead:"Jenn Tang",initiatives:[
+    {id:"3.1",name:"Global EOR Workflow",owner:"—",projects:[
+      {id:"3.1.1",name:"End-to-End SOP Definition",owner:"—",progress:0,rag:"G",risk:null,start:"2026-04-01",end:"2026-08-31"},
+      {id:"3.1.2",name:"RACI Mapping",owner:"—",progress:0,rag:"G",risk:null,start:"2026-03-01",end:"2026-08-31"},
+    ]},
+    {id:"3.2",name:"SLA Framework",owner:"—",projects:[
+      {id:"3.2.1",name:"Onboarding SLA",owner:"—",progress:0,rag:"G",risk:null,start:"2026-03-01",end:"2026-08-31"},
+      {id:"3.2.2",name:"Payroll SLA",owner:"—",progress:0,rag:"G",risk:null,start:"2026-03-01",end:"2026-08-31"},
+      {id:"3.2.3",name:"Immigration Workflows and SLA",owner:"—",progress:0,rag:"G",risk:null,start:"2026-05-01",end:"2026-12-31"},
+    ]},
+    {id:"3.3",name:"Tiered Client Servicing",owner:"—",projects:[
+      {id:"3.3.1",name:"L1/L2/L3 Model Design",owner:"—",progress:0,rag:"G",risk:null,start:"2026-04-01",end:"2026-08-31"},
+    ]},
+    {id:"3.4",name:"Knowledge Consolidation",owner:"—",projects:[
+      {id:"3.4.1",name:"SOP & Compliance Library",owner:"—",progress:0,rag:"G",risk:null,start:"2026-04-01",end:"2026-08-31"},
+    ]},
+  ]},
+  {id:4,code:"WS4",icon:"⬟",color:"#9A4CC9",name:"Legal & Contractual Harmonization",subtitle:"Global MSA, legal library & contract alignment",lead:"Louis Sanchez de Lozada",initiatives:[
+    {id:"4.1",name:"Global MSA",owner:"—",projects:[
+      {id:"4.1.1",name:"Core Template Finalization",owner:"—",progress:0,rag:"G",risk:null,start:"2026-03-01",end:"2026-03-31"},
+      {id:"4.1.2",name:"Country Addendums",owner:"—",progress:0,rag:"G",risk:null,start:"2026-03-01",end:"2026-03-31"},
+      {id:"4.1.3",name:"Clause Deviation Policy",owner:"—",progress:0,rag:"G",risk:null,start:"2026-03-01",end:"2026-03-31"},
+    ]},
+    {id:"4.2",name:"Legal Library",owner:"—",projects:[
+      {id:"4.2.1",name:"Legal Library Build",owner:"—",progress:0,rag:"G",risk:null,start:"2026-03-01",end:"2026-03-31"},
+    ]},
+  ]},
+  {id:5,code:"WS5",icon:"◆",color:"#C97A4C",name:"Financial Integration",subtitle:"Reporting, systems, stabilization & SAP",lead:"Ludovic Imbert",initiatives:[
+    {id:"5.1",name:"Consolidated Reporting",owner:"—",projects:[
+      {id:"5.1.1",name:"Revenue Definition Alignment",owner:"—",progress:0,rag:"G",risk:null,start:"2026-03-01",end:"2026-03-31"},
+      {id:"5.1.2",name:"Monthly Consolidated Accounts for EOR",owner:"—",progress:0,rag:"G",risk:null,start:"2026-03-01",end:"2026-06-30"},
+    ]},
+    {id:"5.2",name:"Financial Systems Integration",owner:"—",projects:[
+      {id:"5.2.1",name:"Systems Landscape Audit",owner:"—",progress:0,rag:"G",risk:null,start:"2026-06-01",end:"2026-12-31"},
+      {id:"5.2.2",name:"Chart of Accounts Harmonization",owner:"—",progress:0,rag:"G",risk:null,start:"2026-04-01",end:"2026-05-31"},
+      {id:"5.2.3",name:"Invoicing Model Decision",owner:"—",progress:0,rag:"G",risk:null,start:"2026-04-01",end:"2026-05-31"},
+    ]},
+    {id:"5.3",name:"Serviap Stabilization",owner:"—",projects:[
+      {id:"5.3.1",name:"Balance Sheet Review",owner:"—",progress:0,rag:"G",risk:null,start:"2026-03-01",end:"2026-04-30"},
+      {id:"5.3.2",name:"Cost Structure Review",owner:"—",progress:0,rag:"G",risk:null,start:"2026-03-01",end:"2026-04-30"},
+    ]},
+    {id:"5.4",name:"Debt Stabilization",owner:"—",projects:[
+      {id:"5.4.1",name:"LATAM AR Audit",owner:"—",progress:0,rag:"G",risk:null,start:"2026-03-01",end:"2026-08-31"},
+      {id:"5.4.2",name:"Collection Escalation Plan",owner:"—",progress:0,rag:"G",risk:null,start:"2026-03-01",end:"2026-03-31"},
+    ]},
+    {id:"5.5",name:"SAP Implementation",owner:"—",projects:[
+      {id:"5.5.1",name:"SAP Implementation",owner:"—",progress:0,rag:"G",risk:null,start:"2026-03-01",end:"2026-08-31"},
+    ]},
+  ]},
+  {id:6,code:"WS6",icon:"⬢",color:"#4C7AC9",name:"Systems & Data Integration",subtitle:"CRM, EOR platform, data & systems rationalization",lead:"Jeff Daniel",initiatives:[
+    {id:"6.1",name:"CRM Integration",owner:"—",projects:[
+      {id:"6.1.1",name:"CRM Architecture Decision",owner:"—",progress:0,rag:"G",risk:null,start:"2026-03-01",end:"2026-08-31"},
+      {id:"6.1.2",name:"Data Migration",owner:"—",progress:0,rag:"G",risk:null,start:"2026-05-01",end:"2026-12-31"},
+      {id:"6.1.3",name:"Lead Routing Automation",owner:"—",progress:0,rag:"G",risk:null,start:"2026-05-01",end:"2026-12-31"},
+    ]},
+    {id:"6.2",name:"Data Consolidation",owner:"—",projects:[
+      {id:"6.2.1",name:"Client Master Data Cleanup",owner:"—",progress:0,rag:"G",risk:null,start:"2026-05-01",end:"2026-12-31"},
+      {id:"6.2.2",name:"Employee Data Merge",owner:"—",progress:0,rag:"G",risk:null,start:"2026-05-01",end:"2026-12-31"},
+    ]},
+    {id:"6.3",name:"EOR Platform",owner:"—",projects:[
+      {id:"6.3.1",name:"Workflow Alignment Pre-Build",owner:"—",progress:0,rag:"G",risk:null,start:"2026-01-01",end:"2026-05-31"},
+      {id:"6.3.2",name:"Data Migration",owner:"—",progress:0,rag:"G",risk:null,start:"2026-03-01",end:"2026-05-31"},
+      {id:"6.3.3",name:"Build, Test, Implement",owner:"—",progress:0,rag:"G",risk:null,start:"2026-01-01",end:"2026-05-31"},
+    ]},
+    {id:"6.4",name:"Systems Rationalization",owner:"—",projects:[
+      {id:"6.4.1",name:"HRIS Assessment",owner:"—",progress:0,rag:"G",risk:null,start:"2026-05-01",end:"2026-08-31"},
+    ]},
+  ]},
+  {id:7,code:"WS7",icon:"◎",color:"#C9C44C",name:"Organization, Workforce & Culture",subtitle:"TOM, restructuring, culture & internal comms",lead:"Kelly Luker",initiatives:[
+    {id:"7.1",name:"Target Operating Model",owner:"—",projects:[
+      {id:"7.1.1",name:"Org Structure Design",owner:"—",progress:0,rag:"G",risk:null,start:"2026-03-01",end:"2026-03-31"},
+      {id:"7.1.2",name:"Role Documentation",owner:"—",progress:0,rag:"G",risk:null,start:"2026-03-01",end:"2026-04-30"},
+      {id:"7.1.3",name:"Mapping and Internal People",owner:"—",progress:0,rag:"G",risk:null,start:"2026-03-01",end:"2026-03-31"},
+      {id:"7.1.4",name:"Global People P&P",owner:"—",progress:0,rag:"G",risk:null,start:"2026-03-01",end:"2026-05-31"},
+    ]},
+    {id:"7.2",name:"Serviap Restructuring",owner:"—",projects:[
+      {id:"7.2.1",name:"Role Mapping",owner:"—",progress:0,rag:"G",risk:null,start:"2026-03-01",end:"2026-03-31"},
+      {id:"7.2.2",name:"Resizing Execution Plan",owner:"—",progress:0,rag:"G",risk:null,start:"2026-03-01",end:"2026-04-15"},
+    ]},
+    {id:"7.3",name:"Cultural Integration",owner:"—",projects:[
+      {id:"7.3.1",name:"Founder Alignment Workshop",owner:"—",progress:0,rag:"G",risk:null,start:"2026-03-15",end:"2026-04-15"},
+      {id:"7.3.2",name:"Cross-Geo Workshops",owner:"—",progress:0,rag:"G",risk:null,start:"2026-03-15",end:"2026-04-15"},
+    ]},
+    {id:"7.4",name:"Internal Communications",owner:"—",projects:[
+      {id:"7.4.1",name:"Integration Communications",owner:"—",progress:0,rag:"G",risk:null,start:"2026-03-01",end:"2026-08-31"},
+      {id:"7.4.2",name:"Change Champion Network",owner:"—",progress:0,rag:"G",risk:null,start:"2026-03-01",end:"2026-08-31"},
+      {id:"7.4.3",name:"Change Story Cascade",owner:"—",progress:0,rag:"G",risk:null,start:"2026-03-01",end:"2026-03-31"},
+      {id:"7.4.4",name:"Execute Communications",owner:"—",progress:0,rag:"G",risk:null,start:"2026-03-01",end:"2026-08-31"},
+    ]},
+  ]},
+  {id:8,code:"WS8",icon:"◇",color:"#C94C4C",name:"Integration Governance",subtitle:"Programme management & oversight",lead:"Hafiz Ladha",initiatives:[
+    {id:"8.1",name:"Set Up Integration Platform & Process",owner:"—",projects:[
+      {id:"8.1.1",name:"Governance & Integration Management",owner:"—",progress:0,rag:"G",risk:null,start:"2026-03-01",end:"2026-08-31"},
+    ]},
+  ]},
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GOOGLE SHEETS DATA LOADER
+//
+// Expected sheet columns (row 1 = headers, data from row 2):
+//   A  Project ID
+//   B  Workstream Code       (WS1 – WS8)
+//   C  Initiative ID         (e.g. 1.1)
+//   D  Initiative Name
+//   E  Workstream Lead       (person accountable for the whole workstream)
+//   F  Initiative Owner      (person accountable for this initiative)
+//   G  Project Name
+//   H  Project Owner         (person accountable for this specific project)
+//   I  Start Date            (YYYY-MM-DD)
+//   J  End Date              (YYYY-MM-DD)
+//   K  % Complete            (0–100, no % sign)
+//   L  RAG                   (G, A, or R)
+//   M  Risk / Issue          (free text, leave blank if none)
+// ─────────────────────────────────────────────────────────────────────────────
+async function loadFromSheets() {
+  const { SHEET_ID, API_KEY, SHEET_TAB } = CONFIG;
+  if (SHEET_ID === "YOUR_SHEET_ID_HERE" || API_KEY === "YOUR_API_KEY_HERE") {
+    return null;
+  }
+  const range = encodeURIComponent(`${SHEET_TAB}!A2:M500`);
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?key=${API_KEY}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Sheets API error: ${res.status} ${res.statusText}`);
+  const json = await res.json();
+  const rows = json.values || [];
+
+  // Seed workstream map from visual metadata (no lead yet — comes from sheet)
+  const wsMap = {};
+  Object.values(WS_META).forEach(m => {
+    wsMap[m.code] = { ...m, lead: "—", initiatives: [] };
+  });
+
+  rows.forEach(row => {
+    const [
+      projId,       // A
+      wsCode,       // B
+      initId,       // C
+      initName,     // D
+      wsLead,       // E  ← workstream lead
+      initOwner,    // F  ← initiative owner
+      projName,     // G
+      projOwner,    // H  ← project owner
+      start,        // I
+      end,          // J
+      progressRaw,  // K
+      ragRaw,       // L
+      risk,         // M
+    ] = row;
+
+    const code = wsCode?.trim();
+    if (!code || !wsMap[code]) return;
+    const ws = wsMap[code];
+
+    // Set workstream lead from the first row that has one
+    if (wsLead?.trim() && ws.lead === "—") ws.lead = wsLead.trim();
+
+    // Find or create initiative
+    const iid = initId?.trim();
+    let init = ws.initiatives.find(i => i.id === iid);
+    if (!init) {
+      init = {
+        id:    iid,
+        name:  initName?.trim() || "",
+        owner: initOwner?.trim() || "—",   // initiative owner
+        projects: [],
+      };
+      ws.initiatives.push(init);
+    }
+    // Update initiative owner if a later row provides it
+    if (initOwner?.trim() && init.owner === "—") init.owner = initOwner.trim();
+
+    // Add project
+    const rag = ["G","A","R"].includes(ragRaw?.trim().toUpperCase())
+      ? ragRaw.trim().toUpperCase() : "G";
+
+    init.projects.push({
+      id:       projId?.trim() || `${iid}.${init.projects.length+1}`,
+      name:     projName?.trim() || "",
+      owner:    projOwner?.trim() || "—",   // project owner
+      progress: Math.min(100, Math.max(0, parseInt(progressRaw) || 0)),
+      rag,
+      risk:     risk?.trim() || null,
+      start:    start?.trim() || "2026-01-01",
+      end:      end?.trim()   || "2026-12-31",
+    });
+  });
+
+  return Object.values(wsMap).filter(ws => ws.initiatives.length > 0);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HELPERS & CALCULATIONS
+// ─────────────────────────────────────────────────────────────────────────────
+const TODAY = new Date();
+function plannedPct(start,end){
+  const s=new Date(start),e=new Date(end);
+  if(TODAY<=s)return 0; if(TODAY>=e)return 100;
+  return Math.round(((TODAY-s)/(e-s))*100);
+}
+const RAG={
+  G:{label:"On Track",color:"#22c55e",bg:"rgba(34,197,94,0.11)",border:"rgba(34,197,94,0.32)"},
+  A:{label:"At Risk",color:"#f59e0b",bg:"rgba(245,158,11,0.11)",border:"rgba(245,158,11,0.32)"},
+  R:{label:"Off Track",color:"#ef4444",bg:"rgba(239,68,68,0.11)",border:"rgba(239,68,68,0.32)"},
+};
+const allProjects=ws=>ws.initiatives.flatMap(i=>i.projects);
+const wsRag=ws=>allProjects(ws).reduce((w,p)=>p.rag==="R"?"R":p.rag==="A"&&w!=="R"?"A":w,"G");
+const avgOf=arr=>arr.length?Math.round(arr.reduce((a,p)=>a+p.progress,0)/arr.length):0;
+const avgNums=arr=>arr.length?Math.round(arr.reduce((a,n)=>a+n,0)/arr.length):0;
+const wsActual=ws=>avgOf(allProjects(ws));
+const initActual=init=>avgOf(init.projects);
+const initPlanned=init=>avgNums(init.projects.map(p=>plannedPct(p.start,p.end)));
+const wsPlanned=ws=>avgNums(allProjects(ws).map(p=>plannedPct(p.start,p.end)));
+const initRag=init=>init.projects.reduce((w,p)=>p.rag==="R"?"R":p.rag==="A"&&w!=="R"?"A":w,"G");
+const fmtDate=str=>{const d=new Date(str);return d.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"2-digit"});};
+const varianceColor=v=>v>=0?"#22c55e":v>=-15?"#f59e0b":"#ef4444";
+const varianceLabel=v=>v>=0?`+${v}%`:`${v}%`;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MICRO COMPONENTS
+// ─────────────────────────────────────────────────────────────────────────────
+function Dot({rag}){return <span style={{display:"inline-block",width:7,height:7,borderRadius:"50%",background:RAG[rag].color,flexShrink:0}}/>;}
+function RAGBadge({rag,tiny}){
+  const c=RAG[rag];
+  return <span style={{display:"inline-flex",alignItems:"center",gap:4,padding:tiny?"2px 7px":"3px 10px",borderRadius:20,background:c.bg,border:`1px solid ${c.border}`,color:c.color,fontSize:tiny?10:11,fontFamily:"DM Mono,monospace",fontWeight:600,letterSpacing:"0.06em",whiteSpace:"nowrap"}}><Dot rag={rag}/>{c.label}</span>;
+}
+function Bar({pct,color,h=5}){
+  const isHex=color.startsWith("#");
+  const fill=pct===0?"rgba(255,255,255,0.09)":isHex?`linear-gradient(90deg,${color}77,${color})`:color;
+  return <div style={{width:"100%",height:h,borderRadius:h,background:"rgba(255,255,255,0.07)",overflow:"hidden"}}><div style={{height:"100%",width:`${Math.min(100,Math.max(0,pct))}%`,borderRadius:h,background:fill,transition:"width 0.4s ease"}}/></div>;
+}
+function VariancePill({actual,planned}){
+  const v=actual-planned,col=varianceColor(v);
+  return <span style={{display:"inline-flex",alignItems:"center",gap:3,padding:"2px 8px",borderRadius:20,background:`${col}18`,border:`1px solid ${col}35`,color:col,fontSize:10,fontFamily:"DM Mono,monospace",fontWeight:700,whiteSpace:"nowrap"}}>{v>=0?"▲":"▼"} {varianceLabel(v)}</span>;
+}
+function OwnerTag({label,name}){
+  if(!name||name==="—")return null;
+  return <span style={{fontSize:9,color:"rgba(255,255,255,0.32)",fontFamily:"DM Mono,monospace"}}><span style={{color:"rgba(255,255,255,0.18)"}}>{label}: </span>{name}</span>;
+}
+
+// Gantt
+const GANTT_START=new Date("2026-01-01"),GANTT_END=new Date("2026-12-31"),GANTT_SPAN=GANTT_END-GANTT_START;
+function ganttPct(d){return Math.max(0,Math.min(100,((new Date(d)-GANTT_START)/GANTT_SPAN)*100));}
+const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function GanttHeader(){
+  return <div style={{position:"relative",height:18,marginBottom:4}}>{MONTHS.map((m,i)=><div key={m} style={{position:"absolute",left:`${(i/12)*100}%`,fontSize:9,color:"rgba(255,255,255,0.3)",fontFamily:"DM Mono,monospace",transform:"translateX(-50%)"}}>{m}</div>)}</div>;
+}
+function GanttRow({project,color}){
+  const left=ganttPct(project.start),right=100-ganttPct(project.end);
+  const plan=plannedPct(project.start,project.end),v=project.progress-plan,bc=varianceColor(v);
+  const todayPct=ganttPct(TODAY.toISOString().slice(0,10));
+  return(
+    <div style={{position:"relative",height:22,marginBottom:2}}>
+      <div style={{position:"absolute",top:7,left:0,right:0,height:8,borderRadius:4,background:"rgba(255,255,255,0.06)"}}/>
+      <div style={{position:"absolute",top:7,left:`${left}%`,right:`${right}%`,height:8,borderRadius:4,background:`${color}30`,border:`1px dashed ${color}60`}}/>
+      <div style={{position:"absolute",top:7,left:`${left}%`,width:`${(1-(right/100)-(left/100))*project.progress/100*100}%`,height:8,borderRadius:4,background:`linear-gradient(90deg,${bc}88,${bc})`,transition:"width 0.4s"}}/>
+      <div style={{position:"absolute",top:2,left:`${todayPct}%`,width:2,height:18,background:"rgba(255,255,255,0.55)",borderRadius:2}}/>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MASTER DASHBOARD
+// ─────────────────────────────────────────────────────────────────────────────
+function Master({wsList,onSelect,lastRefresh}){
+  const all=wsList.flatMap(allProjects);
+  const rc={G:0,A:0,R:0};all.forEach(p=>rc[p.rag]++);
+  const overallActual=avgNums(wsList.map(ws=>wsActual(ws)));
+  const overallPlanned=avgNums(wsList.map(ws=>wsPlanned(ws)));
+  const overallVariance=overallActual-overallPlanned;
+  const risks=wsList.flatMap(ws=>allProjects(ws).filter(p=>p.risk).map(p=>({...p,wsCode:ws.code,wsColor:ws.color})));
+  const totalInitiatives=wsList.reduce((a,ws)=>a+ws.initiatives.length,0);
+  const totalProjects=all.length;
+  return(
+    <div>
+      {lastRefresh&&<div style={{fontSize:9,color:"rgba(255,255,255,0.2)",fontFamily:"DM Mono,monospace",marginBottom:14,textAlign:"right"}}>Last refreshed: {lastRefresh}</div>}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:10,marginBottom:20}}>
+        {[
+          {l:"Actual Progress",v:`${overallActual}%`,sub:"across all workstreams"},
+          {l:"Planned Progress",v:`${overallPlanned}%`,sub:"as of today"},
+          {l:"Variance",v:varianceLabel(overallVariance),sub:"actual vs planned",col:varianceColor(overallVariance)},
+          {l:"Initiatives / Projects",v:`${totalInitiatives} / ${totalProjects}`,sub:`${totalInitiatives} initiatives · ${totalProjects} projects`},
+          {l:"Open Risks",v:risks.length,sub:risks.length>0?"requiring attention":"none logged",col:risks.length>0?"#ef4444":null},
+        ].map((k,i)=>(
+          <div key={i} style={{background:k.col?`${k.col}0E`:"rgba(255,255,255,0.03)",border:`1px solid ${k.col?k.col+"25":"rgba(255,255,255,0.07)"}`,borderRadius:10,padding:"15px 16px"}}>
+            <div style={{fontSize:10,color:"rgba(255,255,255,0.38)",fontFamily:"DM Mono,monospace",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:5}}>{k.l}</div>
+            <div style={{fontSize:26,fontFamily:"Playfair Display,serif",color:k.col||"#fff",lineHeight:1,marginBottom:3}}>{k.v}</div>
+            <div style={{fontSize:11,color:"rgba(255,255,255,0.28)"}}>{k.sub}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,marginBottom:22}}>
+        {["G","A","R"].map(r=>(
+          <div key={r} style={{background:RAG[r].bg,border:`1px solid ${RAG[r].border}`,borderRadius:10,padding:"13px 16px",display:"flex",alignItems:"center",gap:12}}>
+            <div style={{width:36,height:36,borderRadius:"50%",background:RAG[r].color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,fontWeight:700,color:"#0a0d12",flexShrink:0}}>{rc[r]}</div>
+            <div><div style={{fontSize:13,color:RAG[r].color,fontWeight:600}}>{RAG[r].label}</div><div style={{fontSize:11,color:"rgba(255,255,255,0.32)"}}>projects</div></div>
+          </div>
+        ))}
+      </div>
+      <div style={{fontSize:10,color:"rgba(255,255,255,0.28)",fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:9}}>Workstream Status — click to drill in</div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:9,marginBottom:26}}>
+        {wsList.map(ws=>{
+          const act=wsActual(ws),plan=wsPlanned(ws),rag=wsRag(ws);
+          return(
+            <div key={ws.id} onClick={()=>onSelect(ws.id)} style={{background:"rgba(255,255,255,0.022)",border:"1px solid rgba(255,255,255,0.055)",borderLeft:`3px solid ${ws.color}`,borderRadius:10,padding:"13px 15px",cursor:"pointer",transition:"background 0.16s"}}
+              onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.055)"}
+              onMouseLeave={e=>e.currentTarget.style.background="rgba(255,255,255,0.022)"}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:9,gap:8}}>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:9,color:ws.color,fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",marginBottom:2}}>{ws.code}</div>
+                  <div style={{fontSize:13,fontWeight:600,color:"#fff",lineHeight:1.3}}>{ws.name}</div>
+                  <div style={{fontSize:10,color:"rgba(255,255,255,0.32)",marginTop:3}}>Lead: <span style={{color:"rgba(255,255,255,0.6)"}}>{ws.lead}</span></div>
+                </div>
+                <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:5}}><RAGBadge rag={rag} tiny/><VariancePill actual={act} planned={plan}/></div>
+              </div>
+              <div style={{marginBottom:5}}>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{fontSize:9,color:"rgba(255,255,255,0.35)",fontFamily:"DM Mono,monospace"}}>ACTUAL</span><span style={{fontSize:9,color:ws.color,fontFamily:"DM Mono,monospace"}}>{act}%</span></div>
+                <Bar pct={act} color={ws.color}/>
+              </div>
+              <div>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{fontSize:9,color:"rgba(255,255,255,0.35)",fontFamily:"DM Mono,monospace"}}>PLANNED</span><span style={{fontSize:9,color:"rgba(255,255,255,0.45)",fontFamily:"DM Mono,monospace"}}>{plan}%</span></div>
+                <Bar pct={plan} color="#666e7a"/>
+              </div>
+              <div style={{display:"flex",gap:12,marginTop:8}}>
+                <span style={{fontSize:10,color:"rgba(255,255,255,0.28)"}}>{ws.initiatives.length} initiatives</span>
+                <span style={{fontSize:10,color:"rgba(255,255,255,0.28)"}}>{allProjects(ws).length} projects</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div style={{fontSize:10,color:"rgba(255,255,255,0.28)",fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:9}}>Consolidated Risk Register</div>
+      {risks.length>0?(
+        <div style={{border:"1px solid rgba(255,255,255,0.07)",borderRadius:10,overflow:"hidden"}}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 70px 80px",padding:"7px 16px",background:"rgba(255,255,255,0.025)",borderBottom:"1px solid rgba(255,255,255,0.055)"}}>
+            {["Risk / Issue","WS","Status"].map((h,i)=><span key={i} style={{fontSize:9,color:"rgba(255,255,255,0.28)",fontFamily:"DM Mono,monospace",letterSpacing:"0.08em",textTransform:"uppercase"}}>{h}</span>)}
+          </div>
+          {risks.map((r,i)=>(
+            <div key={i} style={{display:"grid",gridTemplateColumns:"1fr 70px 80px",padding:"10px 16px",alignItems:"center",borderBottom:i<risks.length-1?"1px solid rgba(255,255,255,0.04)":"none",background:i%2===0?"transparent":"rgba(255,255,255,0.012)"}}>
+              <div>
+                <div style={{fontSize:12,color:"rgba(255,255,255,0.8)",marginBottom:1}}>{r.name}</div>
+                <div style={{fontSize:10,color:"rgba(255,255,255,0.3)",marginBottom:3,fontFamily:"DM Mono,monospace"}}>Project owner: {r.owner}</div>
+                <div style={{fontSize:11,color:"#f59e0b"}}>⚠ {r.risk}</div>
+              </div>
+              <div style={{fontSize:11,color:r.wsColor,fontFamily:"DM Mono,monospace"}}>{r.wsCode}</div>
+              <RAGBadge rag={r.rag} tiny/>
+            </div>
+          ))}
+        </div>
+      ):(
+        <div style={{border:"1px solid rgba(255,255,255,0.06)",borderRadius:10,padding:18,textAlign:"center"}}>
+          <div style={{fontSize:11,color:"rgba(255,255,255,0.22)"}}>No risks logged.</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WORKSTREAM DASHBOARD
+// ─────────────────────────────────────────────────────────────────────────────
+function WSDash({ws}){
+  const [openInit,setOpenInit]=useState(null);
+  const [view,setView]=useState("table");
+  const all=allProjects(ws);
+  const rc={G:0,A:0,R:0};all.forEach(p=>rc[p.rag]++);
+  const act=wsActual(ws),plan=wsPlanned(ws),v=act-plan;
+  const risks=all.filter(p=>p.risk);
+  const tabBtn=(label,val)=>(
+    <button onClick={()=>setView(val)} style={{padding:"5px 14px",borderRadius:6,cursor:"pointer",fontSize:11,fontFamily:"DM Mono,monospace",border:`1px solid ${view===val?ws.color+"60":"rgba(255,255,255,0.1)"}`,background:view===val?`${ws.color}18`:"transparent",color:view===val?ws.color:"rgba(255,255,255,0.45)",transition:"all 0.15s"}}>{label}</button>
+  );
+  return(
+    <div>
+      {/* Header */}
+      <div style={{background:`linear-gradient(135deg,${ws.color}12 0%,transparent 55%)`,border:`1px solid ${ws.color}28`,borderRadius:12,padding:"19px 22px",marginBottom:20,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+        <div style={{display:"flex",alignItems:"center",gap:14}}>
+          <div style={{fontSize:28,color:ws.color}}>{ws.icon}</div>
+          <div>
+            <div style={{fontSize:9,color:ws.color,fontFamily:"DM Mono,monospace",letterSpacing:"0.12em",marginBottom:3}}>{ws.code} · {ws.subtitle}</div>
+            <div style={{fontSize:18,fontFamily:"Playfair Display,serif",color:"#fff"}}>{ws.name}</div>
+            <div style={{fontSize:11,color:"rgba(255,255,255,0.38)",marginTop:3}}>
+              Workstream Lead: <span style={{color:"rgba(255,255,255,0.72)"}}>{ws.lead}</span>
+            </div>
+          </div>
+        </div>
+        <div style={{textAlign:"right"}}>
+          <div style={{display:"flex",alignItems:"flex-end",gap:12,justifyContent:"flex-end",marginBottom:4}}>
+            <div><div style={{fontSize:9,color:"rgba(255,255,255,0.35)",fontFamily:"DM Mono,monospace",marginBottom:1}}>ACTUAL</div><div style={{fontSize:34,fontFamily:"Playfair Display,serif",color:ws.color,lineHeight:1}}>{act}%</div></div>
+            <div style={{paddingBottom:4}}><div style={{fontSize:9,color:"rgba(255,255,255,0.35)",fontFamily:"DM Mono,monospace",marginBottom:1}}>PLANNED</div><div style={{fontSize:22,fontFamily:"Playfair Display,serif",color:"rgba(255,255,255,0.45)",lineHeight:1}}>{plan}%</div></div>
+          </div>
+          <VariancePill actual={act} planned={plan}/>
+        </div>
+      </div>
+
+      {/* KPIs */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:9,marginBottom:18}}>
+        {[{l:"Initiatives",v:ws.initiatives.length},{l:"Projects",v:all.length},{l:"Variance",v:varianceLabel(v),col:varianceColor(v)},{l:"On Track",v:rc.G,col:RAG.G.color},{l:"At Risk",v:rc.A,col:RAG.A.color},{l:"Off Track",v:rc.R,col:RAG.R.color}].map((k,i)=>(
+          <div key={i} style={{background:k.col?`${k.col}0C`:"rgba(255,255,255,0.03)",border:`1px solid ${k.col?k.col+"20":"rgba(255,255,255,0.06)"}`,borderRadius:8,padding:"11px 12px"}}>
+            <div style={{fontSize:9,color:"rgba(255,255,255,0.36)",fontFamily:"DM Mono,monospace",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:4}}>{k.l}</div>
+            <div style={{fontSize:20,fontFamily:"Playfair Display,serif",color:k.col||"#fff"}}>{k.v}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* View toggle */}
+      <div style={{display:"flex",gap:6,marginBottom:14}}>{tabBtn("📋 Table","table")}{tabBtn("📅 Gantt","gantt")}</div>
+
+      {/* TABLE VIEW */}
+      {view==="table"&&(
+        <div style={{display:"flex",flexDirection:"column",gap:7,marginBottom:22}}>
+          {ws.initiatives.map(init=>{
+            const open=openInit===init.id,ip=initActual(init),iplan=initPlanned(init),ir=initRag(init);
+            return(
+              <div key={init.id} style={{border:`1px solid ${open?ws.color+"40":"rgba(255,255,255,0.055)"}`,borderRadius:9,overflow:"hidden",transition:"border-color 0.18s"}}>
+                {/* initiative header */}
+                <div onClick={()=>setOpenInit(open?null:init.id)} style={{padding:"12px 15px",cursor:"pointer",background:open?`${ws.color}09`:"rgba(255,255,255,0.01)",display:"flex",alignItems:"center",gap:10}}>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:5,flexWrap:"wrap"}}>
+                      <span style={{fontSize:9,color:ws.color,fontFamily:"DM Mono,monospace"}}>{init.id}</span>
+                      <span style={{fontSize:13,fontWeight:600,color:"#fff"}}>{init.name}</span>
+                      <RAGBadge rag={ir} tiny/>
+                      <VariancePill actual={ip} planned={iplan}/>
+                    </div>
+                    {/* initiative owner displayed clearly */}
+                    <div style={{marginBottom:6}}>
+                      <OwnerTag label="Initiative Owner" name={init.owner}/>
+                    </div>
+                    <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                      <div style={{flex:1}}>
+                        <div style={{display:"flex",justifyContent:"space-between",marginBottom:2}}><span style={{fontSize:8,color:"rgba(255,255,255,0.3)",fontFamily:"DM Mono,monospace"}}>ACTUAL</span><span style={{fontSize:8,color:ws.color,fontFamily:"DM Mono,monospace"}}>{ip}%</span></div>
+                        <Bar pct={ip} color={ws.color}/>
+                      </div>
+                      <div style={{flex:1}}>
+                        <div style={{display:"flex",justifyContent:"space-between",marginBottom:2}}><span style={{fontSize:8,color:"rgba(255,255,255,0.3)",fontFamily:"DM Mono,monospace"}}>PLANNED</span><span style={{fontSize:8,color:"rgba(255,255,255,0.45)",fontFamily:"DM Mono,monospace"}}>{iplan}%</span></div>
+                        <Bar pct={iplan} color="#666e7a"/>
+                      </div>
+                    </div>
+                  </div>
+                  <span style={{fontSize:10,color:"rgba(255,255,255,0.22)",flexShrink:0}}>{init.projects.length}p</span>
+                  <span style={{fontSize:10,color:"rgba(255,255,255,0.22)"}}>{open?"▲":"▼"}</span>
+                </div>
+
+                {/* project rows */}
+                {open&&(
+                  <div style={{borderTop:"1px solid rgba(255,255,255,0.055)"}}>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 56px 56px 90px 130px 80px",padding:"6px 15px",background:"rgba(255,255,255,0.02)",borderBottom:"1px solid rgba(255,255,255,0.045)"}}>
+                      {["Project / Owner","Actual","Planned","Variance","Dates","RAG"].map((h,i)=>(
+                        <span key={i} style={{fontSize:9,color:"rgba(255,255,255,0.26)",fontFamily:"DM Mono,monospace",letterSpacing:"0.07em",textTransform:"uppercase"}}>{h}</span>
+                      ))}
+                    </div>
+                    {init.projects.map((pr,pi)=>{
+                      const pplan=plannedPct(pr.start,pr.end);
+                      return(
+                        <div key={pr.id} style={{display:"grid",gridTemplateColumns:"1fr 56px 56px 90px 130px 80px",padding:"9px 15px",alignItems:"center",borderBottom:"1px solid rgba(255,255,255,0.032)",background:pi%2===0?"transparent":"rgba(255,255,255,0.011)"}}>
+                          <div>
+                            <div style={{fontSize:12,color:"rgba(255,255,255,0.82)",marginBottom:2}}>{pr.name}</div>
+                            {/* project owner displayed on its own line */}
+                            <OwnerTag label="Project Owner" name={pr.owner}/>
+                            {pr.risk&&<div style={{fontSize:10,color:"#f59e0b",marginTop:4}}>⚠ {pr.risk}</div>}
+                          </div>
+                          <div style={{fontSize:11,color:ws.color,fontFamily:"DM Mono,monospace",fontWeight:600}}>{pr.progress}%</div>
+                          <div style={{fontSize:11,color:"rgba(255,255,255,0.45)",fontFamily:"DM Mono,monospace"}}>{pplan}%</div>
+                          <VariancePill actual={pr.progress} planned={pplan}/>
+                          <div style={{fontSize:9,color:"rgba(255,255,255,0.35)",fontFamily:"DM Mono,monospace",lineHeight:1.7}}>{fmtDate(pr.start)}<br/>→ {fmtDate(pr.end)}</div>
+                          <RAGBadge rag={pr.rag} tiny/>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* GANTT VIEW */}
+      {view==="gantt"&&(
+        <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:10,padding:"16px 18px",marginBottom:22}}>
+          <div style={{display:"flex",gap:16,marginBottom:12,flexWrap:"wrap"}}>
+            {[["rgba(255,255,255,0.25)","1px dashed rgba(255,255,255,0.4)","Planned duration"],["#4C9AC9","none","Actual progress"],["rgba(255,255,255,0.55)","none","Today"]].map(([bg,border,label],i)=>(
+              <div key={i} style={{display:"flex",alignItems:"center",gap:6}}>
+                {i<2?<div style={{width:24,height:7,borderRadius:3,background:bg,border}}/>:<div style={{width:2,height:14,borderRadius:2,background:bg}}/>}
+                <span style={{fontSize:10,color:"rgba(255,255,255,0.4)",fontFamily:"DM Mono,monospace"}}>{label}</span>
+              </div>
+            ))}
+          </div>
+          <GanttHeader/>
+          {ws.initiatives.map(init=>(
+            <div key={init.id} style={{marginBottom:14}}>
+              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:5,paddingBottom:4,borderBottom:"1px solid rgba(255,255,255,0.06)"}}>
+                <span style={{fontSize:10,color:ws.color,fontFamily:"DM Mono,monospace",letterSpacing:"0.08em"}}>{init.id} {init.name}</span>
+                <OwnerTag label="Owner" name={init.owner}/>
+              </div>
+              {init.projects.map(pr=>{
+                const pplan=plannedPct(pr.start,pr.end);
+                return(
+                  <div key={pr.id} style={{display:"grid",gridTemplateColumns:"200px 1fr 90px 80px",alignItems:"center",gap:10,marginBottom:4}}>
+                    <div>
+                      <div style={{fontSize:11,color:"rgba(255,255,255,0.7)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}} title={pr.name}>{pr.name}</div>
+                      <OwnerTag label="Owner" name={pr.owner}/>
+                    </div>
+                    <GanttRow project={pr} color={ws.color}/>
+                    <VariancePill actual={pr.progress} planned={pplan}/>
+                    <RAGBadge rag={pr.rag} tiny/>
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Risk register */}
+      <div style={{fontSize:10,color:"rgba(255,255,255,0.28)",fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>Workstream Risk Register</div>
+      {risks.length>0?(
+        <div style={{border:"1px solid rgba(255,255,255,0.07)",borderRadius:10,overflow:"hidden"}}>
+          {risks.map((r,i)=>(
+            <div key={i} style={{display:"grid",gridTemplateColumns:"1fr 84px",padding:"10px 15px",alignItems:"center",borderBottom:i<risks.length-1?"1px solid rgba(255,255,255,0.04)":"none",background:i%2===0?"transparent":"rgba(255,255,255,0.012)"}}>
+              <div>
+                <div style={{fontSize:12,color:"rgba(255,255,255,0.8)",marginBottom:1}}>{r.name}</div>
+                <OwnerTag label="Project Owner" name={r.owner}/>
+                <div style={{fontSize:11,color:"#f59e0b",marginTop:4}}>⚠ {r.risk}</div>
+              </div>
+              <RAGBadge rag={r.rag} tiny/>
+            </div>
+          ))}
+        </div>
+      ):(
+        <div style={{border:"1px solid rgba(255,255,255,0.055)",borderRadius:10,padding:16,textAlign:"center"}}>
+          <div style={{fontSize:11,color:"rgba(255,255,255,0.22)"}}>No risks logged for this workstream.</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// APP SHELL
+// ─────────────────────────────────────────────────────────────────────────────
+function App(){
+  const [active,setActive]=useState(0);
+  const [wsList,setWsList]=useState(FALLBACK_DATA);
+  const [loading,setLoading]=useState(false);
+  const [error,setError]=useState(null);
+  const [lastRefresh,setLastRefresh]=useState(null);
+  const [usingSheets,setUsingSheets]=useState(false);
+
+  const isConfigured = CONFIG.SHEET_ID!=="YOUR_SHEET_ID_HERE" && CONFIG.API_KEY!=="YOUR_API_KEY_HERE";
+
+  const refresh=useCallback(async()=>{
+    if(!isConfigured)return;
+    setLoading(true);setError(null);
+    try{
+      const data=await loadFromSheets();
+      if(data){setWsList(data);setUsingSheets(true);setLastRefresh(new Date().toLocaleTimeString());}
+    }catch(e){setError(e.message);}
+    finally{setLoading(false);}
+  },[isConfigured]);
+
+  useEffect(()=>{refresh();},[]);
+  useEffect(()=>{
+    if(!isConfigured||!CONFIG.REFRESH_INTERVAL)return;
+    const t=setInterval(refresh,CONFIG.REFRESH_INTERVAL);
+    return()=>clearInterval(t);
+  },[isConfigured]);
+
+  const currentWS=wsList.find(w=>w.id===active);
+  const navItems=[{id:0,code:"CMD",icon:"◈",color:"#C9A84C",name:"Integration Command",lead:null},...wsList];
+
+  return(
+    <div style={{minHeight:"100vh",background:"#0a0d12",fontFamily:"DM Sans,sans-serif",color:"#fff"}}>
+      <div style={{display:"flex",height:"100vh",overflow:"hidden"}}>
+        {/* Sidebar */}
+        <div style={{width:260,flexShrink:0,background:"rgba(255,255,255,0.014)",borderRight:"1px solid rgba(255,255,255,0.055)",display:"flex",flexDirection:"column",overflow:"hidden"}}>
+          <div style={{padding:"18px 16px 14px",borderBottom:"1px solid rgba(255,255,255,0.048)"}}>
+            <div style={{fontSize:9,color:"rgba(255,255,255,0.26)",fontFamily:"DM Mono,monospace",letterSpacing:"0.14em",textTransform:"uppercase",marginBottom:4}}>Post-Acquisition Integration</div>
+            <div style={{fontSize:19,fontFamily:"Playfair Display,serif",color:"#fff"}}>Hightekers</div>
+            <div style={{fontSize:10,color:"rgba(255,255,255,0.28)",marginTop:3}}>Serviap · EOS · Rivermate</div>
+            <div style={{marginTop:9,height:1,background:"linear-gradient(90deg,#C9A84C50,transparent)"}}/>
+            <div style={{fontSize:9,color:"#C9A84C",fontFamily:"DM Mono,monospace",marginTop:6,letterSpacing:"0.05em"}}>8 Workstreams</div>
+            {usingSheets&&<div style={{marginTop:5,fontSize:8,color:"rgba(34,197,94,0.7)",fontFamily:"DM Mono,monospace",letterSpacing:"0.05em"}}>● LIVE FROM GOOGLE SHEETS</div>}
+          </div>
+          <nav style={{flex:1,overflowY:"auto",padding:"7px"}}>
+            {navItems.map(ws=>{
+              const isActive=active===ws.id;
+              const liveWS=wsList.find(w=>w.id===ws.id);
+              const rag=liveWS?wsRag(liveWS):null;
+              return(
+                <div key={ws.id} onClick={()=>setActive(ws.id)} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:7,cursor:"pointer",marginBottom:1,background:isActive?`${ws.color}15`:"transparent",border:`1px solid ${isActive?ws.color+"35":"transparent"}`,transition:"all 0.13s"}}
+                  onMouseEnter={e=>{if(!isActive)e.currentTarget.style.background="rgba(255,255,255,0.032)";}}
+                  onMouseLeave={e=>{if(!isActive)e.currentTarget.style.background="transparent";}}>
+                  <span style={{fontSize:12,color:isActive?ws.color:"rgba(255,255,255,0.22)",flexShrink:0}}>{ws.icon}</span>
+                  <div style={{flex:1,minWidth:0}}>
+                    {ws.id===0?(
+                      <div style={{fontSize:12,fontWeight:isActive?600:400,color:isActive?"#fff":"rgba(255,255,255,0.46)"}}>Integration Command</div>
+                    ):(
+                      <>
+                        <div style={{fontSize:8,color:ws.color,fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",marginBottom:1}}>{ws.code}</div>
+                        <div style={{fontSize:11,fontWeight:isActive?600:400,color:isActive?"#fff":"rgba(255,255,255,0.46)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{ws.name}</div>
+                        {ws.lead&&ws.lead!=="—"&&<div style={{fontSize:9,color:"rgba(255,255,255,0.22)",marginTop:1}}>{ws.lead}</div>}
+                      </>
+                    )}
+                  </div>
+                  {rag&&<Dot rag={rag}/>}
+                </div>
+              );
+            })}
+          </nav>
+          <div style={{padding:"10px 13px",borderTop:"1px solid rgba(255,255,255,0.048)"}}>
+            <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:isConfigured?10:0}}>
+              {Object.entries(RAG).map(([k,v])=>(
+                <div key={k} style={{display:"flex",alignItems:"center",gap:4}}>
+                  <div style={{width:6,height:6,borderRadius:"50%",background:v.color}}/>
+                  <span style={{fontSize:9,color:"rgba(255,255,255,0.28)",fontFamily:"DM Mono,monospace"}}>{v.label}</span>
+                </div>
+              ))}
+            </div>
+            {isConfigured&&(
+              <button onClick={refresh} disabled={loading} style={{width:"100%",padding:"7px",borderRadius:7,background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.12)",color:"rgba(255,255,255,0.6)",fontSize:10,cursor:loading?"wait":"pointer",fontFamily:"DM Mono,monospace",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+                <span className={loading?"spin":""} style={{display:"inline-block"}}>↻</span>
+                {loading?"Refreshing…":"Refresh from Sheets"}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Main content */}
+        <div style={{flex:1,overflow:"hidden",display:"flex",flexDirection:"column"}}>
+          <div style={{padding:"13px 24px",borderBottom:"1px solid rgba(255,255,255,0.048)",display:"flex",alignItems:"center",justifyContent:"space-between",background:"rgba(255,255,255,0.006)",flexShrink:0}}>
+            <div>
+              <div style={{fontSize:9,color:active===0?"#C9A84C":currentWS?.color,fontFamily:"DM Mono,monospace",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:2}}>{active===0?"Integration Command Centre":`${currentWS?.code} — Workstream Dashboard`}</div>
+              <div style={{fontSize:15,fontFamily:"Playfair Display,serif",color:"#fff"}}>{active===0?"Master Integration Dashboard":currentWS?.name}</div>
+            </div>
+            <div style={{display:"flex",alignItems:"center",gap:10}}>
+              {error&&<div style={{fontSize:10,color:"#ef4444",fontFamily:"DM Mono,monospace",maxWidth:220}}>⚠ {error}</div>}
+              <div style={{padding:"5px 12px",borderRadius:20,background:"rgba(255,255,255,0.038)",border:"1px solid rgba(255,255,255,0.065)",fontSize:10,color:"rgba(255,255,255,0.38)",fontFamily:"DM Mono,monospace"}}>EOR Integration · 2026</div>
+            </div>
+          </div>
+          <div style={{flex:1,overflowY:"auto",padding:"20px 24px"}}>
+            {active===0
+              ?<Master wsList={wsList} onSelect={setActive} lastRefresh={lastRefresh}/>
+              :currentWS&&<WSDash ws={currentWS}/>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
