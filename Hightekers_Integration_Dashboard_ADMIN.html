@@ -1161,6 +1161,7 @@ function App(){
     try{
       const data=await loadFromSheets();
       if(data){setWsList(data);setUsingSheets(true);setLastRefresh(new Date().toLocaleTimeString());setDirty(false);showSuccess("Refreshed from Google Sheets");}
+      const cd=await loadProjectCards();setCardData(cd);
     }catch(e){setError(e.message);}
     finally{setLoading(false);}
   },[isConfigured]);
