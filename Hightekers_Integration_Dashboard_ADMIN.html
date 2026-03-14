@@ -590,27 +590,19 @@ function ProjectCardModal({project,card,milestones,wsColor,onClose,onSave}){
   });
   const setF=(k,v)=>setForm(p=>({...p,[k]:v}));
   const setMS=(i,k,v)=>setForm(p=>({...p,milestones:p.milestones.map((m,j)=>j===i?{...m,[k]:v}:m)}));
-
-  const Sec=({title,icon,children})=>(
-    <div style={{marginBottom:16}}>
-      <div style={{fontSize:9,color:"rgba(255,255,255,0.35)",fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:6,display:"flex",alignItems:"center",gap:5}}>
-        {icon&&<span>{icon}</span>}{title}
-      </div>
-      {children}
-    </div>
-  );
-  const VBox=({val,ph})=>(
-    <div style={{fontSize:13,color:val?"rgba(255,255,255,0.78)":"rgba(255,255,255,0.22)",lineHeight:1.6,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:7,padding:"9px 12px",fontStyle:val?"normal":"italic",whiteSpace:"pre-wrap"}}>{val||ph}</div>
-  );
   const handleSave=async()=>{
     setSaving(true);
     const validMS=form.milestones.filter(m=>m.name&&m.name.trim());
     await onSave(project.id,{description:form.description,scope:form.scope,outputs:form.outputs,kpis:form.kpis,dependencies:form.dependencies},validMS);
     setSaving(false);setEditing(false);
   };
+  const fieldStyle={width:"100%",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:7,color:"#fff",fontSize:13,padding:"9px 12px",outline:"none",fontFamily:"DM Sans,sans-serif",resize:"vertical",lineHeight:1.5};
+  const labelStyle={fontSize:9,color:"rgba(255,255,255,0.35)",fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:6,display:"flex",alignItems:"center",gap:5};
+  const viewStyle=(val)=>({fontSize:13,color:val?"rgba(255,255,255,0.78)":"rgba(255,255,255,0.22)",lineHeight:1.6,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:7,padding:"9px 12px",fontStyle:val?"normal":"italic",whiteSpace:"pre-wrap"});
   return(
     <div className="overlay" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
       <div style={{background:"#13171f",border:`1px solid ${wsColor}35`,borderRadius:14,width:"100%",maxWidth:700,maxHeight:"92vh",overflow:"hidden",display:"flex",flexDirection:"column"}}>
+        {/* Header */}
         <div style={{padding:"18px 22px 14px",borderBottom:"1px solid rgba(255,255,255,0.07)",background:`linear-gradient(135deg,${wsColor}10 0%,transparent 60%)`}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12}}>
             <div style={{flex:1}}>
@@ -623,10 +615,10 @@ function ProjectCardModal({project,card,milestones,wsColor,onClose,onSave}){
               </div>
             </div>
             <div style={{display:"flex",gap:6,flexShrink:0,alignItems:"center"}}>
-              {!editing&&<button onClick={()=>setEditing(true)} style={{padding:"5px 13px",borderRadius:7,background:"rgba(201,168,76,0.15)",border:"1px solid rgba(201,168,76,0.35)",color:"#C9A84C",fontSize:11,cursor:"pointer",fontFamily:"DM Mono,monospace",fontWeight:600}}>✎ Edit</button>}
-              {editing&&<button onClick={handleSave} disabled={saving} style={{padding:"5px 13px",borderRadius:7,background:"#C9A84C",border:"none",color:"#0a0d12",fontSize:11,cursor:saving?"wait":"pointer",fontFamily:"DM Mono,monospace",fontWeight:700}}>{saving?"Saving…":"✓ Save"}</button>}
+              {!editing&&<button onClick={()=>setEditing(true)} style={{padding:"5px 13px",borderRadius:7,background:"rgba(201,168,76,0.15)",border:"1px solid rgba(201,168,76,0.35)",color:"#C9A84C",fontSize:11,cursor:"pointer",fontFamily:"DM Mono,monospace",fontWeight:600}}>&#9998; Edit</button>}
+              {editing&&<button onClick={handleSave} disabled={saving} style={{padding:"5px 13px",borderRadius:7,background:"#C9A84C",border:"none",color:"#0a0d12",fontSize:11,cursor:saving?"wait":"pointer",fontFamily:"DM Mono,monospace",fontWeight:700}}>{saving?"Saving\u2026":"\u2713 Save"}</button>}
               {editing&&<button onClick={()=>setEditing(false)} style={{padding:"5px 13px",borderRadius:7,background:"transparent",border:"1px solid rgba(255,255,255,0.12)",color:"rgba(255,255,255,0.5)",fontSize:11,cursor:"pointer",fontFamily:"DM Mono,monospace"}}>Cancel</button>}
-              <button onClick={onClose} style={{background:"transparent",border:"1px solid rgba(255,255,255,0.12)",borderRadius:6,color:"rgba(255,255,255,0.4)",fontSize:14,padding:"4px 10px",cursor:"pointer"}}>✕</button>
+              <button onClick={onClose} style={{background:"transparent",border:"1px solid rgba(255,255,255,0.12)",borderRadius:6,color:"rgba(255,255,255,0.4)",fontSize:14,padding:"4px 10px",cursor:"pointer"}}>\u2715</button>
             </div>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginTop:11}}>
@@ -641,17 +633,50 @@ function ProjectCardModal({project,card,milestones,wsColor,onClose,onSave}){
           </div>
           {project.risk&&<div style={{marginTop:9,fontSize:11,color:"#f59e0b",background:"rgba(245,158,11,0.08)",border:"1px solid rgba(245,158,11,0.2)",borderRadius:6,padding:"5px 9px"}}>&#9888; {project.risk}</div>}
         </div>
+        {/* Body */}
         <div style={{flex:1,overflowY:"auto",padding:"16px 22px"}}>
-          <Sec title="Description" icon="&#128203;">{editing?<textarea rows={3} value={form["description"]} onChange={e=>setF("description",e.target.value)} placeholder="Describe what this project is and why it matters..." style={{width:"100%",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:7,color:"#fff",fontSize:13,padding:"9px 12px",outline:"none",fontFamily:"DM Sans,sans-serif",resize:"vertical",lineHeight:1.5}}/>:<VBox val={form.description} ph="No description added yet."/>}</Sec>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
-            <Sec title="Scope" icon="&#127919;">{editing?<textarea rows={3} value={form["scope"]} onChange={e=>setF("scope",e.target.value)} placeholder="What is in and out of scope..." style={{width:"100%",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:7,color:"#fff",fontSize:13,padding:"9px 12px",outline:"none",fontFamily:"DM Sans,sans-serif",resize:"vertical",lineHeight:1.5}}/>:<VBox val={form.scope} ph="No scope defined yet."/>}</Sec>
-            <Sec title="Outputs / Deliverables" icon="&#128230;">{editing?<textarea rows={3} value={form["outputs"]} onChange={e=>setF("outputs",e.target.value)} placeholder="Key deliverables and outputs..." style={{width:"100%",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:7,color:"#fff",fontSize:13,padding:"9px 12px",outline:"none",fontFamily:"DM Sans,sans-serif",resize:"vertical",lineHeight:1.5}}/>:<VBox val={form.outputs} ph="No outputs defined yet."/>}</Sec>
+          {/* Description */}
+          <div style={{marginBottom:16}}>
+            <div style={labelStyle}><span>&#128203;</span> Description</div>
+            {editing
+              ?<textarea rows={3} value={form.description} onChange={e=>setF("description",e.target.value)} placeholder="Describe what this project is and why it matters..." style={fieldStyle}/>
+              :<div style={viewStyle(form.description)}>{form.description||"No description added yet."}</div>}
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
-            <Sec title="KPIs" icon="&#128202;">{editing?<textarea rows={3} value={form["kpis"]} onChange={e=>setF("kpis",e.target.value)} placeholder="How will success be measured..." style={{width:"100%",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:7,color:"#fff",fontSize:13,padding:"9px 12px",outline:"none",fontFamily:"DM Sans,sans-serif",resize:"vertical",lineHeight:1.5}}/>:<VBox val={form.kpis} ph="No KPIs defined yet."/>}</Sec>
-            <Sec title="Dependencies" icon="&#128279;">{editing?<textarea rows={3} value={form["dependencies"]} onChange={e=>setF("dependencies",e.target.value)} placeholder="What does this project depend on..." style={{width:"100%",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:7,color:"#fff",fontSize:13,padding:"9px 12px",outline:"none",fontFamily:"DM Sans,sans-serif",resize:"vertical",lineHeight:1.5}}/>:<VBox val={form.dependencies} ph="No dependencies noted."/>}</Sec>
+            {/* Scope */}
+            <div>
+              <div style={labelStyle}><span>&#127919;</span> Scope</div>
+              {editing
+                ?<textarea rows={3} value={form.scope} onChange={e=>setF("scope",e.target.value)} placeholder="What is in and out of scope..." style={fieldStyle}/>
+                :<div style={viewStyle(form.scope)}>{form.scope||"No scope defined yet."}</div>}
+            </div>
+            {/* Outputs */}
+            <div>
+              <div style={labelStyle}><span>&#128230;</span> Outputs / Deliverables</div>
+              {editing
+                ?<textarea rows={3} value={form.outputs} onChange={e=>setF("outputs",e.target.value)} placeholder="Key deliverables and outputs..." style={fieldStyle}/>
+                :<div style={viewStyle(form.outputs)}>{form.outputs||"No outputs defined yet."}</div>}
+            </div>
           </div>
-          <Sec title="Milestones" icon="&#127937;">
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
+            {/* KPIs */}
+            <div>
+              <div style={labelStyle}><span>&#128202;</span> KPIs</div>
+              {editing
+                ?<textarea rows={3} value={form.kpis} onChange={e=>setF("kpis",e.target.value)} placeholder="How will success be measured..." style={fieldStyle}/>
+                :<div style={viewStyle(form.kpis)}>{form.kpis||"No KPIs defined yet."}</div>}
+            </div>
+            {/* Dependencies */}
+            <div>
+              <div style={labelStyle}><span>&#128279;</span> Dependencies</div>
+              {editing
+                ?<textarea rows={3} value={form.dependencies} onChange={e=>setF("dependencies",e.target.value)} placeholder="What does this project depend on..." style={fieldStyle}/>
+                :<div style={viewStyle(form.dependencies)}>{form.dependencies||"No dependencies noted."}</div>}
+            </div>
+          </div>
+          {/* Milestones */}
+          <div style={{marginBottom:16}}>
+            <div style={labelStyle}><span>&#127937;</span> Milestones</div>
             {editing?(
               <div style={{display:"flex",flexDirection:"column",gap:6}}>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 130px 130px",gap:8,padding:"3px 0"}}>
@@ -681,19 +706,18 @@ function ProjectCardModal({project,card,milestones,wsColor,onClose,onSave}){
                     <MilestoneStatusBadge status={ms.status}/>
                   </div>
                 )):(
-                  <div style={{fontSize:12,color:"rgba(255,255,255,0.25)",fontStyle:"italic",padding:"8px 0"}}>No milestones added yet. Click &#9998; Edit to add them.</div>
+                  <div style={{fontSize:12,color:"rgba(255,255,255,0.25)",fontStyle:"italic",padding:"8px 0"}}>No milestones added yet. Click Edit to add them.</div>
                 )}
               </div>
             )}
-          </Sec>
+          </div>
         </div>
       </div>
     </div>
   );
 }
-// ─────────────────────────────────────────────────────────────────────────────
-// WORKSTREAM ADMIN DASHBOARD
-// ─────────────────────────────────────────────────────────────────────────────
+
+
 function WSDash({ws,onUpdate,markDirty,cardData,onCardOpen}){
   const [openInit,setOpenInit]=useState(null);
   const [modal,setModal]=useState(null);
