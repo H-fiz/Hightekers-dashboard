@@ -384,38 +384,47 @@ async function loadProjectCards(){
 
 async function saveProjectCard(projectId,cardFields,milestoneRows,accessToken){
   const {SHEET_ID,PROJECT_CARDS_TAB,MILESTONES_TAB}=CONFIG;
-  const readUrl=`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(PROJECT_CARDS_TAB+"!A2:A500")}?key=${CONFIG.API_KEY}`;
-  const existing=await fetch(readUrl).then(r=>r.json());
-  const rows=existing.values||[];
-  const rowIndex=rows.findIndex(r=>r[0]?.trim()===projectId);
+  const hdr={"Authorization":`Bearer ${accessToken}`,"Content-Type":"application/json"};
+
+  // ── 1. Save card fields (ProjectCards tab) ────────────────────────────────
+  const pcReadRes=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(PROJECT_CARDS_TAB+"!A2:A500")}?key=${CONFIG.API_KEY}`);
+  const pcData=await pcReadRes.json();
+  const pcRows=pcData.values||[];
+  const pcRowIdx=pcRows.findIndex(r=>r[0]?.trim()===projectId);
   const sheetRow=[projectId,cardFields.description||"",cardFields.scope||"",cardFields.outputs||"",cardFields.kpis||"",cardFields.dependencies||""];
-  if(rowIndex>=0){
-    const range=encodeURIComponent(`${PROJECT_CARDS_TAB}!A${rowIndex+2}:F${rowIndex+2}`);
-    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`,{
-      method:"PUT",headers:{"Authorization":`Bearer ${accessToken}`,"Content-Type":"application/json"},
-      body:JSON.stringify({range:`${PROJECT_CARDS_TAB}!A${rowIndex+2}`,majorDimension:"ROWS",values:[sheetRow]}),
+  if(pcRowIdx>=0){
+    // Update existing row
+    const r=`${PROJECT_CARDS_TAB}!A${pcRowIdx+2}:F${pcRowIdx+2}`;
+    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(r)}?valueInputOption=RAW`,{
+      method:"PUT",headers:hdr,
+      body:JSON.stringify({range:r,majorDimension:"ROWS",values:[sheetRow]}),
     });
   } else {
+    // Append new row
     await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(PROJECT_CARDS_TAB+"!A1")}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,{
-      method:"POST",headers:{"Authorization":`Bearer ${accessToken}`,"Content-Type":"application/json"},
+      method:"POST",headers:hdr,
       body:JSON.stringify({majorDimension:"ROWS",values:[sheetRow]}),
     });
   }
-  const mReadUrl=`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(MILESTONES_TAB+"!A2:A500")}?key=${CONFIG.API_KEY}`;
-  const mExisting=await fetch(mReadUrl).then(r=>r.json());
-  const mRows=mExisting.values||[];
-  const mIndices=mRows.reduce((acc,r,i)=>{if(r[0]?.trim()===projectId)acc.push(i+2);return acc;},[]);
-  for(const ri of mIndices){
-    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(MILESTONES_TAB+"!A"+ri+":D"+ri)}:clear`,{
-      method:"POST",headers:{"Authorization":`Bearer ${accessToken}`,"Content-Type":"application/json"},
-    });
-  }
+
+  // ── 2. Save milestones — read full sheet, rebuild without this project, rewrite ─
   const validMS=milestoneRows.filter(m=>m.name?.trim());
-  if(validMS.length>0){
-    const msData=validMS.map(m=>[projectId,m.name,m.date||"",m.status||"Not Started"]);
-    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(MILESTONES_TAB+"!A1")}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,{
-      method:"POST",headers:{"Authorization":`Bearer ${accessToken}`,"Content-Type":"application/json"},
-      body:JSON.stringify({majorDimension:"ROWS",values:msData}),
+  const mAllRes=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(MILESTONES_TAB+"!A2:D500")}?key=${CONFIG.API_KEY}`);
+  const mAllData=await mAllRes.json();
+  const mAllRows=mAllData.values||[];
+  // Keep rows that belong to OTHER projects
+  const otherRows=mAllRows.filter(r=>r[0]?.trim()!==projectId);
+  // Add this project's new milestones
+  const newMsRows=validMS.map(m=>[projectId,m.name,m.date||"",m.status||"Not Started"]);
+  const allNewRows=[...otherRows,...newMsRows];
+  // Clear the data range then rewrite everything
+  await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(MILESTONES_TAB+"!A2:D500")}:clear`,{
+    method:"POST",headers:hdr,
+  });
+  if(allNewRows.length>0){
+    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(MILESTONES_TAB+"!A2")}?valueInputOption=RAW`,{
+      method:"PUT",headers:hdr,
+      body:JSON.stringify({range:`${MILESTONES_TAB}!A2`,majorDimension:"ROWS",values:allNewRows}),
     });
   }
 }
@@ -581,6 +590,16 @@ function ProjectCardModal({project,card,milestones,wsColor,onClose,onSave}){
   });
   const setF=(k,v)=>setForm(p=>({...p,[k]:v}));
   const setMS=(i,k,v)=>setForm(p=>({...p,milestones:p.milestones.map((m,j)=>j===i?{...m,[k]:v}:m)}));
+  // Sync form when card data is refreshed from sheet after save
+  useEffect(()=>{
+    setForm({
+      description:card?.description||"",scope:card?.scope||"",
+      outputs:card?.outputs||"",kpis:card?.kpis||"",dependencies:card?.dependencies||"",
+      milestones:(milestones&&milestones.length>0)
+        ?[...milestones.map(m=>({...m})),...Array(Math.max(0,5-milestones.length)).fill({name:"",date:"",status:"Not Started"})]
+        :Array(5).fill(null).map(()=>({name:"",date:"",status:"Not Started"})),
+    });
+  },[card,milestones]);
   const Sec=({title,icon,children})=>(
     <div style={{marginBottom:16}}>
       <div style={{fontSize:9,color:"rgba(255,255,255,0.35)",fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:6,display:"flex",alignItems:"center",gap:5}}>
@@ -591,10 +610,6 @@ function ProjectCardModal({project,card,milestones,wsColor,onClose,onSave}){
   );
   const VBox=({val,ph})=>(
     <div style={{fontSize:13,color:val?"rgba(255,255,255,0.78)":"rgba(255,255,255,0.22)",lineHeight:1.6,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:7,padding:"9px 12px",fontStyle:val?"normal":"italic",whiteSpace:"pre-wrap"}}>{val||ph}</div>
-  );
-  const EText=({k,ph,rows})=>(
-    <textarea rows={rows||3} value={form[k]} onChange={e=>setF(k,e.target.value)} placeholder={ph}
-      style={{width:"100%",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:7,color:"#fff",fontSize:13,padding:"9px 12px",outline:"none",fontFamily:"DM Sans,sans-serif",resize:"vertical",lineHeight:1.5}}/>
   );
   const handleSave=async()=>{
     setSaving(true);
@@ -636,14 +651,14 @@ function ProjectCardModal({project,card,milestones,wsColor,onClose,onSave}){
           {project.risk&&<div style={{marginTop:9,fontSize:11,color:"#f59e0b",background:"rgba(245,158,11,0.08)",border:"1px solid rgba(245,158,11,0.2)",borderRadius:6,padding:"5px 9px"}}>&#9888; {project.risk}</div>}
         </div>
         <div style={{flex:1,overflowY:"auto",padding:"16px 22px"}}>
-          <Sec title="Description" icon="&#128203;">{editing?<EText k="description" ph="Describe what this project is and why it matters..."/>:<VBox val={form.description} ph="No description added yet."/>}</Sec>
+          <Sec title="Description" icon="&#128203;">{editing?<textarea rows={3} value={form["description"]} onChange={e=>setF("description",e.target.value)} placeholder="Describe what this project is and why it matters..." style={{width:"100%",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:7,color:"#fff",fontSize:13,padding:"9px 12px",outline:"none",fontFamily:"DM Sans,sans-serif",resize:"vertical",lineHeight:1.5}}/>:<VBox val={form.description} ph="No description added yet."/>}</Sec>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
-            <Sec title="Scope" icon="&#127919;">{editing?<EText k="scope" ph="What is in and out of scope..."/>:<VBox val={form.scope} ph="No scope defined yet."/>}</Sec>
-            <Sec title="Outputs / Deliverables" icon="&#128230;">{editing?<EText k="outputs" ph="Key deliverables and outputs..."/>:<VBox val={form.outputs} ph="No outputs defined yet."/>}</Sec>
+            <Sec title="Scope" icon="&#127919;">{editing?<textarea rows={3} value={form["scope"]} onChange={e=>setF("scope",e.target.value)} placeholder="What is in and out of scope..." style={{width:"100%",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:7,color:"#fff",fontSize:13,padding:"9px 12px",outline:"none",fontFamily:"DM Sans,sans-serif",resize:"vertical",lineHeight:1.5}}/>:<VBox val={form.scope} ph="No scope defined yet."/>}</Sec>
+            <Sec title="Outputs / Deliverables" icon="&#128230;">{editing?<textarea rows={3} value={form["outputs"]} onChange={e=>setF("outputs",e.target.value)} placeholder="Key deliverables and outputs..." style={{width:"100%",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:7,color:"#fff",fontSize:13,padding:"9px 12px",outline:"none",fontFamily:"DM Sans,sans-serif",resize:"vertical",lineHeight:1.5}}/>:<VBox val={form.outputs} ph="No outputs defined yet."/>}</Sec>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
-            <Sec title="KPIs" icon="&#128202;">{editing?<EText k="kpis" ph="How will success be measured..."/>:<VBox val={form.kpis} ph="No KPIs defined yet."/>}</Sec>
-            <Sec title="Dependencies" icon="&#128279;">{editing?<EText k="dependencies" ph="What does this project depend on..."/>:<VBox val={form.dependencies} ph="No dependencies noted."/>}</Sec>
+            <Sec title="KPIs" icon="&#128202;">{editing?<textarea rows={3} value={form["kpis"]} onChange={e=>setF("kpis",e.target.value)} placeholder="How will success be measured..." style={{width:"100%",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:7,color:"#fff",fontSize:13,padding:"9px 12px",outline:"none",fontFamily:"DM Sans,sans-serif",resize:"vertical",lineHeight:1.5}}/>:<VBox val={form.kpis} ph="No KPIs defined yet."/>}</Sec>
+            <Sec title="Dependencies" icon="&#128279;">{editing?<textarea rows={3} value={form["dependencies"]} onChange={e=>setF("dependencies",e.target.value)} placeholder="What does this project depend on..." style={{width:"100%",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:7,color:"#fff",fontSize:13,padding:"9px 12px",outline:"none",fontFamily:"DM Sans,sans-serif",resize:"vertical",lineHeight:1.5}}/>:<VBox val={form.dependencies} ph="No dependencies noted."/>}</Sec>
           </div>
           <Sec title="Milestones" icon="&#127937;">
             {editing?(
