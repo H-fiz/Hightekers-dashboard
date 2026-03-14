@@ -16,6 +16,7 @@ body{background:#0a0d12;color:#fff;font-family:"DM Sans",sans-serif}
 ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:4px}
 .spin{animation:spin 1s linear infinite}
 @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px}
 </style>
 </head>
 <body>
@@ -30,6 +31,8 @@ const CONFIG = {
   SHEET_ID: "1iMDERwbcOxZU9QBLbCGU3sr1fk1hm1g2QFv0urm9q2M",
   API_KEY:  "AIzaSyBCMuPUGiry60b7rSFNb0yRSOMrBf3N014",
   SHEET_TAB: "Dashboard",
+  PROJECT_CARDS_TAB: "ProjectCards",
+  MILESTONES_TAB: "Milestones",
   REFRESH_INTERVAL: 300000, // ms — set to 0 to disable auto-refresh
 };
 
@@ -290,6 +293,113 @@ async function loadFromSheets() {
   return Object.values(wsMap).filter(ws => ws.initiatives.length > 0);
 }
 
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PROJECT CARDS — load from ProjectCards and Milestones tabs
+// ─────────────────────────────────────────────────────────────────────────────
+async function loadProjectCards(){
+  const {SHEET_ID,API_KEY,PROJECT_CARDS_TAB,MILESTONES_TAB}=CONFIG;
+  if(!SHEET_ID||SHEET_ID==="YOUR_SHEET_ID_HERE") return {cards:{},milestones:{}};
+  try{
+    const cr=encodeURIComponent(`${PROJECT_CARDS_TAB}!A2:F500`);
+    const mr=encodeURIComponent(`${MILESTONES_TAB}!A2:D500`);
+    const [cr2,mr2]=await Promise.all([
+      fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${cr}?key=${API_KEY}`).then(r=>r.json()),
+      fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${mr}?key=${API_KEY}`).then(r=>r.json()),
+    ]);
+    const cards={};
+    (cr2.values||[]).forEach(row=>{
+      const [id,desc,scope,outputs,kpis,deps]=row;
+      if(id?.trim()) cards[id.trim()]={description:desc||"",scope:scope||"",outputs:outputs||"",kpis:kpis||"",dependencies:deps||""};
+    });
+    const milestones={};
+    (mr2.values||[]).forEach(row=>{
+      const [pid,name,date,status]=row;
+      if(!pid?.trim()) return;
+      if(!milestones[pid.trim()]) milestones[pid.trim()]=[];
+      milestones[pid.trim()].push({name:name||"",date:date||"",status:status||"Not Started"});
+    });
+    return {cards,milestones};
+  }catch(e){
+    console.warn("Project cards load failed:",e.message);
+    return {cards:{},milestones:{}};
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PROJECT CARD MODAL — view only
+// ─────────────────────────────────────────────────────────────────────────────
+const MS_STATUS={
+  "Complete":{color:"#22c55e",bg:"rgba(34,197,94,0.1)",border:"rgba(34,197,94,0.25)"},
+  "In Progress":{color:"#f59e0b",bg:"rgba(245,158,11,0.1)",border:"rgba(245,158,11,0.25)"},
+  "Not Started":{color:"rgba(255,255,255,0.35)",bg:"rgba(255,255,255,0.04)",border:"rgba(255,255,255,0.1)"},
+};
+function MilestoneStatusBadge({status}){
+  const s=MS_STATUS[status]||MS_STATUS["Not Started"];
+  return <span style={{fontSize:9,fontFamily:"DM Mono,monospace",fontWeight:600,padding:"2px 8px",borderRadius:20,background:s.bg,border:`1px solid ${s.border}`,color:s.color,whiteSpace:"nowrap"}}>{status}</span>;
+}
+function ProjectCardModal({project,card,milestones,wsColor,onClose}){
+  const pplan=plannedPct(project.start,project.end);
+  const fmtMD=str=>{if(!str)return"—";const d=new Date(str);return isNaN(d)?str:d.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"});};
+  const Sec=({title,icon,children})=>(<div style={{marginBottom:18}}><div style={{fontSize:9,color:"rgba(255,255,255,0.35)",fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:7,display:"flex",alignItems:"center",gap:6}}>{icon&&<span>{icon}</span>}{title}</div>{children}</div>);
+  const TBox=({val,ph})=>(<div style={{fontSize:13,color:val?"rgba(255,255,255,0.78)":"rgba(255,255,255,0.22)",lineHeight:1.6,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:7,padding:"10px 13px",fontStyle:val?"normal":"italic"}}>{val||ph}</div>);
+  const hasCard=card&&(card.description||card.scope||card.outputs||card.kpis||card.dependencies);
+  return(
+    <div className="overlay" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
+      <div style={{background:"#13171f",border:`1px solid ${wsColor}35`,borderRadius:14,width:"100%",maxWidth:680,maxHeight:"90vh",overflow:"hidden",display:"flex",flexDirection:"column"}}>
+        <div style={{padding:"20px 24px 16px",borderBottom:"1px solid rgba(255,255,255,0.07)",background:`linear-gradient(135deg,${wsColor}10 0%,transparent 60%)`}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12}}>
+            <div style={{flex:1}}>
+              <div style={{fontSize:9,color:wsColor,fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",marginBottom:4}}>{project.id}</div>
+              <div style={{fontSize:19,fontFamily:"Playfair Display,serif",color:"#fff",marginBottom:8,lineHeight:1.3}}>{project.name}</div>
+              <div style={{display:"flex",gap:12,flexWrap:"wrap",alignItems:"center"}}>
+                <RAGBadge rag={project.rag} tiny/>
+                <VariancePill actual={project.progress} planned={pplan}/>
+                <span style={{fontSize:10,color:"rgba(255,255,255,0.35)",fontFamily:"DM Mono,monospace"}}>Owner: <span style={{color:"rgba(255,255,255,0.6)"}}>{project.owner}</span></span>
+                <span style={{fontSize:10,color:"rgba(255,255,255,0.35)",fontFamily:"DM Mono,monospace"}}>{fmtDate(project.start)} → {fmtDate(project.end)}</span>
+              </div>
+            </div>
+            <button onClick={onClose} style={{background:"transparent",border:"1px solid rgba(255,255,255,0.12)",borderRadius:6,color:"rgba(255,255,255,0.4)",fontSize:14,padding:"4px 10px",cursor:"pointer",flexShrink:0}}>✕</button>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginTop:12}}>
+            <div><div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{fontSize:8,color:"rgba(255,255,255,0.3)",fontFamily:"DM Mono,monospace"}}>ACTUAL</span><span style={{fontSize:8,color:wsColor,fontFamily:"DM Mono,monospace"}}>{project.progress}%</span></div><Bar pct={project.progress} color={wsColor} h={6}/></div>
+            <div><div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{fontSize:8,color:"rgba(255,255,255,0.3)",fontFamily:"DM Mono,monospace"}}>PLANNED</span><span style={{fontSize:8,color:"rgba(255,255,255,0.4)",fontFamily:"DM Mono,monospace"}}>{pplan}%</span></div><Bar pct={pplan} color="#666e7a" h={6}/></div>
+          </div>
+          {project.risk&&<div style={{marginTop:10,fontSize:11,color:"#f59e0b",background:"rgba(245,158,11,0.08)",border:"1px solid rgba(245,158,11,0.2)",borderRadius:6,padding:"6px 10px"}}>⚠ {project.risk}</div>}
+        </div>
+        <div style={{flex:1,overflowY:"auto",padding:"18px 24px"}}>
+          {!hasCard?(<div style={{textAlign:"center",padding:"32px 0",color:"rgba(255,255,255,0.25)",fontSize:13}}>No project card details have been added yet.</div>):(
+            <>
+              {card.description&&<Sec title="Description" icon="📋"><TBox val={card.description}/></Sec>}
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:18}}>
+                {card.scope&&<Sec title="Scope" icon="🎯"><TBox val={card.scope}/></Sec>}
+                {card.outputs&&<Sec title="Outputs / Deliverables" icon="📦"><TBox val={card.outputs}/></Sec>}
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:18}}>
+                {card.kpis&&<Sec title="KPIs" icon="📊"><TBox val={card.kpis}/></Sec>}
+                {card.dependencies&&<Sec title="Dependencies" icon="🔗"><TBox val={card.dependencies}/></Sec>}
+              </div>
+              {milestones&&milestones.length>0&&(
+                <Sec title="Milestones" icon="🏁">
+                  <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                    {milestones.map((ms,i)=>(
+                      <div key={i} style={{display:"grid",gridTemplateColumns:"1fr 110px 110px",gap:10,alignItems:"center",padding:"8px 12px",background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:7}}>
+                        <div style={{fontSize:13,color:"rgba(255,255,255,0.78)"}}>{ms.name||"—"}</div>
+                        <div style={{fontSize:11,color:"rgba(255,255,255,0.4)",fontFamily:"DM Mono,monospace"}}>{fmtMD(ms.date)}</div>
+                        <MilestoneStatusBadge status={ms.status}/>
+                      </div>
+                    ))}
+                  </div>
+                </Sec>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // HELPERS & CALCULATIONS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -460,7 +570,7 @@ function Master({wsList,onSelect,lastRefresh}){
 // ─────────────────────────────────────────────────────────────────────────────
 // WORKSTREAM DASHBOARD
 // ─────────────────────────────────────────────────────────────────────────────
-function WSDash({ws}){
+function WSDash({ws,cardData,onCardOpen}){
   const [openInit,setOpenInit]=useState(null);
   const [view,setView]=useState("table");
   const all=allProjects(ws);
@@ -554,7 +664,7 @@ function WSDash({ws}){
                       return(
                         <div key={pr.id} style={{display:"grid",gridTemplateColumns:"1fr 56px 56px 90px 130px 80px",padding:"9px 15px",alignItems:"center",borderBottom:"1px solid rgba(255,255,255,0.032)",background:pi%2===0?"transparent":"rgba(255,255,255,0.011)"}}>
                           <div>
-                            <div style={{fontSize:12,color:"rgba(255,255,255,0.82)",marginBottom:2}}>{pr.name}</div>
+                            <div onClick={()=>onCardOpen&&onCardOpen({project:pr,wsColor:ws.color})} style={{fontSize:12,color:"rgba(255,255,255,0.82)",marginBottom:2,cursor:"pointer",display:"flex",alignItems:"center",gap:5}}>{pr.name}<span style={{fontSize:9,color:"rgba(255,255,255,0.2)",fontFamily:"DM Mono,monospace"}}>▸ card</span></div>
                             {/* project owner displayed on its own line */}
                             <OwnerTag label="Project Owner" name={pr.owner}/>
                             {pr.risk&&<div style={{fontSize:10,color:"#f59e0b",marginTop:4}}>⚠ {pr.risk}</div>}
@@ -598,7 +708,7 @@ function WSDash({ws}){
                 return(
                   <div key={pr.id} style={{display:"grid",gridTemplateColumns:"200px 1fr 90px 80px",alignItems:"center",gap:10,marginBottom:4}}>
                     <div>
-                      <div style={{fontSize:11,color:"rgba(255,255,255,0.7)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}} title={pr.name}>{pr.name}</div>
+                      <div onClick={()=>onCardOpen&&onCardOpen({project:pr,wsColor:ws.color})} style={{fontSize:11,color:"rgba(255,255,255,0.7)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",cursor:"pointer"}} title={`${pr.name} — click for project card`}>{pr.name}</div>
                       <OwnerTag label="Owner" name={pr.owner}/>
                     </div>
                     <GanttRow project={pr} color={ws.color}/>
@@ -646,6 +756,8 @@ function App(){
   const [error,setError]=useState(null);
   const [lastRefresh,setLastRefresh]=useState(null);
   const [usingSheets,setUsingSheets]=useState(false);
+  const [cardData,setCardData]=useState({cards:{},milestones:{}});
+  const [activeCard,setActiveCard]=useState(null); // {project, wsColor}
 
   const isConfigured = CONFIG.SHEET_ID!=="YOUR_SHEET_ID_HERE" && CONFIG.API_KEY!=="YOUR_API_KEY_HERE";
 
@@ -655,6 +767,7 @@ function App(){
     try{
       const data=await loadFromSheets();
       if(data){setWsList(data);setUsingSheets(true);setLastRefresh(new Date().toLocaleTimeString());}
+      const cd=await loadProjectCards();setCardData(cd);
     }catch(e){setError(e.message);}
     finally{setLoading(false);}
   },[isConfigured]);
@@ -741,11 +854,12 @@ function App(){
           <div style={{flex:1,overflowY:"auto",padding:"20px 24px"}}>
             {active===0
               ?<Master wsList={wsList} onSelect={setActive} lastRefresh={lastRefresh}/>
-              :currentWS&&<WSDash ws={currentWS}/>
+              :currentWS&&<WSDash ws={currentWS} cardData={cardData} onCardOpen={setActiveCard}/>
             }
           </div>
         </div>
       </div>
+      {activeCard&&<ProjectCardModal project={activeCard.project} card={cardData.cards[activeCard.project.id]} milestones={cardData.milestones[activeCard.project.id]} wsColor={activeCard.wsColor} onClose={()=>setActiveCard(null)}/>}
     </div>
   );
 }
