@@ -590,16 +590,7 @@ function ProjectCardModal({project,card,milestones,wsColor,onClose,onSave}){
   });
   const setF=(k,v)=>setForm(p=>({...p,[k]:v}));
   const setMS=(i,k,v)=>setForm(p=>({...p,milestones:p.milestones.map((m,j)=>j===i?{...m,[k]:v}:m)}));
-  // Sync form when card data is refreshed from sheet after save
-  useEffect(()=>{
-    setForm({
-      description:card?.description||"",scope:card?.scope||"",
-      outputs:card?.outputs||"",kpis:card?.kpis||"",dependencies:card?.dependencies||"",
-      milestones:(milestones&&milestones.length>0)
-        ?[...milestones.map(m=>({...m})),...Array(Math.max(0,5-milestones.length)).fill({name:"",date:"",status:"Not Started"})]
-        :Array(5).fill(null).map(()=>({name:"",date:"",status:"Not Started"})),
-    });
-  },[card,milestones]);
+
   const Sec=({title,icon,children})=>(
     <div style={{marginBottom:16}}>
       <div style={{fontSize:9,color:"rgba(255,255,255,0.35)",fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:6,display:"flex",alignItems:"center",gap:5}}>
@@ -1336,7 +1327,7 @@ function App(){
           </div>
         </div>
       </div>
-      {activeCard&&<ProjectCardModal project={activeCard.project} card={cardData.cards[activeCard.project.id]} milestones={cardData.milestones[activeCard.project.id]} wsColor={activeCard.wsColor} onClose={()=>setActiveCard(null)} onSave={handleSaveCard}/>}
+      {activeCard&&<ProjectCardModal key={activeCard.project.id} project={activeCard.project} card={cardData.cards[activeCard.project.id]} milestones={cardData.milestones[activeCard.project.id]} wsColor={activeCard.wsColor} onClose={()=>setActiveCard(null)} onSave={handleSaveCard}/>}
     </>
   );
 }
