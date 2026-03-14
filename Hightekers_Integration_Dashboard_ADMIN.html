@@ -616,9 +616,9 @@ function ProjectCardModal({project,card,milestones,wsColor,onClose,onSave}){
             </div>
             <div style={{display:"flex",gap:6,flexShrink:0,alignItems:"center"}}>
               {!editing&&<button onClick={()=>setEditing(true)} style={{padding:"5px 13px",borderRadius:7,background:"rgba(201,168,76,0.15)",border:"1px solid rgba(201,168,76,0.35)",color:"#C9A84C",fontSize:11,cursor:"pointer",fontFamily:"DM Mono,monospace",fontWeight:600}}>&#9998; Edit</button>}
-              {editing&&<button onClick={handleSave} disabled={saving} style={{padding:"5px 13px",borderRadius:7,background:"#C9A84C",border:"none",color:"#0a0d12",fontSize:11,cursor:saving?"wait":"pointer",fontFamily:"DM Mono,monospace",fontWeight:700}}>{saving?"Saving\u2026":"\u2713 Save"}</button>}
+              {editing&&<button onClick={handleSave} disabled={saving} style={{padding:"5px 13px",borderRadius:7,background:"#C9A84C",border:"none",color:"#0a0d12",fontSize:11,cursor:saving?"wait":"pointer",fontFamily:"DM Mono,monospace",fontWeight:700}}>{saving?"Saving…":"✓ Save"}</button>}
               {editing&&<button onClick={()=>setEditing(false)} style={{padding:"5px 13px",borderRadius:7,background:"transparent",border:"1px solid rgba(255,255,255,0.12)",color:"rgba(255,255,255,0.5)",fontSize:11,cursor:"pointer",fontFamily:"DM Mono,monospace"}}>Cancel</button>}
-              <button onClick={onClose} style={{background:"transparent",border:"1px solid rgba(255,255,255,0.12)",borderRadius:6,color:"rgba(255,255,255,0.4)",fontSize:14,padding:"4px 10px",cursor:"pointer"}}>\u2715</button>
+              <button onClick={onClose} style={{background:"transparent",border:"1px solid rgba(255,255,255,0.12)",borderRadius:6,color:"rgba(255,255,255,0.4)",fontSize:14,padding:"4px 10px",cursor:"pointer"}}>✕</button>
             </div>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginTop:11}}>
