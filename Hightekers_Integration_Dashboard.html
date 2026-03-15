@@ -495,7 +495,7 @@ function ganttPct(d){return Math.max(0,Math.min(100,((new Date(d)-GANTT_START)/G
 const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 function GanttHeader(){
   return(
-    <div style={{display:"grid",gridTemplateColumns:"240px 1fr",marginBottom:4,alignItems:"center"}}>
+    <div style={{display:"grid",gridTemplateColumns:"240px 1fr 80px 70px",gap:10,marginBottom:4,alignItems:"center"}}>
       <div/>
       <div style={{position:"relative",height:18}}>
         {MONTHS.map((m,i)=>(
@@ -504,6 +504,7 @@ function GanttHeader(){
             transform:"translateX(-50%)",whiteSpace:"nowrap"}}>{m}</div>
         ))}
       </div>
+      <div/><div/>
     </div>
   );
 }
@@ -543,13 +544,17 @@ function Sparkline({data,color,width=80,height=28}){
       </div>
     );
   }
-  const pts=vals.map((v,i)=>{
-    const x=(i/(vals.length-1))*width;
-    const y=height-((v-min)/(max-min))*(height-4)-2;
-    return `${x},${y}`;
-  }).join(' ');
+  // If all values identical, draw flat line at mid-height
+  const allSame=vals.every(v=>v===vals[0]);
+  const pts=allSame
+    ?`0,${height/2} ${width},${height/2}`
+    :vals.map((v,i)=>{
+        const x=(i/(vals.length-1))*width;
+        const y=height-((v-min)/(max-min))*(height-4)-2;
+        return `${x},${y}`;
+      }).join(' ');
   const last=vals[vals.length-1];
-  const prev=vals[vals.length-2];
+  const prev=vals.length>=2?vals[vals.length-2]:vals[0];
   const trend=last-prev;
   const trendColor=trend>0?"#22c55e":trend<0?"#ef4444":"rgba(255,255,255,0.4)";
   return(
