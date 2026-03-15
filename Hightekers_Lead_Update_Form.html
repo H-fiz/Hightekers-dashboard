@@ -14,10 +14,10 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#0a0d12;color:#fff;font-family:"DM Sans",sans-serif}
 ::-webkit-scrollbar{width:4px}
-::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.5);border-radius:4px}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.12);border-radius:4px}
 .spin{animation:spin 1s linear infinite}
 @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-input,select,textarea{background:rgba(255,255,255,0.5);border:1px solid rgba(255,255,255,0.5);border-radius:6px;color:#fff;font-size:13px;padding:7px 10px;outline:none;font-family:"DM Sans",sans-serif;transition:border-color .15s}
+input,select,textarea{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);border-radius:6px;color:#fff;font-size:13px;padding:7px 10px;outline:none;font-family:"DM Sans",sans-serif;transition:border-color .15s}
 input:focus,select:focus,textarea:focus{border-color:rgba(255,255,255,0.62)}
 select option{background:#13171f}
 input[type=range]{padding:0;background:transparent;border:none}
@@ -194,7 +194,7 @@ function RAGPicker({value,onChange}){
   return(
     <div style={{display:"flex",gap:6}}>
       {["G","A","R"].map(r=>(
-        <button key={r} onClick={()=>onChange(r)} style={{flex:1,padding:"6px 0",borderRadius:7,cursor:"pointer",fontSize:13,fontFamily:"DM Mono,monospace",fontWeight:600,border:`2px solid ${value===r?RAG[r].color:"rgba(255,255,255,0.5)"}`,background:value===r?`${RAG[r].color}22`:"transparent",color:value===r?RAG[r].color:"rgba(255,255,255,0.72)",transition:"all .15s"}}>
+        <button key={r} onClick={()=>onChange(r)} style={{flex:1,padding:"6px 0",borderRadius:7,cursor:"pointer",fontSize:13,fontFamily:"DM Mono,monospace",fontWeight:600,border:`2px solid ${value===r?RAG[r].color:"rgba(255,255,255,0.15)"}`,background:value===r?`${RAG[r].color}22`:"transparent",color:value===r?RAG[r].color:"rgba(255,255,255,0.72)",transition:"all .15s"}}>
           {RAG[r].label}
         </button>
       ))}
@@ -225,7 +225,7 @@ function WSPickerScreen({user,wsCodes,onPick,onSignOut}){
                   onMouseLeave={e=>{e.currentTarget.style.background=`${ws.color}0A`;e.currentTarget.style.borderColor=`${ws.color}30`;}}>
                   <span style={{fontSize:18,color:ws.color,flexShrink:0}}>{ws.icon}</span>
                   <div>
-                    <div style={{fontSize:11,color:ws.color,fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",marginBottom:2}}>{ws.code}</div>
+                    <div style={{fontSize:13,color:ws.color,fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",marginBottom:2}}>{ws.code}</div>
                     <div style={{fontSize:13,fontWeight:600,color:"#fff"}}>{ws.name}</div>
                   </div>
                   <span style={{marginLeft:"auto",fontSize:12,color:"rgba(255,255,255,0.62)"}}>→</span>
@@ -357,7 +357,7 @@ function UpdateForm({user,wsCode,wsData,onSubmitDone,onSignOut}){
       {/* Header */}
       <div style={{background:"rgba(255,255,255,0.022)",borderBottom:"1px solid rgba(255,255,255,0.055)",padding:"14px 24px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
         <div>
-          <div style={{fontSize:11,color:ws.color,fontFamily:"DM Mono,monospace",letterSpacing:"0.14em",textTransform:"uppercase",marginBottom:3}}>Post-Acquisition Integration · Workstream Update Portal</div>
+          <div style={{fontSize:13,color:ws.color,fontFamily:"DM Mono,monospace",letterSpacing:"0.14em",textTransform:"uppercase",marginBottom:3}}>Post-Acquisition Integration · Workstream Update Portal</div>
           <div style={{fontSize:17,fontFamily:"Playfair Display,serif",color:"#fff"}}>{ws.icon} {ws.name}</div>
         </div>
         <div style={{display:"flex",alignItems:"center",gap:12}}>
@@ -384,7 +384,7 @@ function UpdateForm({user,wsCode,wsData,onSubmitDone,onSignOut}){
               :<><div style={{width:8,height:8,borderRadius:"50%",background:"rgba(255,255,255,0.022)",flexShrink:0}}/><span style={{fontSize:13,color:"rgba(255,255,255,0.62)"}}>No changes yet — edit projects below</span></>
             }
           </div>
-          <button onClick={handleSubmit} disabled={submitting||dirtyCount===0} style={{padding:"9px 22px",borderRadius:8,background:dirtyCount>0?"#22c55e":"rgba(255,255,255,0.5)",border:"none",color:dirtyCount>0?"#0a0d12":"rgba(255,255,255,0.5)",fontSize:13,fontWeight:700,cursor:dirtyCount>0&&!submitting?"pointer":"not-allowed",transition:"all .2s",display:"flex",alignItems:"center",gap:7}}>
+          <button onClick={handleSubmit} disabled={submitting||dirtyCount===0} style={{padding:"9px 22px",borderRadius:8,background:dirtyCount>0?"#22c55e":"rgba(255,255,255,0.07)",border:"none",color:dirtyCount>0?"#0a0d12":"rgba(255,255,255,0.35)",fontSize:13,fontWeight:700,cursor:dirtyCount>0&&!submitting?"pointer":"not-allowed",transition:"all .2s",display:"flex",alignItems:"center",gap:7}}>
             <span className={submitting?"spin":""} style={{display:"inline-block"}}>{submitting?"↻":"↑"}</span>
             {submitting?"Submitting…":"Submit for Approval"}
           </button>
@@ -396,12 +396,12 @@ function UpdateForm({user,wsCode,wsData,onSubmitDone,onSignOut}){
           {wsData.map(init=>{
             const open=openInit===init.id;
             return(
-              <div key={init.id} style={{border:`1px solid ${open?ws.color+"40":"rgba(255,255,255,0.5)"}`,borderRadius:10,overflow:"hidden",transition:"border-color .18s"}}>
+              <div key={init.id} style={{border:`1px solid ${open?ws.color+"40":"rgba(255,255,255,0.07)"}`,borderRadius:10,overflow:"hidden",transition:"border-color .18s"}}>
                 {/* initiative header */}
-                <div onClick={()=>setOpenInit(open?null:init.id)} style={{padding:"13px 16px",cursor:"pointer",background:open?`${ws.color}08`:"rgba(255,255,255,0.5)",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                <div onClick={()=>setOpenInit(open?null:init.id)} style={{padding:"13px 16px",cursor:"pointer",background:open?`${ws.color}08`:"rgba(255,255,255,0.03)",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
                   <div>
                     <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:2}}>
-                      <span style={{fontSize:11,color:ws.color,fontFamily:"DM Mono,monospace"}}>{init.id}</span>
+                      <span style={{fontSize:13,color:ws.color,fontFamily:"DM Mono,monospace"}}>{init.id}</span>
                       <span style={{fontSize:14,fontWeight:600,color:"#fff"}}>{init.name}</span>
                       {/* dirty indicator for this initiative */}
                       {init.projects.some(pr=>edits[pr.id]?.dirty)&&<div style={{width:7,height:7,borderRadius:"50%",background:"#f59e0b"}}/>}
@@ -419,7 +419,7 @@ function UpdateForm({user,wsCode,wsData,onSubmitDone,onSignOut}){
                       const pplan=plannedPct(pr.start,pr.end);
                       const changed=e.dirty;
                       return(
-                        <div key={pr.id} style={{padding:"14px 16px",borderBottom:pi<init.projects.length-1?"1px solid rgba(255,255,255,0.5)":"none",background:changed?"rgba(245,158,11,0.04)":"transparent",borderLeft:changed?"3px solid #f59e0b":"3px solid transparent",transition:"all .15s"}}>
+                        <div key={pr.id} style={{padding:"14px 16px",borderBottom:pi<init.projects.length-1?"1px solid rgba(255,255,255,0.07)":"none",background:changed?"rgba(245,158,11,0.04)":"transparent",borderLeft:changed?"3px solid #f59e0b":"3px solid transparent",transition:"all .15s"}}>
                           {/* project title row */}
                           <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:12,gap:12}}>
                             <div>
@@ -428,37 +428,37 @@ function UpdateForm({user,wsCode,wsData,onSubmitDone,onSignOut}){
                                 <span style={{fontSize:12,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>Owner: <span style={{color:"rgba(255,255,255,0.82)"}}>{pr.owner}</span></span>
                                 <span style={{fontSize:12,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>{fmtDate(pr.start)} → {fmtDate(pr.end)}</span>
                                 <span style={{fontSize:12,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>Planned: <span style={{color:"rgba(255,255,255,0.82)"}}>{pplan}%</span></span>
-                              {(()=>{const v=e.progress-pplan;const col=v>=0?"#22c55e":v>=-15?"#f59e0b":"#ef4444";return <span style={{marginLeft:8,fontSize:11,color:col,fontFamily:"DM Mono,monospace",fontWeight:700}}>{v>=0?"+":""}{v}%</span>;})()}
+                              {(()=>{const v=e.progress-pplan;const col=v>=0?"#22c55e":v>=-15?"#f59e0b":"#ef4444";return <span style={{marginLeft:8,fontSize:13,color:col,fontFamily:"DM Mono,monospace",fontWeight:700}}>{v>=0?"+":""}{v}%</span>;})()}
                               </div>
                             </div>
-                            {changed&&<span style={{fontSize:11,color:"#f59e0b",fontFamily:"DM Mono,monospace",background:"rgba(245,158,11,0.1)",border:"1px solid rgba(245,158,11,0.25)",borderRadius:4,padding:"2px 7px",flexShrink:0,whiteSpace:"nowrap"}}>CHANGED</span>}
+                            {changed&&<span style={{fontSize:13,color:"#f59e0b",fontFamily:"DM Mono,monospace",background:"rgba(245,158,11,0.1)",border:"1px solid rgba(245,158,11,0.25)",borderRadius:4,padding:"2px 7px",flexShrink:0,whiteSpace:"nowrap"}}>CHANGED</span>}
                           </div>
 
                           {/* editable fields — 3 column grid */}
                           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:14}}>
                             {/* % complete */}
                             <div>
-                              <div style={{fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:6}}>% Complete</div>
+                              <div style={{fontSize:13,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:6}}>% Complete</div>
                               <div style={{display:"flex",alignItems:"center",gap:10}}>
                                 <input type="range" min="0" max="100" value={e.progress} onChange={ev=>setField(pr.id,"progress",parseInt(ev.target.value))} style={{flex:1,height:4,accentColor:ws.color}}/>
                                 <input type="number" min="0" max="100" value={e.progress} onChange={ev=>setField(pr.id,"progress",Math.min(100,Math.max(0,parseInt(ev.target.value)||0)))} style={{width:52,textAlign:"center",padding:"4px 6px",fontSize:13}}/>
                               </div>
-                              {pr.progress!==e.progress&&<div style={{fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",marginTop:3}}>Was: {pr.progress}%</div>}
+                              {pr.progress!==e.progress&&<div style={{fontSize:13,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",marginTop:3}}>Was: {pr.progress}%</div>}
                             </div>
 
                             {/* RAG */}
                             <div>
-                              <div style={{fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:6}}>RAG Status</div>
+                              <div style={{fontSize:13,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:6}}>RAG Status</div>
                               <RAGPicker value={e.rag} onChange={v=>setField(pr.id,"rag",v)}/>
-                              {pr.rag!==e.rag&&<div style={{fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",marginTop:3}}>Was: {RAG[pr.rag]?.label}</div>}
-                              {(()=>{const variance=e.progress-pplan;if(e.rag==="G"&&variance<=-15)return(<div style={{fontSize:11,color:"#f59e0b",marginTop:4,background:"rgba(245,158,11,0.08)",border:"1px solid rgba(245,158,11,0.25)",borderRadius:5,padding:"3px 8px"}}>&#9888; {Math.abs(variance)}% behind plan &#8212; consider At Risk</div>);if(e.rag==="G"&&variance<=-5)return(<div style={{fontSize:11,color:"rgba(245,158,11,0.7)",marginTop:4}}>&#8595; {Math.abs(variance)}% behind plan</div>);return null;})()}
+                              {pr.rag!==e.rag&&<div style={{fontSize:13,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",marginTop:3}}>Was: {RAG[pr.rag]?.label}</div>}
+                              {(()=>{const variance=e.progress-pplan;if(e.rag==="G"&&variance<=-15)return(<div style={{fontSize:13,color:"#f59e0b",marginTop:4,background:"rgba(245,158,11,0.08)",border:"1px solid rgba(245,158,11,0.25)",borderRadius:5,padding:"3px 8px"}}>&#9888; {Math.abs(variance)}% behind plan &#8212; consider At Risk</div>);if(e.rag==="G"&&variance<=-5)return(<div style={{fontSize:13,color:"rgba(245,158,11,0.7)",marginTop:4}}>&#8595; {Math.abs(variance)}% behind plan</div>);return null;})()}
                             </div>
 
                             {/* Risk */}
                             <div>
-                              <div style={{fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:6}}>Risk / Issue</div>
+                              <div style={{fontSize:13,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:6}}>Risk / Issue</div>
                               <textarea rows={2} value={e.risk} onChange={ev=>setField(pr.id,"risk",ev.target.value)} placeholder="Describe any risk or issue, or leave blank" style={{width:"100%",resize:"vertical",fontSize:12,padding:"6px 8px"}}/>
-                              {(pr.risk||"")!==(e.risk||"")&&<div style={{fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",marginTop:2}}>Was: {pr.risk||"(none)"}</div>}
+                              {(pr.risk||"")!==(e.risk||"")&&<div style={{fontSize:13,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",marginTop:2}}>Was: {pr.risk||"(none)"}</div>}
                             </div>
                           </div>
                         </div>

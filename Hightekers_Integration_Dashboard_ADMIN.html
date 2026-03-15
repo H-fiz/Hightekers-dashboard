@@ -14,34 +14,34 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#0a0d12;color:#fff;font-family:"DM Sans",sans-serif}
 ::-webkit-scrollbar{width:4px}
-::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.5);border-radius:4px}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.12);border-radius:4px}
 .spin{animation:spin 1s linear infinite}
 @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px}
 /* modal */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.72);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px}
-.modal{background:#13171f;border:1px solid rgba(255,255,255,0.5);border-radius:14px;padding:28px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto}
+.modal{background:#13171f;border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:28px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto}
 /* form fields */
 .field{margin-bottom:13px}
 .field label{display:block;font-size:10px;color:rgba(255,255,255,0.72);font-family:"DM Mono",monospace;letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px}
-.field input,.field select,.field textarea{width:100%;background:rgba(255,255,255,0.5);border:1px solid rgba(255,255,255,0.5);border-radius:6px;color:#fff;font-size:13px;padding:8px 10px;outline:none;transition:border-color .15s;font-family:"DM Sans",sans-serif}
+.field input,.field select,.field textarea{width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);border-radius:6px;color:#fff;font-size:13px;padding:8px 10px;outline:none;transition:border-color .15s;font-family:"DM Sans",sans-serif}
 .field input:focus,.field select:focus,.field textarea:focus{border-color:rgba(255,255,255,0.62)}
 .field select option{background:#13171f;color:#fff}
 /* buttons */
 .btn{padding:8px 18px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;border:none;transition:all .15s;font-family:"DM Sans",sans-serif}
 .btn-gold{background:#C9A84C;color:#0a0d12}.btn-gold:hover{background:#d4b660}
-.btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.5);color:rgba(255,255,255,0.6)}.btn-ghost:hover{border-color:rgba(255,255,255,0.62);color:#fff}
+.btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.6)}.btn-ghost:hover{border-color:rgba(255,255,255,0.62);color:#fff}
 .btn-danger{background:transparent;border:1px solid rgba(239,68,68,0.35);color:#ef4444}.btn-danger:hover{background:rgba(239,68,68,0.1)}
 .btn-green{background:#22c55e;color:#0a0d12}.btn-green:hover{background:#16a34a}
 /* dirty indicator */
 .dirty-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#f59e0b;margin-left:5px;flex-shrink:0}
 /* inline admin controls */
 .admin-row{display:flex;align-items:center;gap:6px}
-.icon-btn{background:transparent;border:1px solid rgba(255,255,255,0.5);border-radius:5px;color:rgba(255,255,255,0.72);font-size:11px;padding:3px 7px;cursor:pointer;transition:all .15s;font-family:"DM Mono",monospace;white-space:nowrap}
+.icon-btn{background:transparent;border:1px solid rgba(255,255,255,0.15);border-radius:5px;color:rgba(255,255,255,0.72);font-size:11px;padding:3px 7px;cursor:pointer;transition:all .15s;font-family:"DM Mono",monospace;white-space:nowrap}
 .icon-btn:hover{border-color:rgba(255,255,255,0.62);color:#fff}
 .icon-btn.danger:hover{border-color:#ef4444;color:#ef4444}
-.add-row{display:flex;align-items:center;gap:6px;padding:7px 15px;border-top:1px solid rgba(255,255,255,0.5)}
-.add-btn{background:transparent;border:1px dashed rgba(255,255,255,0.5);border-radius:6px;color:rgba(255,255,255,0.72);font-size:11px;padding:4px 12px;cursor:pointer;transition:all .15s;font-family:"DM Mono",monospace}
+.add-row{display:flex;align-items:center;gap:6px;padding:7px 15px;border-top:1px solid rgba(255,255,255,0.08)}
+.add-btn{background:transparent;border:1px dashed rgba(255,255,255,0.15);border-radius:6px;color:rgba(255,255,255,0.72);font-size:11px;padding:4px 12px;cursor:pointer;transition:all .15s;font-family:"DM Mono",monospace}
 .add-btn:hover{border-color:rgba(255,255,255,0.72);color:rgba(255,255,255,0.75)}
 </style>
 </head>
@@ -523,7 +523,7 @@ function RAGBadge({rag,tiny}){
 }
 function Bar({pct,color,h=5}){
   const isHex=color.startsWith("#");
-  const fill=pct===0?"rgba(255,255,255,0.5)":isHex?`linear-gradient(90deg,${color}77,${color})`:color;
+  const fill=pct===0?"rgba(255,255,255,0.08)":isHex?`linear-gradient(90deg,${color}77,${color})`:color;
   return <div style={{width:"100%",height:h,borderRadius:h,background:"rgba(255,255,255,0.022)",overflow:"hidden"}}><div style={{height:"100%",width:`${Math.min(100,Math.max(0,pct))}%`,borderRadius:h,background:fill,transition:"width 0.4s ease"}}/></div>;
 }
 function VariancePill({actual,planned}){
@@ -554,7 +554,7 @@ function EditModal({title,fields,onSave,onDelete,onClose,deleteLabel}){
             {f.type==="rag"?(
               <div style={{display:"flex",gap:8,marginTop:2}}>
                 {["G","A","R"].map(r=>(
-                  <button key={r} onClick={()=>set(f.key,r)} style={{flex:1,padding:"7px 0",borderRadius:7,cursor:"pointer",fontSize:13,fontFamily:"DM Mono,monospace",fontWeight:600,border:`2px solid ${form[f.key]===r?RAG[r].color:"rgba(255,255,255,0.5)"}`,background:form[f.key]===r?`${RAG[r].color}22`:"transparent",color:form[f.key]===r?RAG[r].color:"rgba(255,255,255,0.72)",transition:"all .15s"}}>
+                  <button key={r} onClick={()=>set(f.key,r)} style={{flex:1,padding:"7px 0",borderRadius:7,cursor:"pointer",fontSize:13,fontFamily:"DM Mono,monospace",fontWeight:600,border:`2px solid ${form[f.key]===r?RAG[r].color:"rgba(255,255,255,0.15)"}`,background:form[f.key]===r?`${RAG[r].color}22`:"transparent",color:form[f.key]===r?RAG[r].color:"rgba(255,255,255,0.72)",transition:"all .15s"}}>
                     {RAG[r].label}
                   </button>
                 ))}
@@ -606,11 +606,11 @@ function Confirm({message,onConfirm,onClose}){
 const MS_STATUS={
   "Complete":{color:"#22c55e",bg:"rgba(34,197,94,0.1)",border:"rgba(34,197,94,0.25)"},
   "In Progress":{color:"#f59e0b",bg:"rgba(245,158,11,0.1)",border:"rgba(245,158,11,0.25)"},
-  "Not Started":{color:"rgba(255,255,255,0.62)",bg:"rgba(255,255,255,0.5)",border:"rgba(255,255,255,0.055)"},
+  "Not Started":{color:"rgba(255,255,255,0.62)",bg:"rgba(255,255,255,0.06)",border:"rgba(255,255,255,0.055)"},
 };
 function MilestoneStatusBadge({status}){
   const s=MS_STATUS[status]||MS_STATUS["Not Started"];
-  return <span style={{fontSize:11,fontFamily:"DM Mono,monospace",fontWeight:600,padding:"2px 8px",borderRadius:20,background:s.bg,border:`1px solid ${s.border}`,color:s.color,whiteSpace:"nowrap"}}>{status}</span>;
+  return <span style={{fontSize:13,fontFamily:"DM Mono,monospace",fontWeight:600,padding:"2px 8px",borderRadius:20,background:s.bg,border:`1px solid ${s.border}`,color:s.color,whiteSpace:"nowrap"}}>{status}</span>;
 }
 function ProjectCardModal({project,card,milestones,wsColor,onClose,onSave}){
   const pplan=plannedPct(project.start,project.end);
@@ -633,7 +633,7 @@ function ProjectCardModal({project,card,milestones,wsColor,onClose,onSave}){
     setSaving(false);setEditing(false);
   };
   const fieldStyle={width:"100%",background:"rgba(255,255,255,0.022)",border:"1px solid rgba(255,255,255,0.055)",borderRadius:7,color:"#fff",fontSize:13,padding:"9px 12px",outline:"none",fontFamily:"DM Sans,sans-serif",resize:"vertical",lineHeight:1.5};
-  const labelStyle={fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:6,display:"flex",alignItems:"center",gap:5};
+  const labelStyle={fontSize:13,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:6,display:"flex",alignItems:"center",gap:5};
   const viewStyle=(val)=>({fontSize:13,color:val?"rgba(255,255,255,0.78)":"rgba(255,255,255,0.5)",lineHeight:1.6,background:"rgba(255,255,255,0.022)",border:"1px solid rgba(255,255,255,0.055)",borderRadius:7,padding:"9px 12px",fontStyle:val?"normal":"italic",whiteSpace:"pre-wrap"});
   return(
     <div className="overlay" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
@@ -642,7 +642,7 @@ function ProjectCardModal({project,card,milestones,wsColor,onClose,onSave}){
         <div style={{padding:"18px 22px 14px",borderBottom:"1px solid rgba(255,255,255,0.055)",background:`linear-gradient(135deg,${wsColor}10 0%,transparent 60%)`}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12}}>
             <div style={{flex:1}}>
-              <div style={{fontSize:11,color:wsColor,fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",marginBottom:3}}>{project.id}</div>
+              <div style={{fontSize:13,color:wsColor,fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",marginBottom:3}}>{project.id}</div>
               <div style={{fontSize:18,fontFamily:"Playfair Display,serif",color:"#fff",marginBottom:7,lineHeight:1.3}}>{project.name}</div>
               <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>
                 <RAGBadge rag={project.rag} tiny/>
@@ -659,11 +659,11 @@ function ProjectCardModal({project,card,milestones,wsColor,onClose,onSave}){
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginTop:11}}>
             <div>
-              <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{fontSize:10,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>ACTUAL</span><span style={{fontSize:10,color:wsColor,fontFamily:"DM Mono,monospace"}}>{project.progress}%</span></div>
+              <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{fontSize:12,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>ACTUAL</span><span style={{fontSize:12,color:wsColor,fontFamily:"DM Mono,monospace"}}>{project.progress}%</span></div>
               <Bar pct={project.progress} color={wsColor} h={5}/>
             </div>
             <div>
-              <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{fontSize:10,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>PLANNED</span><span style={{fontSize:10,color:"rgba(255,255,255,0.72)",fontFamily:"DM Mono,monospace"}}>{pplan}%</span></div>
+              <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{fontSize:12,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>PLANNED</span><span style={{fontSize:12,color:"rgba(255,255,255,0.72)",fontFamily:"DM Mono,monospace"}}>{pplan}%</span></div>
               <Bar pct={pplan} color="#666e7a" h={5}/>
             </div>
           </div>
@@ -717,7 +717,7 @@ function ProjectCardModal({project,card,milestones,wsColor,onClose,onSave}){
               <div style={{display:"flex",flexDirection:"column",gap:6}}>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 130px 130px",gap:8,padding:"3px 0"}}>
                   {["Milestone Name","Date","Status"].map((h,i)=>(
-                    <span key={i} style={{fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",letterSpacing:"0.08em",textTransform:"uppercase"}}>{h}</span>
+                    <span key={i} style={{fontSize:13,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",letterSpacing:"0.08em",textTransform:"uppercase"}}>{h}</span>
                   ))}
                 </div>
                 {form.milestones.map((ms,i)=>(
@@ -832,7 +832,7 @@ function WSDash({ws,onUpdate,markDirty,cardData,onCardOpen}){
         <div style={{display:"flex",alignItems:"center",gap:14}}>
           <div style={{fontSize:28,color:ws.color}}>{ws.icon}</div>
           <div>
-            <div style={{fontSize:11,color:ws.color,fontFamily:"DM Mono,monospace",letterSpacing:"0.12em",marginBottom:3}}>{ws.code} · {ws.subtitle}</div>
+            <div style={{fontSize:13,color:ws.color,fontFamily:"DM Mono,monospace",letterSpacing:"0.12em",marginBottom:3}}>{ws.code} · {ws.subtitle}</div>
             <div style={{fontSize:18,fontFamily:"Playfair Display,serif",color:"#fff"}}>{ws.name}</div>
             <div style={{display:"flex",alignItems:"center",gap:8,marginTop:4}}>
               <span style={{fontSize:13,color:"rgba(255,255,255,0.72)"}}>Workstream Lead:</span>
@@ -842,8 +842,8 @@ function WSDash({ws,onUpdate,markDirty,cardData,onCardOpen}){
         </div>
         <div style={{textAlign:"right"}}>
           <div style={{display:"flex",alignItems:"flex-end",gap:12,justifyContent:"flex-end",marginBottom:4}}>
-            <div><div style={{fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",marginBottom:1}}>ACTUAL</div><div style={{fontSize:34,fontFamily:"Playfair Display,serif",color:ws.color,lineHeight:1}}>{act}%</div></div>
-            <div style={{paddingBottom:4}}><div style={{fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",marginBottom:1}}>PLANNED</div><div style={{fontSize:22,fontFamily:"Playfair Display,serif",color:"rgba(255,255,255,0.72)",lineHeight:1}}>{plan}%</div></div>
+            <div><div style={{fontSize:13,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",marginBottom:1}}>ACTUAL</div><div style={{fontSize:34,fontFamily:"Playfair Display,serif",color:ws.color,lineHeight:1}}>{act}%</div></div>
+            <div style={{paddingBottom:4}}><div style={{fontSize:13,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",marginBottom:1}}>PLANNED</div><div style={{fontSize:22,fontFamily:"Playfair Display,serif",color:"rgba(255,255,255,0.72)",lineHeight:1}}>{plan}%</div></div>
           </div>
           <VariancePill actual={act} planned={plan}/>
         </div>
@@ -852,8 +852,8 @@ function WSDash({ws,onUpdate,markDirty,cardData,onCardOpen}){
       {/* KPIs */}
       <div style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:9,marginBottom:18}}>
         {[{l:"Initiatives",v:ws.initiatives.length},{l:"Projects",v:all.length},{l:"Variance",v:varianceLabel(act-plan),col:varianceColor(act-plan)},{l:"On Track",v:rc.G,col:RAG.G.color},{l:"At Risk",v:rc.A,col:RAG.A.color},{l:"Off Track",v:rc.R,col:RAG.R.color}].map((k,i)=>(
-          <div key={i} style={{background:k.col?`${k.col}0C`:"rgba(255,255,255,0.5)",border:`1px solid ${k.col?k.col+"20":"rgba(255,255,255,0.5)"}`,borderRadius:8,padding:"11px 12px"}}>
-            <div style={{fontSize:11,color:"rgba(255,255,255,0.72)",fontFamily:"DM Mono,monospace",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:4}}>{k.l}</div>
+          <div key={i} style={{background:k.col?`${k.col}0C`:"rgba(255,255,255,0.04)",border:`1px solid ${k.col?k.col+"20":"rgba(255,255,255,0.07)"}`,borderRadius:8,padding:"11px 12px"}}>
+            <div style={{fontSize:13,color:"rgba(255,255,255,0.72)",fontFamily:"DM Mono,monospace",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:4}}>{k.l}</div>
             <div style={{fontSize:20,fontFamily:"Playfair Display,serif",color:k.col||"#fff"}}>{k.v}</div>
           </div>
         ))}
@@ -865,12 +865,12 @@ function WSDash({ws,onUpdate,markDirty,cardData,onCardOpen}){
         {ws.initiatives.map(init=>{
           const open=openInit===init.id,ip=initActual(init),iplan=initPlanned(init),ir=initRag(init);
           return(
-            <div key={init.id} style={{border:`1px solid ${open?ws.color+"40":"rgba(255,255,255,0.5)"}`,borderRadius:9,overflow:"hidden",transition:"border-color 0.18s"}}>
+            <div key={init.id} style={{border:`1px solid ${open?ws.color+"40":"rgba(255,255,255,0.07)"}`,borderRadius:9,overflow:"hidden",transition:"border-color 0.18s"}}>
               {/* initiative header */}
-              <div style={{padding:"11px 14px",background:open?`${ws.color}09`:"rgba(255,255,255,0.5)",display:"flex",alignItems:"center",gap:8}}>
+              <div style={{padding:"11px 14px",background:open?`${ws.color}09`:"rgba(255,255,255,0.03)",display:"flex",alignItems:"center",gap:8}}>
                 <div onClick={()=>setOpenInit(open?null:init.id)} style={{flex:1,minWidth:0,cursor:"pointer"}}>
                   <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:4,flexWrap:"wrap"}}>
-                    <span style={{fontSize:11,color:ws.color,fontFamily:"DM Mono,monospace"}}>{init.id}</span>
+                    <span style={{fontSize:13,color:ws.color,fontFamily:"DM Mono,monospace"}}>{init.id}</span>
                     <span style={{fontSize:13,fontWeight:600,color:"#fff"}}>{init.name}</span>
                     <RAGBadge rag={ir} tiny/>
                     <VariancePill actual={ip} planned={iplan}/>
@@ -881,11 +881,11 @@ function WSDash({ws,onUpdate,markDirty,cardData,onCardOpen}){
                   </div>
                   <div style={{display:"flex",gap:8,alignItems:"center"}}>
                     <div style={{flex:1}}>
-                      <div style={{display:"flex",justifyContent:"space-between",marginBottom:2}}><span style={{fontSize:10,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>ACTUAL</span><span style={{fontSize:10,color:ws.color,fontFamily:"DM Mono,monospace"}}>{ip}%</span></div>
+                      <div style={{display:"flex",justifyContent:"space-between",marginBottom:2}}><span style={{fontSize:12,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>ACTUAL</span><span style={{fontSize:12,color:ws.color,fontFamily:"DM Mono,monospace"}}>{ip}%</span></div>
                       <Bar pct={ip} color={ws.color}/>
                     </div>
                     <div style={{flex:1}}>
-                      <div style={{display:"flex",justifyContent:"space-between",marginBottom:2}}><span style={{fontSize:10,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>PLANNED</span><span style={{fontSize:10,color:"rgba(255,255,255,0.72)",fontFamily:"DM Mono,monospace"}}>{iplan}%</span></div>
+                      <div style={{display:"flex",justifyContent:"space-between",marginBottom:2}}><span style={{fontSize:12,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>PLANNED</span><span style={{fontSize:12,color:"rgba(255,255,255,0.72)",fontFamily:"DM Mono,monospace"}}>{iplan}%</span></div>
                       <Bar pct={iplan} color="#666e7a"/>
                     </div>
                   </div>
@@ -903,22 +903,22 @@ function WSDash({ws,onUpdate,markDirty,cardData,onCardOpen}){
                 <div style={{borderTop:"1px solid rgba(255,255,255,0.055)"}}>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 56px 56px 90px 130px 80px 70px",padding:"6px 14px",background:"rgba(255,255,255,0.022)",borderBottom:"1px solid rgba(255,255,255,0.055)"}}>
                     {["Project / Owner","Actual","Planned","Variance","Dates","RAG",""].map((h,i)=>(
-                      <span key={i} style={{fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",letterSpacing:"0.07em",textTransform:"uppercase"}}>{h}</span>
+                      <span key={i} style={{fontSize:13,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",letterSpacing:"0.07em",textTransform:"uppercase"}}>{h}</span>
                     ))}
                   </div>
                   {init.projects.map((pr,pi)=>{
                     const pplan=plannedPct(pr.start,pr.end);
                     return(
-                      <div key={pr.id} style={{display:"grid",gridTemplateColumns:"1fr 56px 56px 90px 130px 80px 70px",padding:"9px 14px",alignItems:"center",borderBottom:"1px solid rgba(255,255,255,0.055)",background:pi%2===0?"transparent":"rgba(255,255,255,0.5)"}}>
+                      <div key={pr.id} style={{display:"grid",gridTemplateColumns:"1fr 56px 56px 90px 130px 80px 70px",padding:"9px 14px",alignItems:"center",borderBottom:"1px solid rgba(255,255,255,0.055)",background:pi%2===0?"transparent":"rgba(255,255,255,0.02)"}}>
                         <div>
-                          <div onClick={()=>onCardOpen&&onCardOpen({project:pr,wsColor:ws.color})} style={{fontSize:12,color:"rgba(255,255,255,0.82)",marginBottom:2,cursor:"pointer",display:"flex",alignItems:"center",gap:5}}>{pr.name}<span style={{fontSize:11,color:"rgba(255,255,255,0.5)",fontFamily:"DM Mono,monospace"}}>&#9658; card</span></div>
-                          <div style={{fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>Owner: {pr.owner}</div>
+                          <div onClick={()=>onCardOpen&&onCardOpen({project:pr,wsColor:ws.color})} style={{fontSize:12,color:"rgba(255,255,255,0.82)",marginBottom:2,cursor:"pointer",display:"flex",alignItems:"center",gap:5}}>{pr.name}<span style={{fontSize:13,color:"rgba(255,255,255,0.5)",fontFamily:"DM Mono,monospace"}}>&#9658; card</span></div>
+                          <div style={{fontSize:13,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>Owner: {pr.owner}</div>
                           {pr.risk&&<div style={{fontSize:12,color:"#f59e0b",marginTop:3}}>⚠ {pr.risk}</div>}
                         </div>
                         <div style={{fontSize:13,color:ws.color,fontFamily:"DM Mono,monospace",fontWeight:600}}>{pr.progress}%</div>
                         <div style={{fontSize:13,color:"rgba(255,255,255,0.72)",fontFamily:"DM Mono,monospace"}}>{pplan}%</div>
                         <VariancePill actual={pr.progress} planned={pplan}/>
-                        <div style={{fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",lineHeight:1.7}}>{fmtDate(pr.start)}<br/>→ {fmtDate(pr.end)}</div>
+                        <div style={{fontSize:13,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",lineHeight:1.7}}>{fmtDate(pr.start)}<br/>→ {fmtDate(pr.end)}</div>
                         <RAGBadge rag={pr.rag} tiny/>
                         <button className="icon-btn" style={{fontSize:12}} onClick={()=>setModal({type:"proj",proj:pr,initId:init.id})}>✎ Edit</button>
                       </div>
@@ -947,7 +947,7 @@ function WSDash({ws,onUpdate,markDirty,cardData,onCardOpen}){
 function Sparkline({data,color,width=80,height=28}){
   if(!data||data.length<2) return(
     <div style={{width,height,display:"flex",alignItems:"center",justifyContent:"center"}}>
-      <span style={{fontSize:11,color:"rgba(255,255,255,0.35)",fontFamily:"DM Mono,monospace"}}>No data</span>
+      <span style={{fontSize:13,color:"rgba(255,255,255,0.35)",fontFamily:"DM Mono,monospace"}}>No data</span>
     </div>
   );
   const vals=data.map(d=>d.actual);
@@ -971,7 +971,7 @@ function Sparkline({data,color,width=80,height=28}){
           return i===vals.length-1?<circle key={i} cx={x} cy={y} r={2.5} fill={color}/>:null;
         })}
       </svg>
-      <span style={{fontSize:11,color:trendColor,fontFamily:"DM Mono,monospace",fontWeight:700,whiteSpace:"nowrap"}}>
+      <span style={{fontSize:13,color:trendColor,fontFamily:"DM Mono,monospace",fontWeight:700,whiteSpace:"nowrap"}}>
         {trend>0?"+":""}{trend}%
       </span>
     </div>
@@ -997,7 +997,7 @@ function CrossGantt({wsList}){
         <div/>
         <div style={{position:"relative",height:18}}>
           {MONTHS.map((m,i)=>(
-            <div key={m} style={{position:"absolute",left:`${(i/12)*100}%`,fontSize:11,color:"rgba(255,255,255,0.5)",fontFamily:"DM Mono,monospace",transform:"translateX(-50%)"}}>{m}</div>
+            <div key={m} style={{position:"absolute",left:`${(i/12)*100}%`,fontSize:13,color:"rgba(255,255,255,0.5)",fontFamily:"DM Mono,monospace",transform:"translateX(-50%)"}}>{m}</div>
           ))}
         </div>
       </div>
@@ -1015,8 +1015,8 @@ function CrossGantt({wsList}){
               <div style={{display:"flex",alignItems:"center",gap:6,paddingRight:8}}>
                 <span style={{fontSize:13,color:ws.color}}>{ws.icon}</span>
                 <span style={{fontSize:12,color:"rgba(255,255,255,0.9)",fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{ws.code}</span>
-                <span style={{fontSize:11,color:wsRagColor,marginLeft:"auto"}}>●</span>
-                <span style={{fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>{isExpanded?"▲":"▼"}</span>
+                <span style={{fontSize:13,color:wsRagColor,marginLeft:"auto"}}>●</span>
+                <span style={{fontSize:13,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>{isExpanded?"▲":"▼"}</span>
               </div>
               <div style={{position:"relative",height:14,background:"rgba(255,255,255,0.05)",borderRadius:3,overflow:"hidden"}}>
                 {/* WS extent bar */}
@@ -1049,8 +1049,8 @@ function CrossGantt({wsList}){
               return(
                 <div key={pr.id} style={{display:"grid",gridTemplateColumns:"200px 1fr",gap:0,alignItems:"center",padding:"2px 0",background:pi%2===0?"transparent":"rgba(255,255,255,0.015)"}}>
                   <div style={{paddingLeft:16,paddingRight:8,overflow:"hidden"}}>
-                    <div style={{fontSize:11,color:"rgba(255,255,255,0.82)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}} title={pr.name}>{pr.name}</div>
-                    <div style={{fontSize:10,color:"rgba(255,255,255,0.5)",fontFamily:"DM Mono,monospace"}}>{pr.progress}% <span style={{color:ragC}}>●</span></div>
+                    <div style={{fontSize:13,color:"rgba(255,255,255,0.82)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}} title={pr.name}>{pr.name}</div>
+                    <div style={{fontSize:12,color:"rgba(255,255,255,0.5)",fontFamily:"DM Mono,monospace"}}>{pr.progress}% <span style={{color:ragC}}>●</span></div>
                   </div>
                   <div style={{position:"relative",height:10,background:"rgba(255,255,255,0.04)",borderRadius:2,overflow:"hidden"}}>
                     <div style={{position:"absolute",top:0,bottom:0,left:`${left}%`,right:`${right}%`,background:`${ws.color}20`,border:`1px dashed ${ws.color}50`,borderRadius:2}}/>
@@ -1068,7 +1068,7 @@ function CrossGantt({wsList}){
         {[["rgba(255,255,255,0.25)","1px dashed rgba(255,255,255,0.4)","Planned duration"],["#4C9AC9","none","Actual progress"],["rgba(255,255,255,0.7)","none","Today"]].map(([bg,border,label],i)=>(
           <div key={i} style={{display:"flex",alignItems:"center",gap:5}}>
             {i<2?<div style={{width:20,height:6,borderRadius:2,background:bg,border}}/>:<div style={{width:2,height:12,borderRadius:1,background:bg}}/>}
-            <span style={{fontSize:11,color:"rgba(255,255,255,0.5)",fontFamily:"DM Mono,monospace"}}>{label}</span>
+            <span style={{fontSize:13,color:"rgba(255,255,255,0.5)",fontFamily:"DM Mono,monospace"}}>{label}</span>
           </div>
         ))}
       </div>
@@ -1209,8 +1209,8 @@ function ProposalsPanel({wsList,onUpdate,markDirty,accessToken,onTokenRefresh}){
                     </div>
                     {/* changes grid */}
                     <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}}>
-                      <div style={{background:progChanged?"rgba(245,158,11,0.06)":"rgba(255,255,255,0.5)",border:`1px solid ${progChanged?"rgba(245,158,11,0.2)":"rgba(255,255,255,0.5)"}`,borderRadius:7,padding:"10px 12px"}}>
-                        <div style={{fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6}}>% Complete</div>
+                      <div style={{background:progChanged?"rgba(245,158,11,0.06)":"rgba(255,255,255,0.04)",border:`1px solid ${progChanged?"rgba(245,158,11,0.2)":"rgba(255,255,255,0.07)"}`,borderRadius:7,padding:"10px 12px"}}>
+                        <div style={{fontSize:13,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6}}>% Complete</div>
                         {progChanged?(
                           <div style={{display:"flex",alignItems:"center",gap:8}}>
                             <span style={{fontSize:18,fontFamily:"Playfair Display,serif",color:"rgba(255,255,255,0.62)",textDecoration:"line-through"}}>{p.oldProgress}%</span>
@@ -1221,8 +1221,8 @@ function ProposalsPanel({wsList,onUpdate,markDirty,accessToken,onTokenRefresh}){
                           <span style={{fontSize:18,fontFamily:"Playfair Display,serif",color:"rgba(255,255,255,0.72)"}}>{p.oldProgress}% <span style={{fontSize:12,color:"rgba(255,255,255,0.62)"}}>unchanged</span></span>
                         )}
                       </div>
-                      <div style={{background:ragChanged?"rgba(245,158,11,0.06)":"rgba(255,255,255,0.5)",border:`1px solid ${ragChanged?"rgba(245,158,11,0.2)":"rgba(255,255,255,0.5)"}`,borderRadius:7,padding:"10px 12px"}}>
-                        <div style={{fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6}}>RAG Status</div>
+                      <div style={{background:ragChanged?"rgba(245,158,11,0.06)":"rgba(255,255,255,0.04)",border:`1px solid ${ragChanged?"rgba(245,158,11,0.2)":"rgba(255,255,255,0.07)"}`,borderRadius:7,padding:"10px 12px"}}>
+                        <div style={{fontSize:13,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6}}>RAG Status</div>
                         {ragChanged?(
                           <div style={{display:"flex",alignItems:"center",gap:7,flexWrap:"wrap"}}>
                             <span style={{fontSize:13,color:RAG[p.oldRag]?.color,fontFamily:"DM Mono,monospace",opacity:0.5,textDecoration:"line-through"}}>{RAG[p.oldRag]?.label}</span>
@@ -1233,8 +1233,8 @@ function ProposalsPanel({wsList,onUpdate,markDirty,accessToken,onTokenRefresh}){
                           <span style={{fontSize:13,color:RAG[p.oldRag]?.color,fontFamily:"DM Mono,monospace"}}>{RAG[p.oldRag]?.label} <span style={{fontSize:12,color:"rgba(255,255,255,0.62)",color:"rgba(255,255,255,0.62)"}}>unchanged</span></span>
                         )}
                       </div>
-                      <div style={{background:riskChanged?"rgba(245,158,11,0.06)":"rgba(255,255,255,0.5)",border:`1px solid ${riskChanged?"rgba(245,158,11,0.2)":"rgba(255,255,255,0.5)"}`,borderRadius:7,padding:"10px 12px"}}>
-                        <div style={{fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6}}>Risk / Issue</div>
+                      <div style={{background:riskChanged?"rgba(245,158,11,0.06)":"rgba(255,255,255,0.04)",border:`1px solid ${riskChanged?"rgba(245,158,11,0.2)":"rgba(255,255,255,0.07)"}`,borderRadius:7,padding:"10px 12px"}}>
+                        <div style={{fontSize:13,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6}}>Risk / Issue</div>
                         {riskChanged?(
                           <div>
                             {p.oldRisk&&<div style={{fontSize:13,color:"rgba(255,255,255,0.62)",textDecoration:"line-through",marginBottom:3}}>{p.oldRisk}</div>}
@@ -1270,7 +1270,7 @@ function Master({wsList,onSelect,lastRefresh,history}){
   const totalInits=wsList.reduce((a,ws)=>a+ws.initiatives.length,0);
   return(
     <div>
-      {lastRefresh&&<div style={{fontSize:11,color:"rgba(255,255,255,0.5)",fontFamily:"DM Mono,monospace",marginBottom:14,textAlign:"right"}}>Last synced from Sheets: {lastRefresh}</div>}
+      {lastRefresh&&<div style={{fontSize:13,color:"rgba(255,255,255,0.5)",fontFamily:"DM Mono,monospace",marginBottom:14,textAlign:"right"}}>Last synced from Sheets: {lastRefresh}</div>}
       <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:10,marginBottom:20}}>
         {[
           {l:"Actual Progress",v:`${overallActual}%`,sub:"across all workstreams"},
@@ -1279,7 +1279,7 @@ function Master({wsList,onSelect,lastRefresh,history}){
           {l:"Initiatives / Projects",v:`${totalInits} / ${all.length}`,sub:`${totalInits} initiatives · ${all.length} projects`},
           {l:"Open Risks",v:risks.length,sub:risks.length>0?"requiring attention":"none logged",col:risks.length>0?"#ef4444":null},
         ].map((k,i)=>(
-          <div key={i} style={{background:k.col?`${k.col}0E`:"rgba(255,255,255,0.5)",border:`1px solid ${k.col?k.col+"25":"rgba(255,255,255,0.5)"}`,borderRadius:10,padding:"15px 16px"}}>
+          <div key={i} style={{background:k.col?`${k.col}0E`:"rgba(255,255,255,0.04)",border:`1px solid ${k.col?k.col+"25":"rgba(255,255,255,0.07)"}`,borderRadius:10,padding:"15px 16px"}}>
             <div style={{fontSize:12,color:"rgba(255,255,255,0.72)",fontFamily:"DM Mono,monospace",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:5}}>{k.l}</div>
             <div style={{fontSize:26,fontFamily:"Playfair Display,serif",color:k.col||"#fff",lineHeight:1,marginBottom:3}}>{k.v}</div>
             <div style={{fontSize:13,color:"rgba(255,255,255,0.62)"}}>{k.sub}</div>
@@ -1307,22 +1307,22 @@ function Master({wsList,onSelect,lastRefresh,history}){
           const act=wsActual(ws),plan=wsPlanned(ws),rag=wsRag(ws);
           return(
             <div key={ws.id} onClick={()=>onSelect(ws.id)} style={{background:"rgba(255,255,255,0.022)",border:"1px solid rgba(255,255,255,0.055)",borderLeft:`3px solid ${ws.color}`,borderRadius:10,padding:"13px 15px",cursor:"pointer",transition:"background 0.16s"}}
-              onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.5)"}
-              onMouseLeave={e=>e.currentTarget.style.background="rgba(255,255,255,0.5)"}>
+              onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.05)"}
+              onMouseLeave={e=>e.currentTarget.style.background="rgba(255,255,255,0.05)"}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:9,gap:8}}>
                 <div style={{flex:1}}>
-                  <div style={{fontSize:11,color:ws.color,fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",marginBottom:2}}>{ws.code}</div>
+                  <div style={{fontSize:13,color:ws.color,fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",marginBottom:2}}>{ws.code}</div>
                   <div style={{fontSize:13,fontWeight:600,color:"#fff",lineHeight:1.3}}>{ws.name}</div>
                   <div style={{fontSize:12,color:"rgba(255,255,255,0.62)",marginTop:3}}>Lead: <span style={{color:"rgba(255,255,255,0.6)"}}>{ws.lead}</span></div>
                 </div>
                 <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:5}}><RAGBadge rag={rag} tiny/><VariancePill actual={act} planned={plan}/></div>
               </div>
               <div style={{marginBottom:5}}>
-                <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>ACTUAL</span><span style={{fontSize:11,color:ws.color,fontFamily:"DM Mono,monospace"}}>{act}%</span></div>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{fontSize:13,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>ACTUAL</span><span style={{fontSize:13,color:ws.color,fontFamily:"DM Mono,monospace"}}>{act}%</span></div>
                 <Bar pct={act} color={ws.color}/>
               </div>
               <div>
-                <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>PLANNED</span><span style={{fontSize:11,color:"rgba(255,255,255,0.72)",fontFamily:"DM Mono,monospace"}}>{plan}%</span></div>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{fontSize:13,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>PLANNED</span><span style={{fontSize:13,color:"rgba(255,255,255,0.72)",fontFamily:"DM Mono,monospace"}}>{plan}%</span></div>
                 <Bar pct={plan} color="#666e7a"/>
               </div>
               <div style={{display:"flex",gap:12,marginTop:8}}>
@@ -1334,16 +1334,16 @@ function Master({wsList,onSelect,lastRefresh,history}){
           );
         })}
       </div>
+      }
       {risks.length>0&&(
         <div>
-          }
       <div style={{fontSize:12,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:9}}>Consolidated Risk Register</div>
           <div style={{border:"1px solid rgba(255,255,255,0.055)",borderRadius:10,overflow:"hidden"}}>
             <div style={{display:"grid",gridTemplateColumns:"1fr 70px 80px",padding:"7px 16px",background:"rgba(255,255,255,0.022)",borderBottom:"1px solid rgba(255,255,255,0.055)"}}>
-              {["Risk / Issue","WS","Status"].map((h,i)=><span key={i} style={{fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",letterSpacing:"0.08em",textTransform:"uppercase"}}>{h}</span>)}
+              {["Risk / Issue","WS","Status"].map((h,i)=><span key={i} style={{fontSize:13,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",letterSpacing:"0.08em",textTransform:"uppercase"}}>{h}</span>)}
             </div>
             {risks.map((r,i)=>(
-              <div key={i} style={{display:"grid",gridTemplateColumns:"1fr 70px 80px",padding:"10px 16px",alignItems:"center",borderBottom:i<risks.length-1?"1px solid rgba(255,255,255,0.5)":"none",background:i%2===0?"transparent":"rgba(255,255,255,0.5)"}}>
+              <div key={i} style={{display:"grid",gridTemplateColumns:"1fr 70px 80px",padding:"10px 16px",alignItems:"center",borderBottom:i<risks.length-1?"1px solid rgba(255,255,255,0.07)":"none",background:i%2===0?"transparent":"rgba(255,255,255,0.02)"}}>
                 <div><div style={{fontSize:12,color:"rgba(255,255,255,0.8)",marginBottom:2}}>{r.name}</div><div style={{fontSize:13,color:"#f59e0b"}}>⚠ {r.risk}</div></div>
                 <div style={{fontSize:13,color:r.wsColor,fontFamily:"DM Mono,monospace"}}>{r.wsCode}</div>
                 <RAGBadge rag={r.rag} tiny/>
@@ -1430,16 +1430,16 @@ function App(){
           {/* ── Sidebar ── */}
           <div style={{width:262,flexShrink:0,background:"rgba(255,255,255,0.022)",borderRight:"1px solid rgba(255,255,255,0.055)",display:"flex",flexDirection:"column",overflow:"hidden"}}>
             <div style={{padding:"18px 16px 14px",borderBottom:"1px solid rgba(255,255,255,0.055)"}}>
-              <div style={{fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",letterSpacing:"0.14em",textTransform:"uppercase",marginBottom:4}}>Post-Acquisition Integration</div>
+              <div style={{fontSize:13,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",letterSpacing:"0.14em",textTransform:"uppercase",marginBottom:4}}>Post-Acquisition Integration</div>
               <div style={{fontSize:19,fontFamily:"Playfair Display,serif",color:"#fff"}}>Hightekers</div>
               <div style={{fontSize:12,color:"rgba(255,255,255,0.62)",marginTop:3}}>Serviap · EOS · Rivermate</div>
               <div style={{marginTop:9,height:1,background:"linear-gradient(90deg,#C9A84C50,transparent)"}}/>
               <div style={{display:"flex",alignItems:"center",gap:6,marginTop:6}}>
-                <div style={{fontSize:11,color:"#C9A84C",fontFamily:"DM Mono,monospace",letterSpacing:"0.05em"}}>ADMIN MODE</div>
-                <div style={{fontSize:10,background:"#C9A84C22",border:"1px solid #C9A84C44",borderRadius:4,padding:"1px 6px",color:"#C9A84C",fontFamily:"DM Mono,monospace"}}>✎</div>
+                <div style={{fontSize:13,color:"#C9A84C",fontFamily:"DM Mono,monospace",letterSpacing:"0.05em"}}>ADMIN MODE</div>
+                <div style={{fontSize:12,background:"#C9A84C22",border:"1px solid #C9A84C44",borderRadius:4,padding:"1px 6px",color:"#C9A84C",fontFamily:"DM Mono,monospace"}}>✎</div>
                 {dirty&&<div className="dirty-dot" title="Unsaved changes"/>}
               </div>
-              {usingSheets&&<div style={{marginTop:4,fontSize:10,color:"rgba(34,197,94,0.7)",fontFamily:"DM Mono,monospace",letterSpacing:"0.05em"}}>● LIVE FROM GOOGLE SHEETS</div>}
+              {usingSheets&&<div style={{marginTop:4,fontSize:12,color:"rgba(34,197,94,0.7)",fontFamily:"DM Mono,monospace",letterSpacing:"0.05em"}}>● LIVE FROM GOOGLE SHEETS</div>}
             </div>
             <nav style={{flex:1,overflowY:"auto",padding:"7px"}}>
               {navItems.map(ws=>{
@@ -1448,7 +1448,7 @@ function App(){
                 const rag=liveWS?wsRag(liveWS):null;
                 return(
                   <div key={ws.id} onClick={()=>setActive(ws.id)} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:7,cursor:"pointer",marginBottom:1,background:isActive?`${ws.color}15`:"transparent",border:`1px solid ${isActive?ws.color+"35":"transparent"}`,transition:"all 0.13s"}}
-                    onMouseEnter={e=>{if(!isActive)e.currentTarget.style.background="rgba(255,255,255,0.5)";}}
+                    onMouseEnter={e=>{if(!isActive)e.currentTarget.style.background="rgba(255,255,255,0.05)";}}
                     onMouseLeave={e=>{if(!isActive)e.currentTarget.style.background="transparent";}}>
                     <span style={{fontSize:12,color:isActive?ws.color:"rgba(255,255,255,0.5)",flexShrink:0}}>{ws.icon}</span>
                     <div style={{flex:1,minWidth:0}}>
@@ -1456,9 +1456,9 @@ function App(){
                         <div style={{fontSize:12,fontWeight:isActive?600:400,color:isActive?"#fff":"rgba(255,255,255,0.82)"}}>Integration Command</div>
                       ):(
                         <>
-                          <div style={{fontSize:10,color:ws.color,fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",marginBottom:1}}>{ws.code}</div>
+                          <div style={{fontSize:12,color:ws.color,fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",marginBottom:1}}>{ws.code}</div>
                           <div style={{fontSize:13,fontWeight:isActive?600:400,color:isActive?"#fff":"rgba(255,255,255,0.82)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{ws.name}</div>
-                          {ws.lead&&ws.lead!=="—"&&<div style={{fontSize:11,color:"rgba(255,255,255,0.5)",marginTop:1}}>{ws.lead}</div>}
+                          {ws.lead&&ws.lead!=="—"&&<div style={{fontSize:13,color:"rgba(255,255,255,0.5)",marginTop:1}}>{ws.lead}</div>}
                         </>
                       )}
                     </div>
@@ -1471,14 +1471,14 @@ function App(){
             {/* Proposals button */}
             <div style={{padding:"6px 7px",borderTop:"1px solid rgba(255,255,255,0.055)"}}>
               <div onClick={()=>setAdminView(adminView==="proposals"?"dashboard":"proposals")} style={{display:"flex",alignItems:"center",gap:8,padding:"9px 10px",borderRadius:7,cursor:"pointer",background:adminView==="proposals"?"rgba(201,168,76,0.15)":"transparent",border:`1px solid ${adminView==="proposals"?"rgba(201,168,76,0.35)":"transparent"}`,transition:"all 0.13s"}}
-                onMouseEnter={e=>{if(adminView!=="proposals")e.currentTarget.style.background="rgba(255,255,255,0.5)";}}
+                onMouseEnter={e=>{if(adminView!=="proposals")e.currentTarget.style.background="rgba(255,255,255,0.05)";}}
                 onMouseLeave={e=>{if(adminView!=="proposals")e.currentTarget.style.background="transparent";}}>
                 <span style={{fontSize:14,flexShrink:0}}>📬</span>
                 <div style={{flex:1}}>
                   <div style={{fontSize:13,fontWeight:adminView==="proposals"?600:400,color:adminView==="proposals"?"#fff":"rgba(255,255,255,0.82)"}}>Review Proposals</div>
-                  <div style={{fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>Lead submissions</div>
+                  <div style={{fontSize:13,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>Lead submissions</div>
                 </div>
-                {adminView==="proposals"&&<span style={{fontSize:11,color:"#C9A84C",fontFamily:"DM Mono,monospace"}}>●</span>}
+                {adminView==="proposals"&&<span style={{fontSize:13,color:"#C9A84C",fontFamily:"DM Mono,monospace"}}>●</span>}
               </div>
             </div>
 
@@ -1488,7 +1488,7 @@ function App(){
                 {Object.entries(RAG).map(([k,v])=>(
                   <div key={k} style={{display:"flex",alignItems:"center",gap:4}}>
                     <div style={{width:6,height:6,borderRadius:"50%",background:v.color}}/>
-                    <span style={{fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>{v.label}</span>
+                    <span style={{fontSize:13,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>{v.label}</span>
                   </div>
                 ))}
               </div>
@@ -1498,11 +1498,11 @@ function App(){
                   {loading?"Refreshing…":"↓ Refresh from Sheets"}
                 </button>
               )}
-              <button onClick={saveToSheets} disabled={saving||!dirty} style={{width:"100%",padding:"8px",borderRadius:7,background:dirty?"#C9A84C":"rgba(255,255,255,0.5)",border:dirty?"none":"1px solid rgba(255,255,255,0.5)",color:dirty?"#0a0d12":"rgba(255,255,255,0.62)",fontSize:13,fontWeight:700,cursor:dirty&&!saving?"pointer":"not-allowed",fontFamily:"DM Mono,monospace",display:"flex",alignItems:"center",justifyContent:"center",gap:6,transition:"all .2s"}}>
+              <button onClick={saveToSheets} disabled={saving||!dirty} style={{width:"100%",padding:"8px",borderRadius:7,background:dirty?"#C9A84C":"rgba(255,255,255,0.04)",border:dirty?"none":"1px solid rgba(255,255,255,0.08)",color:dirty?"#0a0d12":"rgba(255,255,255,0.62)",fontSize:13,fontWeight:700,cursor:dirty&&!saving?"pointer":"not-allowed",fontFamily:"DM Mono,monospace",display:"flex",alignItems:"center",justifyContent:"center",gap:6,transition:"all .2s"}}>
                 <span className={saving?"spin":""} style={{display:"inline-block"}}>↑</span>
                 {saving?"Saving…":dirty?"↑ Save to Sheets":"No Unsaved Changes"}
               </button>
-              {!oauthReady&&<div style={{fontSize:11,color:"rgba(245,158,11,0.6)",fontFamily:"DM Mono,monospace",textAlign:"center"}}>Add OAuth Client ID to enable write-back</div>}
+              {!oauthReady&&<div style={{fontSize:13,color:"rgba(245,158,11,0.6)",fontFamily:"DM Mono,monospace",textAlign:"center"}}>Add OAuth Client ID to enable write-back</div>}
             </div>
           </div>
 
@@ -1511,7 +1511,7 @@ function App(){
             {/* Topbar */}
             <div style={{padding:"11px 22px",borderBottom:"1px solid rgba(255,255,255,0.055)",display:"flex",alignItems:"center",justifyContent:"space-between",background:"rgba(255,255,255,0.022)",flexShrink:0}}>
               <div>
-                <div style={{fontSize:11,color:active===0?"#C9A84C":currentWS?.color,fontFamily:"DM Mono,monospace",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:2}}>{active===0?"Integration Command Centre":`${currentWS?.code} — Admin`}</div>
+                <div style={{fontSize:13,color:active===0?"#C9A84C":currentWS?.color,fontFamily:"DM Mono,monospace",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:2}}>{active===0?"Integration Command Centre":`${currentWS?.code} — Admin`}</div>
                 <div style={{fontSize:15,fontFamily:"Playfair Display,serif",color:"#fff"}}>{active===0?"Master Integration Dashboard":currentWS?.name}</div>
               </div>
               <div style={{display:"flex",alignItems:"center",gap:10}}>
