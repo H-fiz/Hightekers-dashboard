@@ -13,7 +13,7 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#0a0d12;color:#fff;font-family:"DM Sans",sans-serif}
 ::-webkit-scrollbar{width:4px}
-::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:4px}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.5);border-radius:4px}
 .spin{animation:spin 1s linear infinite}
 @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px}
@@ -33,6 +33,7 @@ const CONFIG = {
   SHEET_TAB: "Dashboard",
   PROJECT_CARDS_TAB: "ProjectCards",
   MILESTONES_TAB: "Milestones",
+  HISTORY_TAB: "History",
   REFRESH_INTERVAL: 300000, // ms — set to 0 to disable auto-refresh
 };
 
@@ -332,43 +333,43 @@ async function loadProjectCards(){
 const MS_STATUS={
   "Complete":{color:"#22c55e",bg:"rgba(34,197,94,0.1)",border:"rgba(34,197,94,0.25)"},
   "In Progress":{color:"#f59e0b",bg:"rgba(245,158,11,0.1)",border:"rgba(245,158,11,0.25)"},
-  "Not Started":{color:"rgba(255,255,255,0.35)",bg:"rgba(255,255,255,0.04)",border:"rgba(255,255,255,0.1)"},
+  "Not Started":{color:"rgba(255,255,255,0.62)",bg:"rgba(255,255,255,0.5)",border:"rgba(255,255,255,0.5)"},
 };
 function MilestoneStatusBadge({status}){
   const s=MS_STATUS[status]||MS_STATUS["Not Started"];
-  return <span style={{fontSize:9,fontFamily:"DM Mono,monospace",fontWeight:600,padding:"2px 8px",borderRadius:20,background:s.bg,border:`1px solid ${s.border}`,color:s.color,whiteSpace:"nowrap"}}>{status}</span>;
+  return <span style={{fontSize:11,fontFamily:"DM Mono,monospace",fontWeight:600,padding:"2px 8px",borderRadius:20,background:s.bg,border:`1px solid ${s.border}`,color:s.color,whiteSpace:"nowrap"}}>{status}</span>;
 }
 function ProjectCardModal({project,card,milestones,wsColor,onClose}){
   const pplan=plannedPct(project.start,project.end);
   const fmtMD=str=>{if(!str)return"—";const d=new Date(str);return isNaN(d)?str:d.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"});};
-  const Sec=({title,icon,children})=>(<div style={{marginBottom:18}}><div style={{fontSize:9,color:"rgba(255,255,255,0.35)",fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:7,display:"flex",alignItems:"center",gap:6}}>{icon&&<span>{icon}</span>}{title}</div>{children}</div>);
-  const TBox=({val,ph})=>(<div style={{fontSize:13,color:val?"rgba(255,255,255,0.78)":"rgba(255,255,255,0.22)",lineHeight:1.6,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:7,padding:"10px 13px",fontStyle:val?"normal":"italic"}}>{val||ph}</div>);
+  const Sec=({title,icon,children})=>(<div style={{marginBottom:18}}><div style={{fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:7,display:"flex",alignItems:"center",gap:6}}>{icon&&<span>{icon}</span>}{title}</div>{children}</div>);
+  const TBox=({val,ph})=>(<div style={{fontSize:13,color:val?"rgba(255,255,255,0.78)":"rgba(255,255,255,0.5)",lineHeight:1.6,background:"rgba(255,255,255,0.5)",border:"1px solid rgba(255,255,255,0.5)",borderRadius:7,padding:"10px 13px",fontStyle:val?"normal":"italic"}}>{val||ph}</div>);
   const hasCard=card&&(card.description||card.scope||card.outputs||card.kpis||card.dependencies);
   return(
     <div className="overlay" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
       <div style={{background:"#13171f",border:`1px solid ${wsColor}35`,borderRadius:14,width:"100%",maxWidth:680,maxHeight:"90vh",overflow:"hidden",display:"flex",flexDirection:"column"}}>
-        <div style={{padding:"20px 24px 16px",borderBottom:"1px solid rgba(255,255,255,0.07)",background:`linear-gradient(135deg,${wsColor}10 0%,transparent 60%)`}}>
+        <div style={{padding:"20px 24px 16px",borderBottom:"1px solid rgba(255,255,255,0.5)",background:`linear-gradient(135deg,${wsColor}10 0%,transparent 60%)`}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12}}>
             <div style={{flex:1}}>
-              <div style={{fontSize:9,color:wsColor,fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",marginBottom:4}}>{project.id}</div>
+              <div style={{fontSize:11,color:wsColor,fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",marginBottom:4}}>{project.id}</div>
               <div style={{fontSize:19,fontFamily:"Playfair Display,serif",color:"#fff",marginBottom:8,lineHeight:1.3}}>{project.name}</div>
               <div style={{display:"flex",gap:12,flexWrap:"wrap",alignItems:"center"}}>
                 <RAGBadge rag={project.rag} tiny/>
                 <VariancePill actual={project.progress} planned={pplan}/>
-                <span style={{fontSize:10,color:"rgba(255,255,255,0.35)",fontFamily:"DM Mono,monospace"}}>Owner: <span style={{color:"rgba(255,255,255,0.6)"}}>{project.owner}</span></span>
-                <span style={{fontSize:10,color:"rgba(255,255,255,0.35)",fontFamily:"DM Mono,monospace"}}>{fmtDate(project.start)} → {fmtDate(project.end)}</span>
+                <span style={{fontSize:12,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>Owner: <span style={{color:"rgba(255,255,255,0.6)"}}>{project.owner}</span></span>
+                <span style={{fontSize:12,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>{fmtDate(project.start)} → {fmtDate(project.end)}</span>
               </div>
             </div>
-            <button onClick={onClose} style={{background:"transparent",border:"1px solid rgba(255,255,255,0.12)",borderRadius:6,color:"rgba(255,255,255,0.4)",fontSize:14,padding:"4px 10px",cursor:"pointer",flexShrink:0}}>✕</button>
+            <button onClick={onClose} style={{background:"transparent",border:"1px solid rgba(255,255,255,0.5)",borderRadius:6,color:"rgba(255,255,255,0.72)",fontSize:14,padding:"4px 10px",cursor:"pointer",flexShrink:0}}>✕</button>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginTop:12}}>
-            <div><div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{fontSize:8,color:"rgba(255,255,255,0.3)",fontFamily:"DM Mono,monospace"}}>ACTUAL</span><span style={{fontSize:8,color:wsColor,fontFamily:"DM Mono,monospace"}}>{project.progress}%</span></div><Bar pct={project.progress} color={wsColor} h={6}/></div>
-            <div><div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{fontSize:8,color:"rgba(255,255,255,0.3)",fontFamily:"DM Mono,monospace"}}>PLANNED</span><span style={{fontSize:8,color:"rgba(255,255,255,0.4)",fontFamily:"DM Mono,monospace"}}>{pplan}%</span></div><Bar pct={pplan} color="#666e7a" h={6}/></div>
+            <div><div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{fontSize:10,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>ACTUAL</span><span style={{fontSize:10,color:wsColor,fontFamily:"DM Mono,monospace"}}>{project.progress}%</span></div><Bar pct={project.progress} color={wsColor} h={6}/></div>
+            <div><div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{fontSize:10,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>PLANNED</span><span style={{fontSize:10,color:"rgba(255,255,255,0.72)",fontFamily:"DM Mono,monospace"}}>{pplan}%</span></div><Bar pct={pplan} color="#666e7a" h={6}/></div>
           </div>
-          {project.risk&&<div style={{marginTop:10,fontSize:11,color:"#f59e0b",background:"rgba(245,158,11,0.08)",border:"1px solid rgba(245,158,11,0.2)",borderRadius:6,padding:"6px 10px"}}>⚠ {project.risk}</div>}
+          {project.risk&&<div style={{marginTop:10,fontSize:13,color:"#f59e0b",background:"rgba(245,158,11,0.08)",border:"1px solid rgba(245,158,11,0.2)",borderRadius:6,padding:"6px 10px"}}>⚠ {project.risk}</div>}
         </div>
         <div style={{flex:1,overflowY:"auto",padding:"18px 24px"}}>
-          {!hasCard?(<div style={{textAlign:"center",padding:"32px 0",color:"rgba(255,255,255,0.25)",fontSize:13}}>No project card details have been added yet.</div>):(
+          {!hasCard?(<div style={{textAlign:"center",padding:"32px 0",color:"rgba(255,255,255,0.62)",fontSize:13}}>No project card details have been added yet.</div>):(
             <>
               {card.description&&<Sec title="Description" icon="📋"><TBox val={card.description}/></Sec>}
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:18}}>
@@ -383,9 +384,9 @@ function ProjectCardModal({project,card,milestones,wsColor,onClose}){
                 <Sec title="Milestones" icon="🏁">
                   <div style={{display:"flex",flexDirection:"column",gap:6}}>
                     {milestones.map((ms,i)=>(
-                      <div key={i} style={{display:"grid",gridTemplateColumns:"1fr 110px 110px",gap:10,alignItems:"center",padding:"8px 12px",background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:7}}>
+                      <div key={i} style={{display:"grid",gridTemplateColumns:"1fr 110px 110px",gap:10,alignItems:"center",padding:"8px 12px",background:"rgba(255,255,255,0.5)",border:"1px solid rgba(255,255,255,0.5)",borderRadius:7}}>
                         <div style={{fontSize:13,color:"rgba(255,255,255,0.78)"}}>{ms.name||"—"}</div>
-                        <div style={{fontSize:11,color:"rgba(255,255,255,0.4)",fontFamily:"DM Mono,monospace"}}>{fmtMD(ms.date)}</div>
+                        <div style={{fontSize:13,color:"rgba(255,255,255,0.72)",fontFamily:"DM Mono,monospace"}}>{fmtMD(ms.date)}</div>
                         <MilestoneStatusBadge status={ms.status}/>
                       </div>
                     ))}
@@ -400,6 +401,45 @@ function ProjectCardModal({project,card,milestones,wsColor,onClose}){
   );
 }
 
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HISTORY — load weekly snapshots for trend sparklines
+// History tab: A=Date B=ProjectID C=WSCode D=Actual% E=PlannedPct F=RAG
+// ─────────────────────────────────────────────────────────────────────────────
+async function loadHistory(){
+  const {SHEET_ID,API_KEY,HISTORY_TAB}=CONFIG;
+  if(!SHEET_ID||SHEET_ID==="YOUR_SHEET_ID_HERE") return {};
+  try{
+    const res=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(HISTORY_TAB+"!A2:F2000")}?key=${API_KEY}`);
+    const json=await res.json();
+    const rows=json.values||[];
+    // Group by WSCode -> array of {date,actual,planned,rag} sorted by date
+    const byWS={};
+    rows.forEach(row=>{
+      const [date,projId,wsCode,actual,planned,rag]=row;
+      if(!wsCode) return;
+      if(!byWS[wsCode]) byWS[wsCode]=[];
+      byWS[wsCode].push({date:date||"",actual:parseInt(actual)||0,planned:parseInt(planned)||0,rag:rag||"G"});
+    });
+    // Average per WS per date
+    const wsTrends={};
+    Object.entries(byWS).forEach(([ws,rows])=>{
+      const byDate={};
+      rows.forEach(r=>{
+        if(!byDate[r.date]) byDate[r.date]={actuals:[],planneds:[],rags:[]};
+        byDate[r.date].actuals.push(r.actual);
+        byDate[r.date].planneds.push(r.planned);
+        byDate[r.date].rags.push(r.rag);
+      });
+      wsTrends[ws]=Object.entries(byDate).sort((a,b)=>a[0]<b[0]?-1:1).map(([date,d])=>({
+        date,
+        actual:Math.round(d.actuals.reduce((a,b)=>a+b,0)/d.actuals.length),
+        planned:Math.round(d.planneds.reduce((a,b)=>a+b,0)/d.planneds.length),
+      }));
+    });
+    return wsTrends;
+  }catch(e){console.warn("History load failed:",e.message);return {};}
+}
 // ─────────────────────────────────────────────────────────────────────────────
 // HELPERS & CALCULATIONS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -437,16 +477,16 @@ function RAGBadge({rag,tiny}){
 }
 function Bar({pct,color,h=5}){
   const isHex=color.startsWith("#");
-  const fill=pct===0?"rgba(255,255,255,0.09)":isHex?`linear-gradient(90deg,${color}77,${color})`:color;
-  return <div style={{width:"100%",height:h,borderRadius:h,background:"rgba(255,255,255,0.07)",overflow:"hidden"}}><div style={{height:"100%",width:`${Math.min(100,Math.max(0,pct))}%`,borderRadius:h,background:fill,transition:"width 0.4s ease"}}/></div>;
+  const fill=pct===0?"rgba(255,255,255,0.5)":isHex?`linear-gradient(90deg,${color}77,${color})`:color;
+  return <div style={{width:"100%",height:h,borderRadius:h,background:"rgba(255,255,255,0.5)",overflow:"hidden"}}><div style={{height:"100%",width:`${Math.min(100,Math.max(0,pct))}%`,borderRadius:h,background:fill,transition:"width 0.4s ease"}}/></div>;
 }
 function VariancePill({actual,planned}){
   const v=actual-planned,col=varianceColor(v);
-  return <span style={{display:"inline-flex",alignItems:"center",gap:3,padding:"2px 8px",borderRadius:20,background:`${col}18`,border:`1px solid ${col}35`,color:col,fontSize:10,fontFamily:"DM Mono,monospace",fontWeight:700,whiteSpace:"nowrap"}}>{v>=0?"▲":"▼"} {varianceLabel(v)}</span>;
+  return <span style={{display:"inline-flex",alignItems:"center",gap:3,padding:"2px 8px",borderRadius:20,background:`${col}18`,border:`1px solid ${col}35`,color:col,fontSize:12,fontFamily:"DM Mono,monospace",fontWeight:700,whiteSpace:"nowrap"}}>{v>=0?"▲":"▼"} {varianceLabel(v)}</span>;
 }
 function OwnerTag({label,name}){
   if(!name||name==="—")return null;
-  return <span style={{fontSize:9,color:"rgba(255,255,255,0.32)",fontFamily:"DM Mono,monospace"}}><span style={{color:"rgba(255,255,255,0.18)"}}>{label}: </span>{name}</span>;
+  return <span style={{fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}><span style={{color:"rgba(255,255,255,0.5)"}}>{label}: </span>{name}</span>;
 }
 
 // Gantt
@@ -454,7 +494,7 @@ const GANTT_START=new Date("2026-01-01"),GANTT_END=new Date("2026-12-31"),GANTT_
 function ganttPct(d){return Math.max(0,Math.min(100,((new Date(d)-GANTT_START)/GANTT_SPAN)*100));}
 const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 function GanttHeader(){
-  return <div style={{position:"relative",height:18,marginBottom:4}}>{MONTHS.map((m,i)=><div key={m} style={{position:"absolute",left:`${(i/12)*100}%`,fontSize:9,color:"rgba(255,255,255,0.3)",fontFamily:"DM Mono,monospace",transform:"translateX(-50%)"}}>{m}</div>)}</div>;
+  return <div style={{position:"relative",height:18,marginBottom:4}}>{MONTHS.map((m,i)=><div key={m} style={{position:"absolute",left:`${(i/12)*100}%`,fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",transform:"translateX(-50%)"}}>{m}</div>)}</div>;
 }
 function GanttRow({project,color}){
   const left=ganttPct(project.start),right=100-ganttPct(project.end);
@@ -462,18 +502,154 @@ function GanttRow({project,color}){
   const todayPct=ganttPct(TODAY.toISOString().slice(0,10));
   return(
     <div style={{position:"relative",height:22,marginBottom:2}}>
-      <div style={{position:"absolute",top:7,left:0,right:0,height:8,borderRadius:4,background:"rgba(255,255,255,0.06)"}}/>
+      <div style={{position:"absolute",top:7,left:0,right:0,height:8,borderRadius:4,background:"rgba(255,255,255,0.5)"}}/>
       <div style={{position:"absolute",top:7,left:`${left}%`,right:`${right}%`,height:8,borderRadius:4,background:`${color}30`,border:`1px dashed ${color}60`}}/>
       <div style={{position:"absolute",top:7,left:`${left}%`,width:`${(1-(right/100)-(left/100))*project.progress/100*100}%`,height:8,borderRadius:4,background:`linear-gradient(90deg,${bc}88,${bc})`,transition:"width 0.4s"}}/>
-      <div style={{position:"absolute",top:2,left:`${todayPct}%`,width:2,height:18,background:"rgba(255,255,255,0.55)",borderRadius:2}}/>
+      <div style={{position:"absolute",top:2,left:`${todayPct}%`,width:2,height:18,background:"rgba(255,255,255,0.82)",borderRadius:2}}/>
+    </div>
+  );
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SPARKLINE — trend chart for workstream progress
+// ─────────────────────────────────────────────────────────────────────────────
+function Sparkline({data,color,width=80,height=28}){
+  if(!data||data.length<2) return(
+    <div style={{width,height,display:"flex",alignItems:"center",justifyContent:"center"}}>
+      <span style={{fontSize:11,color:"rgba(255,255,255,0.35)",fontFamily:"DM Mono,monospace"}}>No data</span>
+    </div>
+  );
+  const vals=data.map(d=>d.actual);
+  const min=0,max=100;
+  const pts=vals.map((v,i)=>{
+    const x=(i/(vals.length-1))*width;
+    const y=height-((v-min)/(max-min))*(height-4)-2;
+    return `${x},${y}`;
+  }).join(' ');
+  const last=vals[vals.length-1];
+  const prev=vals[vals.length-2];
+  const trend=last-prev;
+  const trendColor=trend>0?"#22c55e":trend<0?"#ef4444":"rgba(255,255,255,0.4)";
+  return(
+    <div style={{display:"flex",alignItems:"center",gap:6}}>
+      <svg width={width} height={height} style={{overflow:"visible"}}>
+        <polyline points={pts} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.7"/>
+        {vals.map((v,i)=>{
+          const x=(i/(vals.length-1))*width;
+          const y=height-((v-min)/(max-min))*(height-4)-2;
+          return i===vals.length-1?<circle key={i} cx={x} cy={y} r={2.5} fill={color}/>:null;
+        })}
+      </svg>
+      <span style={{fontSize:11,color:trendColor,fontFamily:"DM Mono,monospace",fontWeight:700,whiteSpace:"nowrap"}}>
+        {trend>0?"+":""}{trend}%
+      </span>
     </div>
   );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// CROSS-WORKSTREAM GANTT
+// ─────────────────────────────────────────────────────────────────────────────
+function CrossGantt({wsList}){
+  const [expandedWS,setExpandedWS]=useState(null);
+  const GANTT_S=new Date("2026-01-01"),GANTT_E=new Date("2026-12-31");
+  const SPAN=GANTT_E-GANTT_S;
+  const pct=d=>Math.max(0,Math.min(100,((new Date(d)-GANTT_S)/SPAN)*100));
+  const todayPct=pct(new Date());
+  const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+  return(
+    <div>
+      <div style={{fontSize:12,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:12}}>Cross-Workstream Gantt — 2026</div>
+      {/* Month headers */}
+      <div style={{display:"grid",gridTemplateColumns:"200px 1fr",gap:0,marginBottom:4}}>
+        <div/>
+        <div style={{position:"relative",height:18}}>
+          {MONTHS.map((m,i)=>(
+            <div key={m} style={{position:"absolute",left:`${(i/12)*100}%`,fontSize:11,color:"rgba(255,255,255,0.5)",fontFamily:"DM Mono,monospace",transform:"translateX(-50%)"}}>{m}</div>
+          ))}
+        </div>
+      </div>
+      {/* Workstream rows */}
+      {wsList.map(ws=>{
+        const allProj=ws.initiatives.flatMap(i=>i.projects);
+        const isExpanded=expandedWS===ws.code;
+        const wsActPct=allProj.length?Math.round(allProj.reduce((a,p)=>a+p.progress,0)/allProj.length):0;
+        const wsRagColor={"G":"#22c55e","A":"#f59e0b","R":"#ef4444"}[ws.initiatives.flatMap(i=>i.projects).reduce((w,p)=>p.rag==="R"?"R":p.rag==="A"&&w!=="R"?"A":w,"G")]||"#22c55e";
+        return(
+          <div key={ws.code} style={{marginBottom:2}}>
+            {/* WS summary row */}
+            <div style={{display:"grid",gridTemplateColumns:"200px 1fr",gap:0,alignItems:"center",cursor:"pointer",padding:"3px 0"}}
+              onClick={()=>setExpandedWS(isExpanded?null:ws.code)}>
+              <div style={{display:"flex",alignItems:"center",gap:6,paddingRight:8}}>
+                <span style={{fontSize:13,color:ws.color}}>{ws.icon}</span>
+                <span style={{fontSize:12,color:"rgba(255,255,255,0.9)",fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{ws.code}</span>
+                <span style={{fontSize:11,color:wsRagColor,marginLeft:"auto"}}>●</span>
+                <span style={{fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>{isExpanded?"▲":"▼"}</span>
+              </div>
+              <div style={{position:"relative",height:14,background:"rgba(255,255,255,0.05)",borderRadius:3,overflow:"hidden"}}>
+                {/* WS extent bar */}
+                {(()=>{
+                  const starts=allProj.map(p=>new Date(p.start)).filter(d=>!isNaN(d));
+                  const ends=allProj.map(p=>new Date(p.end)).filter(d=>!isNaN(d));
+                  if(!starts.length) return null;
+                  const wsStart=new Date(Math.min(...starts));
+                  const wsEnd=new Date(Math.max(...ends));
+                  const left=pct(wsStart);
+                  const right=100-pct(wsEnd);
+                  const fillWidth=(pct(wsEnd)-pct(wsStart))*(wsActPct/100);
+                  return(
+                    <>
+                      <div style={{position:"absolute",top:0,bottom:0,left:`${left}%`,right:`${right}%`,background:`${ws.color}25`,borderRadius:2}}/>
+                      <div style={{position:"absolute",top:0,bottom:0,left:`${left}%`,width:`${fillWidth}%`,background:ws.color,borderRadius:2,opacity:0.8}}/>
+                    </>
+                  );
+                })()}
+                {/* Today line */}
+                <div style={{position:"absolute",top:0,bottom:0,left:`${todayPct}%`,width:1.5,background:"rgba(255,255,255,0.7)"}}/>
+              </div>
+            </div>
+            {/* Expanded project rows */}
+            {isExpanded&&allProj.map((pr,pi)=>{
+              const left=pct(pr.start),right=100-pct(pr.end);
+              const planPct=plannedPct(pr.start,pr.end);
+              const fillW=(pct(pr.end)-pct(pr.start))*(pr.progress/100);
+              const ragC={"G":"#22c55e","A":"#f59e0b","R":"#ef4444"}[pr.rag]||"#22c55e";
+              return(
+                <div key={pr.id} style={{display:"grid",gridTemplateColumns:"200px 1fr",gap:0,alignItems:"center",padding:"2px 0",background:pi%2===0?"transparent":"rgba(255,255,255,0.015)"}}>
+                  <div style={{paddingLeft:16,paddingRight:8,overflow:"hidden"}}>
+                    <div style={{fontSize:11,color:"rgba(255,255,255,0.82)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}} title={pr.name}>{pr.name}</div>
+                    <div style={{fontSize:10,color:"rgba(255,255,255,0.5)",fontFamily:"DM Mono,monospace"}}>{pr.progress}% <span style={{color:ragC}}>●</span></div>
+                  </div>
+                  <div style={{position:"relative",height:10,background:"rgba(255,255,255,0.04)",borderRadius:2,overflow:"hidden"}}>
+                    <div style={{position:"absolute",top:0,bottom:0,left:`${left}%`,right:`${right}%`,background:`${ws.color}20`,border:`1px dashed ${ws.color}50`,borderRadius:2}}/>
+                    <div style={{position:"absolute",top:0,bottom:0,left:`${left}%`,width:`${fillW}%`,background:ws.color,borderRadius:2,opacity:0.85}}/>
+                    <div style={{position:"absolute",top:0,bottom:0,left:`${todayPct}%`,width:1,background:"rgba(255,255,255,0.6)"}}/>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        );
+      })}
+      {/* Legend */}
+      <div style={{display:"flex",gap:16,marginTop:10,flexWrap:"wrap"}}>
+        {[["rgba(255,255,255,0.25)","1px dashed rgba(255,255,255,0.4)","Planned duration"],["#4C9AC9","none","Actual progress"],["rgba(255,255,255,0.7)","none","Today"]].map(([bg,border,label],i)=>(
+          <div key={i} style={{display:"flex",alignItems:"center",gap:5}}>
+            {i<2?<div style={{width:20,height:6,borderRadius:2,background:bg,border}}/>:<div style={{width:2,height:12,borderRadius:1,background:bg}}/>}
+            <span style={{fontSize:11,color:"rgba(255,255,255,0.5)",fontFamily:"DM Mono,monospace"}}>{label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+// ─────────────────────────────────────────────────────────────────────────────
 // MASTER DASHBOARD
 // ─────────────────────────────────────────────────────────────────────────────
-function Master({wsList,onSelect,lastRefresh}){
+function Master({wsList,onSelect,lastRefresh,history}){
+  const [masterView,setMasterView]=useState('overview');
   const all=wsList.flatMap(allProjects);
   const rc={G:0,A:0,R:0};all.forEach(p=>rc[p.rag]++);
   const overallActual=avgNums(wsList.map(ws=>wsActual(ws)));
@@ -484,7 +660,7 @@ function Master({wsList,onSelect,lastRefresh}){
   const totalProjects=all.length;
   return(
     <div>
-      {lastRefresh&&<div style={{fontSize:9,color:"rgba(255,255,255,0.2)",fontFamily:"DM Mono,monospace",marginBottom:14,textAlign:"right"}}>Last refreshed: {lastRefresh}</div>}
+      {lastRefresh&&<div style={{fontSize:11,color:"rgba(255,255,255,0.5)",fontFamily:"DM Mono,monospace",marginBottom:14,textAlign:"right"}}>Last refreshed: {lastRefresh}</div>}
       <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:10,marginBottom:20}}>
         {[
           {l:"Actual Progress",v:`${overallActual}%`,sub:"across all workstreams"},
@@ -493,10 +669,10 @@ function Master({wsList,onSelect,lastRefresh}){
           {l:"Initiatives / Projects",v:`${totalInitiatives} / ${totalProjects}`,sub:`${totalInitiatives} initiatives · ${totalProjects} projects`},
           {l:"Open Risks",v:risks.length,sub:risks.length>0?"requiring attention":"none logged",col:risks.length>0?"#ef4444":null},
         ].map((k,i)=>(
-          <div key={i} style={{background:k.col?`${k.col}0E`:"rgba(255,255,255,0.03)",border:`1px solid ${k.col?k.col+"25":"rgba(255,255,255,0.07)"}`,borderRadius:10,padding:"15px 16px"}}>
-            <div style={{fontSize:10,color:"rgba(255,255,255,0.38)",fontFamily:"DM Mono,monospace",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:5}}>{k.l}</div>
+          <div key={i} style={{background:k.col?`${k.col}0E`:"rgba(255,255,255,0.5)",border:`1px solid ${k.col?k.col+"25":"rgba(255,255,255,0.5)"}`,borderRadius:10,padding:"15px 16px"}}>
+            <div style={{fontSize:12,color:"rgba(255,255,255,0.72)",fontFamily:"DM Mono,monospace",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:5}}>{k.l}</div>
             <div style={{fontSize:26,fontFamily:"Playfair Display,serif",color:k.col||"#fff",lineHeight:1,marginBottom:3}}>{k.v}</div>
-            <div style={{fontSize:11,color:"rgba(255,255,255,0.28)"}}>{k.sub}</div>
+            <div style={{fontSize:13,color:"rgba(255,255,255,0.62)"}}>{k.sub}</div>
           </div>
         ))}
       </div>
@@ -504,63 +680,73 @@ function Master({wsList,onSelect,lastRefresh}){
         {["G","A","R"].map(r=>(
           <div key={r} style={{background:RAG[r].bg,border:`1px solid ${RAG[r].border}`,borderRadius:10,padding:"13px 16px",display:"flex",alignItems:"center",gap:12}}>
             <div style={{width:36,height:36,borderRadius:"50%",background:RAG[r].color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,fontWeight:700,color:"#0a0d12",flexShrink:0}}>{rc[r]}</div>
-            <div><div style={{fontSize:13,color:RAG[r].color,fontWeight:600}}>{RAG[r].label}</div><div style={{fontSize:11,color:"rgba(255,255,255,0.32)"}}>projects</div></div>
+            <div><div style={{fontSize:13,color:RAG[r].color,fontWeight:600}}>{RAG[r].label}</div><div style={{fontSize:13,color:"rgba(255,255,255,0.62)"}}>projects</div></div>
           </div>
         ))}
       </div>
-      <div style={{fontSize:10,color:"rgba(255,255,255,0.28)",fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:9}}>Workstream Status — click to drill in</div>
+      {/* Tab buttons */}
+      <div style={{display:"flex",gap:6,marginBottom:16}}>
+        {[["overview","Overview"],["gantt","Cross-Workstream Gantt"]].map(([v,label])=>(
+          <button key={v} onClick={()=>setMasterView(v)} style={{padding:"5px 14px",borderRadius:6,cursor:"pointer",fontSize:12,fontFamily:"DM Mono,monospace",border:`1px solid ${masterView===v?"rgba(201,168,76,0.6)":"rgba(255,255,255,0.15)"}`,background:masterView===v?"rgba(201,168,76,0.15)":"transparent",color:masterView===v?"#C9A84C":"rgba(255,255,255,0.6)",transition:"all 0.15s"}}>{label}</button>
+        ))}
+      </div>
+      {masterView==="gantt"&&<CrossGantt wsList={wsList}/>}
+      {masterView==="overview"&&<div style={{fontSize:12,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:9}}>Workstream Status — click to drill in</div>}
+      {masterView==="overview"&&
       <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:9,marginBottom:26}}>
         {wsList.map(ws=>{
           const act=wsActual(ws),plan=wsPlanned(ws),rag=wsRag(ws);
           return(
-            <div key={ws.id} onClick={()=>onSelect(ws.id)} style={{background:"rgba(255,255,255,0.022)",border:"1px solid rgba(255,255,255,0.055)",borderLeft:`3px solid ${ws.color}`,borderRadius:10,padding:"13px 15px",cursor:"pointer",transition:"background 0.16s"}}
-              onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.055)"}
-              onMouseLeave={e=>e.currentTarget.style.background="rgba(255,255,255,0.022)"}>
+            <div key={ws.id} onClick={()=>onSelect(ws.id)} style={{background:"rgba(255,255,255,0.5)",border:"1px solid rgba(255,255,255,0.5)",borderLeft:`3px solid ${ws.color}`,borderRadius:10,padding:"13px 15px",cursor:"pointer",transition:"background 0.16s"}}
+              onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.5)"}
+              onMouseLeave={e=>e.currentTarget.style.background="rgba(255,255,255,0.5)"}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:9,gap:8}}>
                 <div style={{flex:1}}>
-                  <div style={{fontSize:9,color:ws.color,fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",marginBottom:2}}>{ws.code}</div>
+                  <div style={{fontSize:11,color:ws.color,fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",marginBottom:2}}>{ws.code}</div>
                   <div style={{fontSize:13,fontWeight:600,color:"#fff",lineHeight:1.3}}>{ws.name}</div>
-                  <div style={{fontSize:10,color:"rgba(255,255,255,0.32)",marginTop:3}}>Lead: <span style={{color:"rgba(255,255,255,0.6)"}}>{ws.lead}</span></div>
+                  <div style={{fontSize:12,color:"rgba(255,255,255,0.62)",marginTop:3}}>Lead: <span style={{color:"rgba(255,255,255,0.6)"}}>{ws.lead}</span></div>
                 </div>
                 <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:5}}><RAGBadge rag={rag} tiny/><VariancePill actual={act} planned={plan}/></div>
               </div>
               <div style={{marginBottom:5}}>
-                <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{fontSize:9,color:"rgba(255,255,255,0.35)",fontFamily:"DM Mono,monospace"}}>ACTUAL</span><span style={{fontSize:9,color:ws.color,fontFamily:"DM Mono,monospace"}}>{act}%</span></div>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>ACTUAL</span><span style={{fontSize:11,color:ws.color,fontFamily:"DM Mono,monospace"}}>{act}%</span></div>
                 <Bar pct={act} color={ws.color}/>
               </div>
               <div>
-                <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{fontSize:9,color:"rgba(255,255,255,0.35)",fontFamily:"DM Mono,monospace"}}>PLANNED</span><span style={{fontSize:9,color:"rgba(255,255,255,0.45)",fontFamily:"DM Mono,monospace"}}>{plan}%</span></div>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>PLANNED</span><span style={{fontSize:11,color:"rgba(255,255,255,0.72)",fontFamily:"DM Mono,monospace"}}>{plan}%</span></div>
                 <Bar pct={plan} color="#666e7a"/>
               </div>
               <div style={{display:"flex",gap:12,marginTop:8}}>
-                <span style={{fontSize:10,color:"rgba(255,255,255,0.28)"}}>{ws.initiatives.length} initiatives</span>
-                <span style={{fontSize:10,color:"rgba(255,255,255,0.28)"}}>{allProjects(ws).length} projects</span>
+                <span style={{fontSize:12,color:"rgba(255,255,255,0.62)"}}>{ws.initiatives.length} initiatives</span>
+                <span style={{fontSize:12,color:"rgba(255,255,255,0.62)"}}>{allProjects(ws).length} projects</span>
               </div>
+              {history[ws.code]&&history[ws.code].length>=2&&<div style={{marginTop:6}}><Sparkline data={history[ws.code]} color={ws.color} width={70} height={22}/></div>}
             </div>
           );
         })}
       </div>
-      <div style={{fontSize:10,color:"rgba(255,255,255,0.28)",fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:9}}>Consolidated Risk Register</div>
+      }
+      <div style={{fontSize:12,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:9}}>Consolidated Risk Register</div>
       {risks.length>0?(
-        <div style={{border:"1px solid rgba(255,255,255,0.07)",borderRadius:10,overflow:"hidden"}}>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 70px 80px",padding:"7px 16px",background:"rgba(255,255,255,0.025)",borderBottom:"1px solid rgba(255,255,255,0.055)"}}>
-            {["Risk / Issue","WS","Status"].map((h,i)=><span key={i} style={{fontSize:9,color:"rgba(255,255,255,0.28)",fontFamily:"DM Mono,monospace",letterSpacing:"0.08em",textTransform:"uppercase"}}>{h}</span>)}
+        <div style={{border:"1px solid rgba(255,255,255,0.5)",borderRadius:10,overflow:"hidden"}}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 70px 80px",padding:"7px 16px",background:"rgba(255,255,255,0.5)",borderBottom:"1px solid rgba(255,255,255,0.5)"}}>
+            {["Risk / Issue","WS","Status"].map((h,i)=><span key={i} style={{fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",letterSpacing:"0.08em",textTransform:"uppercase"}}>{h}</span>)}
           </div>
           {risks.map((r,i)=>(
-            <div key={i} style={{display:"grid",gridTemplateColumns:"1fr 70px 80px",padding:"10px 16px",alignItems:"center",borderBottom:i<risks.length-1?"1px solid rgba(255,255,255,0.04)":"none",background:i%2===0?"transparent":"rgba(255,255,255,0.012)"}}>
+            <div key={i} style={{display:"grid",gridTemplateColumns:"1fr 70px 80px",padding:"10px 16px",alignItems:"center",borderBottom:i<risks.length-1?"1px solid rgba(255,255,255,0.5)":"none",background:i%2===0?"transparent":"rgba(255,255,255,0.5)"}}>
               <div>
                 <div style={{fontSize:12,color:"rgba(255,255,255,0.8)",marginBottom:1}}>{r.name}</div>
-                <div style={{fontSize:10,color:"rgba(255,255,255,0.3)",marginBottom:3,fontFamily:"DM Mono,monospace"}}>Project owner: {r.owner}</div>
-                <div style={{fontSize:11,color:"#f59e0b"}}>⚠ {r.risk}</div>
+                <div style={{fontSize:12,color:"rgba(255,255,255,0.62)",marginBottom:3,fontFamily:"DM Mono,monospace"}}>Project owner: {r.owner}</div>
+                <div style={{fontSize:13,color:"#f59e0b"}}>⚠ {r.risk}</div>
               </div>
-              <div style={{fontSize:11,color:r.wsColor,fontFamily:"DM Mono,monospace"}}>{r.wsCode}</div>
+              <div style={{fontSize:13,color:r.wsColor,fontFamily:"DM Mono,monospace"}}>{r.wsCode}</div>
               <RAGBadge rag={r.rag} tiny/>
             </div>
           ))}
         </div>
       ):(
-        <div style={{border:"1px solid rgba(255,255,255,0.06)",borderRadius:10,padding:18,textAlign:"center"}}>
-          <div style={{fontSize:11,color:"rgba(255,255,255,0.22)"}}>No risks logged.</div>
+        <div style={{border:"1px solid rgba(255,255,255,0.5)",borderRadius:10,padding:18,textAlign:"center"}}>
+          <div style={{fontSize:13,color:"rgba(255,255,255,0.5)"}}>No risks logged.</div>
         </div>
       )}
     </div>
@@ -578,7 +764,7 @@ function WSDash({ws,cardData,onCardOpen}){
   const act=wsActual(ws),plan=wsPlanned(ws),v=act-plan;
   const risks=all.filter(p=>p.risk);
   const tabBtn=(label,val)=>(
-    <button onClick={()=>setView(val)} style={{padding:"5px 14px",borderRadius:6,cursor:"pointer",fontSize:11,fontFamily:"DM Mono,monospace",border:`1px solid ${view===val?ws.color+"60":"rgba(255,255,255,0.1)"}`,background:view===val?`${ws.color}18`:"transparent",color:view===val?ws.color:"rgba(255,255,255,0.45)",transition:"all 0.15s"}}>{label}</button>
+    <button onClick={()=>setView(val)} style={{padding:"5px 14px",borderRadius:6,cursor:"pointer",fontSize:13,fontFamily:"DM Mono,monospace",border:`1px solid ${view===val?ws.color+"60":"rgba(255,255,255,0.5)"}`,background:view===val?`${ws.color}18`:"transparent",color:view===val?ws.color:"rgba(255,255,255,0.72)",transition:"all 0.15s"}}>{label}</button>
   );
   return(
     <div>
@@ -587,17 +773,17 @@ function WSDash({ws,cardData,onCardOpen}){
         <div style={{display:"flex",alignItems:"center",gap:14}}>
           <div style={{fontSize:28,color:ws.color}}>{ws.icon}</div>
           <div>
-            <div style={{fontSize:9,color:ws.color,fontFamily:"DM Mono,monospace",letterSpacing:"0.12em",marginBottom:3}}>{ws.code} · {ws.subtitle}</div>
+            <div style={{fontSize:11,color:ws.color,fontFamily:"DM Mono,monospace",letterSpacing:"0.12em",marginBottom:3}}>{ws.code} · {ws.subtitle}</div>
             <div style={{fontSize:18,fontFamily:"Playfair Display,serif",color:"#fff"}}>{ws.name}</div>
-            <div style={{fontSize:11,color:"rgba(255,255,255,0.38)",marginTop:3}}>
+            <div style={{fontSize:13,color:"rgba(255,255,255,0.72)",marginTop:3}}>
               Workstream Lead: <span style={{color:"rgba(255,255,255,0.72)"}}>{ws.lead}</span>
             </div>
           </div>
         </div>
         <div style={{textAlign:"right"}}>
           <div style={{display:"flex",alignItems:"flex-end",gap:12,justifyContent:"flex-end",marginBottom:4}}>
-            <div><div style={{fontSize:9,color:"rgba(255,255,255,0.35)",fontFamily:"DM Mono,monospace",marginBottom:1}}>ACTUAL</div><div style={{fontSize:34,fontFamily:"Playfair Display,serif",color:ws.color,lineHeight:1}}>{act}%</div></div>
-            <div style={{paddingBottom:4}}><div style={{fontSize:9,color:"rgba(255,255,255,0.35)",fontFamily:"DM Mono,monospace",marginBottom:1}}>PLANNED</div><div style={{fontSize:22,fontFamily:"Playfair Display,serif",color:"rgba(255,255,255,0.45)",lineHeight:1}}>{plan}%</div></div>
+            <div><div style={{fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",marginBottom:1}}>ACTUAL</div><div style={{fontSize:34,fontFamily:"Playfair Display,serif",color:ws.color,lineHeight:1}}>{act}%</div></div>
+            <div style={{paddingBottom:4}}><div style={{fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",marginBottom:1}}>PLANNED</div><div style={{fontSize:22,fontFamily:"Playfair Display,serif",color:"rgba(255,255,255,0.72)",lineHeight:1}}>{plan}%</div></div>
           </div>
           <VariancePill actual={act} planned={plan}/>
         </div>
@@ -606,8 +792,8 @@ function WSDash({ws,cardData,onCardOpen}){
       {/* KPIs */}
       <div style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:9,marginBottom:18}}>
         {[{l:"Initiatives",v:ws.initiatives.length},{l:"Projects",v:all.length},{l:"Variance",v:varianceLabel(v),col:varianceColor(v)},{l:"On Track",v:rc.G,col:RAG.G.color},{l:"At Risk",v:rc.A,col:RAG.A.color},{l:"Off Track",v:rc.R,col:RAG.R.color}].map((k,i)=>(
-          <div key={i} style={{background:k.col?`${k.col}0C`:"rgba(255,255,255,0.03)",border:`1px solid ${k.col?k.col+"20":"rgba(255,255,255,0.06)"}`,borderRadius:8,padding:"11px 12px"}}>
-            <div style={{fontSize:9,color:"rgba(255,255,255,0.36)",fontFamily:"DM Mono,monospace",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:4}}>{k.l}</div>
+          <div key={i} style={{background:k.col?`${k.col}0C`:"rgba(255,255,255,0.5)",border:`1px solid ${k.col?k.col+"20":"rgba(255,255,255,0.5)"}`,borderRadius:8,padding:"11px 12px"}}>
+            <div style={{fontSize:11,color:"rgba(255,255,255,0.72)",fontFamily:"DM Mono,monospace",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:4}}>{k.l}</div>
             <div style={{fontSize:20,fontFamily:"Playfair Display,serif",color:k.col||"#fff"}}>{k.v}</div>
           </div>
         ))}
@@ -622,12 +808,12 @@ function WSDash({ws,cardData,onCardOpen}){
           {ws.initiatives.map(init=>{
             const open=openInit===init.id,ip=initActual(init),iplan=initPlanned(init),ir=initRag(init);
             return(
-              <div key={init.id} style={{border:`1px solid ${open?ws.color+"40":"rgba(255,255,255,0.055)"}`,borderRadius:9,overflow:"hidden",transition:"border-color 0.18s"}}>
+              <div key={init.id} style={{border:`1px solid ${open?ws.color+"40":"rgba(255,255,255,0.5)"}`,borderRadius:9,overflow:"hidden",transition:"border-color 0.18s"}}>
                 {/* initiative header */}
-                <div onClick={()=>setOpenInit(open?null:init.id)} style={{padding:"12px 15px",cursor:"pointer",background:open?`${ws.color}09`:"rgba(255,255,255,0.01)",display:"flex",alignItems:"center",gap:10}}>
+                <div onClick={()=>setOpenInit(open?null:init.id)} style={{padding:"12px 15px",cursor:"pointer",background:open?`${ws.color}09`:"rgba(255,255,255,0.5)",display:"flex",alignItems:"center",gap:10}}>
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:5,flexWrap:"wrap"}}>
-                      <span style={{fontSize:9,color:ws.color,fontFamily:"DM Mono,monospace"}}>{init.id}</span>
+                      <span style={{fontSize:11,color:ws.color,fontFamily:"DM Mono,monospace"}}>{init.id}</span>
                       <span style={{fontSize:13,fontWeight:600,color:"#fff"}}>{init.name}</span>
                       <RAGBadge rag={ir} tiny/>
                       <VariancePill actual={ip} planned={iplan}/>
@@ -638,41 +824,41 @@ function WSDash({ws,cardData,onCardOpen}){
                     </div>
                     <div style={{display:"flex",gap:8,alignItems:"center"}}>
                       <div style={{flex:1}}>
-                        <div style={{display:"flex",justifyContent:"space-between",marginBottom:2}}><span style={{fontSize:8,color:"rgba(255,255,255,0.3)",fontFamily:"DM Mono,monospace"}}>ACTUAL</span><span style={{fontSize:8,color:ws.color,fontFamily:"DM Mono,monospace"}}>{ip}%</span></div>
+                        <div style={{display:"flex",justifyContent:"space-between",marginBottom:2}}><span style={{fontSize:10,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>ACTUAL</span><span style={{fontSize:10,color:ws.color,fontFamily:"DM Mono,monospace"}}>{ip}%</span></div>
                         <Bar pct={ip} color={ws.color}/>
                       </div>
                       <div style={{flex:1}}>
-                        <div style={{display:"flex",justifyContent:"space-between",marginBottom:2}}><span style={{fontSize:8,color:"rgba(255,255,255,0.3)",fontFamily:"DM Mono,monospace"}}>PLANNED</span><span style={{fontSize:8,color:"rgba(255,255,255,0.45)",fontFamily:"DM Mono,monospace"}}>{iplan}%</span></div>
+                        <div style={{display:"flex",justifyContent:"space-between",marginBottom:2}}><span style={{fontSize:10,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>PLANNED</span><span style={{fontSize:10,color:"rgba(255,255,255,0.72)",fontFamily:"DM Mono,monospace"}}>{iplan}%</span></div>
                         <Bar pct={iplan} color="#666e7a"/>
                       </div>
                     </div>
                   </div>
-                  <span style={{fontSize:10,color:"rgba(255,255,255,0.22)",flexShrink:0}}>{init.projects.length}p</span>
-                  <span style={{fontSize:10,color:"rgba(255,255,255,0.22)"}}>{open?"▲":"▼"}</span>
+                  <span style={{fontSize:12,color:"rgba(255,255,255,0.5)",flexShrink:0}}>{init.projects.length}p</span>
+                  <span style={{fontSize:12,color:"rgba(255,255,255,0.5)"}}>{open?"▲":"▼"}</span>
                 </div>
 
                 {/* project rows */}
                 {open&&(
-                  <div style={{borderTop:"1px solid rgba(255,255,255,0.055)"}}>
-                    <div style={{display:"grid",gridTemplateColumns:"1fr 56px 56px 90px 130px 80px",padding:"6px 15px",background:"rgba(255,255,255,0.02)",borderBottom:"1px solid rgba(255,255,255,0.045)"}}>
+                  <div style={{borderTop:"1px solid rgba(255,255,255,0.5)"}}>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 56px 56px 90px 130px 80px",padding:"6px 15px",background:"rgba(255,255,255,0.5)",borderBottom:"1px solid rgba(255,255,255,0.5)"}}>
                       {["Project / Owner","Actual","Planned","Variance","Dates","RAG"].map((h,i)=>(
-                        <span key={i} style={{fontSize:9,color:"rgba(255,255,255,0.26)",fontFamily:"DM Mono,monospace",letterSpacing:"0.07em",textTransform:"uppercase"}}>{h}</span>
+                        <span key={i} style={{fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",letterSpacing:"0.07em",textTransform:"uppercase"}}>{h}</span>
                       ))}
                     </div>
                     {init.projects.map((pr,pi)=>{
                       const pplan=plannedPct(pr.start,pr.end);
                       return(
-                        <div key={pr.id} style={{display:"grid",gridTemplateColumns:"1fr 56px 56px 90px 130px 80px",padding:"9px 15px",alignItems:"center",borderBottom:"1px solid rgba(255,255,255,0.032)",background:pi%2===0?"transparent":"rgba(255,255,255,0.011)"}}>
+                        <div key={pr.id} style={{display:"grid",gridTemplateColumns:"1fr 56px 56px 90px 130px 80px",padding:"9px 15px",alignItems:"center",borderBottom:"1px solid rgba(255,255,255,0.5)",background:pi%2===0?"transparent":"rgba(255,255,255,0.5)"}}>
                           <div>
-                            <div onClick={()=>onCardOpen&&onCardOpen({project:pr,wsColor:ws.color})} style={{fontSize:12,color:"rgba(255,255,255,0.82)",marginBottom:2,cursor:"pointer",display:"flex",alignItems:"center",gap:5}}>{pr.name}<span style={{fontSize:9,color:"rgba(255,255,255,0.2)",fontFamily:"DM Mono,monospace"}}>▸ card</span></div>
+                            <div onClick={()=>onCardOpen&&onCardOpen({project:pr,wsColor:ws.color})} style={{fontSize:12,color:"rgba(255,255,255,0.82)",marginBottom:2,cursor:"pointer",display:"flex",alignItems:"center",gap:5}}>{pr.name}<span style={{fontSize:11,color:"rgba(255,255,255,0.5)",fontFamily:"DM Mono,monospace"}}>▸ card</span></div>
                             {/* project owner displayed on its own line */}
                             <OwnerTag label="Project Owner" name={pr.owner}/>
-                            {pr.risk&&<div style={{fontSize:10,color:"#f59e0b",marginTop:4}}>⚠ {pr.risk}</div>}
+                            {pr.risk&&<div style={{fontSize:12,color:"#f59e0b",marginTop:4}}>⚠ {pr.risk}</div>}
                           </div>
-                          <div style={{fontSize:11,color:ws.color,fontFamily:"DM Mono,monospace",fontWeight:600}}>{pr.progress}%</div>
-                          <div style={{fontSize:11,color:"rgba(255,255,255,0.45)",fontFamily:"DM Mono,monospace"}}>{pplan}%</div>
+                          <div style={{fontSize:13,color:ws.color,fontFamily:"DM Mono,monospace",fontWeight:600}}>{pr.progress}%</div>
+                          <div style={{fontSize:13,color:"rgba(255,255,255,0.72)",fontFamily:"DM Mono,monospace"}}>{pplan}%</div>
                           <VariancePill actual={pr.progress} planned={pplan}/>
-                          <div style={{fontSize:9,color:"rgba(255,255,255,0.35)",fontFamily:"DM Mono,monospace",lineHeight:1.7}}>{fmtDate(pr.start)}<br/>→ {fmtDate(pr.end)}</div>
+                          <div style={{fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",lineHeight:1.7}}>{fmtDate(pr.start)}<br/>→ {fmtDate(pr.end)}</div>
                           <RAGBadge rag={pr.rag} tiny/>
                         </div>
                       );
@@ -687,20 +873,20 @@ function WSDash({ws,cardData,onCardOpen}){
 
       {/* GANTT VIEW */}
       {view==="gantt"&&(
-        <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:10,padding:"16px 18px",marginBottom:22}}>
+        <div style={{background:"rgba(255,255,255,0.5)",border:"1px solid rgba(255,255,255,0.5)",borderRadius:10,padding:"16px 18px",marginBottom:22}}>
           <div style={{display:"flex",gap:16,marginBottom:12,flexWrap:"wrap"}}>
-            {[["rgba(255,255,255,0.25)","1px dashed rgba(255,255,255,0.4)","Planned duration"],["#4C9AC9","none","Actual progress"],["rgba(255,255,255,0.55)","none","Today"]].map(([bg,border,label],i)=>(
+            {[["rgba(255,255,255,0.62)","1px dashed rgba(255,255,255,0.72)","Planned duration"],["#4C9AC9","none","Actual progress"],["rgba(255,255,255,0.82)","none","Today"]].map(([bg,border,label],i)=>(
               <div key={i} style={{display:"flex",alignItems:"center",gap:6}}>
                 {i<2?<div style={{width:24,height:7,borderRadius:3,background:bg,border}}/>:<div style={{width:2,height:14,borderRadius:2,background:bg}}/>}
-                <span style={{fontSize:10,color:"rgba(255,255,255,0.4)",fontFamily:"DM Mono,monospace"}}>{label}</span>
+                <span style={{fontSize:12,color:"rgba(255,255,255,0.72)",fontFamily:"DM Mono,monospace"}}>{label}</span>
               </div>
             ))}
           </div>
           <GanttHeader/>
           {ws.initiatives.map(init=>(
             <div key={init.id} style={{marginBottom:14}}>
-              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:5,paddingBottom:4,borderBottom:"1px solid rgba(255,255,255,0.06)"}}>
-                <span style={{fontSize:10,color:ws.color,fontFamily:"DM Mono,monospace",letterSpacing:"0.08em"}}>{init.id} {init.name}</span>
+              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:5,paddingBottom:4,borderBottom:"1px solid rgba(255,255,255,0.5)"}}>
+                <span style={{fontSize:12,color:ws.color,fontFamily:"DM Mono,monospace",letterSpacing:"0.08em"}}>{init.id} {init.name}</span>
                 <OwnerTag label="Owner" name={init.owner}/>
               </div>
               {init.projects.map(pr=>{
@@ -708,7 +894,7 @@ function WSDash({ws,cardData,onCardOpen}){
                 return(
                   <div key={pr.id} style={{display:"grid",gridTemplateColumns:"200px 1fr 90px 80px",alignItems:"center",gap:10,marginBottom:4}}>
                     <div>
-                      <div onClick={()=>onCardOpen&&onCardOpen({project:pr,wsColor:ws.color})} style={{fontSize:11,color:"rgba(255,255,255,0.7)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",cursor:"pointer"}} title={`${pr.name} — click for project card`}>{pr.name}</div>
+                      <div onClick={()=>onCardOpen&&onCardOpen({project:pr,wsColor:ws.color})} style={{fontSize:13,color:"rgba(255,255,255,0.7)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",cursor:"pointer"}} title={`${pr.name} — click for project card`}>{pr.name}</div>
                       <OwnerTag label="Owner" name={pr.owner}/>
                     </div>
                     <GanttRow project={pr} color={ws.color}/>
@@ -723,23 +909,23 @@ function WSDash({ws,cardData,onCardOpen}){
       )}
 
       {/* Risk register */}
-      <div style={{fontSize:10,color:"rgba(255,255,255,0.28)",fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>Workstream Risk Register</div>
+      <div style={{fontSize:12,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>Workstream Risk Register</div>
       {risks.length>0?(
-        <div style={{border:"1px solid rgba(255,255,255,0.07)",borderRadius:10,overflow:"hidden"}}>
+        <div style={{border:"1px solid rgba(255,255,255,0.5)",borderRadius:10,overflow:"hidden"}}>
           {risks.map((r,i)=>(
-            <div key={i} style={{display:"grid",gridTemplateColumns:"1fr 84px",padding:"10px 15px",alignItems:"center",borderBottom:i<risks.length-1?"1px solid rgba(255,255,255,0.04)":"none",background:i%2===0?"transparent":"rgba(255,255,255,0.012)"}}>
+            <div key={i} style={{display:"grid",gridTemplateColumns:"1fr 84px",padding:"10px 15px",alignItems:"center",borderBottom:i<risks.length-1?"1px solid rgba(255,255,255,0.5)":"none",background:i%2===0?"transparent":"rgba(255,255,255,0.5)"}}>
               <div>
                 <div style={{fontSize:12,color:"rgba(255,255,255,0.8)",marginBottom:1}}>{r.name}</div>
                 <OwnerTag label="Project Owner" name={r.owner}/>
-                <div style={{fontSize:11,color:"#f59e0b",marginTop:4}}>⚠ {r.risk}</div>
+                <div style={{fontSize:13,color:"#f59e0b",marginTop:4}}>⚠ {r.risk}</div>
               </div>
               <RAGBadge rag={r.rag} tiny/>
             </div>
           ))}
         </div>
       ):(
-        <div style={{border:"1px solid rgba(255,255,255,0.055)",borderRadius:10,padding:16,textAlign:"center"}}>
-          <div style={{fontSize:11,color:"rgba(255,255,255,0.22)"}}>No risks logged for this workstream.</div>
+        <div style={{border:"1px solid rgba(255,255,255,0.5)",borderRadius:10,padding:16,textAlign:"center"}}>
+          <div style={{fontSize:13,color:"rgba(255,255,255,0.5)"}}>No risks logged for this workstream.</div>
         </div>
       )}
     </div>
@@ -756,6 +942,7 @@ function App(){
   const [error,setError]=useState(null);
   const [lastRefresh,setLastRefresh]=useState(null);
   const [usingSheets,setUsingSheets]=useState(false);
+  const [history,setHistory]=useState({});
   const [cardData,setCardData]=useState({cards:{},milestones:{}});
   const [activeCard,setActiveCard]=useState(null); // {project, wsColor}
 
@@ -767,6 +954,7 @@ function App(){
     try{
       const data=await loadFromSheets();
       if(data){setWsList(data);setUsingSheets(true);setLastRefresh(new Date().toLocaleTimeString());}
+      try{const h=await loadHistory();setHistory(h);}catch(_){}
       const cd=await loadProjectCards();setCardData(cd);
     }catch(e){setError(e.message);}
     finally{setLoading(false);}
@@ -786,14 +974,14 @@ function App(){
     <div style={{minHeight:"100vh",background:"#0a0d12",fontFamily:"DM Sans,sans-serif",color:"#fff"}}>
       <div style={{display:"flex",height:"100vh",overflow:"hidden"}}>
         {/* Sidebar */}
-        <div style={{width:260,flexShrink:0,background:"rgba(255,255,255,0.014)",borderRight:"1px solid rgba(255,255,255,0.055)",display:"flex",flexDirection:"column",overflow:"hidden"}}>
-          <div style={{padding:"18px 16px 14px",borderBottom:"1px solid rgba(255,255,255,0.048)"}}>
-            <div style={{fontSize:9,color:"rgba(255,255,255,0.26)",fontFamily:"DM Mono,monospace",letterSpacing:"0.14em",textTransform:"uppercase",marginBottom:4}}>Post-Acquisition Integration</div>
+        <div style={{width:260,flexShrink:0,background:"rgba(255,255,255,0.5)",borderRight:"1px solid rgba(255,255,255,0.5)",display:"flex",flexDirection:"column",overflow:"hidden"}}>
+          <div style={{padding:"18px 16px 14px",borderBottom:"1px solid rgba(255,255,255,0.5)"}}>
+            <div style={{fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",letterSpacing:"0.14em",textTransform:"uppercase",marginBottom:4}}>Post-Acquisition Integration</div>
             <div style={{fontSize:19,fontFamily:"Playfair Display,serif",color:"#fff"}}>Hightekers</div>
-            <div style={{fontSize:10,color:"rgba(255,255,255,0.28)",marginTop:3}}>Serviap · EOS · Rivermate</div>
+            <div style={{fontSize:12,color:"rgba(255,255,255,0.62)",marginTop:3}}>Serviap · EOS · Rivermate</div>
             <div style={{marginTop:9,height:1,background:"linear-gradient(90deg,#C9A84C50,transparent)"}}/>
-            <div style={{fontSize:9,color:"#C9A84C",fontFamily:"DM Mono,monospace",marginTop:6,letterSpacing:"0.05em"}}>8 Workstreams</div>
-            {usingSheets&&<div style={{marginTop:5,fontSize:8,color:"rgba(34,197,94,0.7)",fontFamily:"DM Mono,monospace",letterSpacing:"0.05em"}}>● LIVE FROM GOOGLE SHEETS</div>}
+            <div style={{fontSize:11,color:"#C9A84C",fontFamily:"DM Mono,monospace",marginTop:6,letterSpacing:"0.05em"}}>8 Workstreams</div>
+            {usingSheets&&<div style={{marginTop:5,fontSize:10,color:"rgba(34,197,94,0.7)",fontFamily:"DM Mono,monospace",letterSpacing:"0.05em"}}>● LIVE FROM GOOGLE SHEETS</div>}
           </div>
           <nav style={{flex:1,overflowY:"auto",padding:"7px"}}>
             {navItems.map(ws=>{
@@ -802,17 +990,17 @@ function App(){
               const rag=liveWS?wsRag(liveWS):null;
               return(
                 <div key={ws.id} onClick={()=>setActive(ws.id)} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:7,cursor:"pointer",marginBottom:1,background:isActive?`${ws.color}15`:"transparent",border:`1px solid ${isActive?ws.color+"35":"transparent"}`,transition:"all 0.13s"}}
-                  onMouseEnter={e=>{if(!isActive)e.currentTarget.style.background="rgba(255,255,255,0.032)";}}
+                  onMouseEnter={e=>{if(!isActive)e.currentTarget.style.background="rgba(255,255,255,0.5)";}}
                   onMouseLeave={e=>{if(!isActive)e.currentTarget.style.background="transparent";}}>
-                  <span style={{fontSize:12,color:isActive?ws.color:"rgba(255,255,255,0.22)",flexShrink:0}}>{ws.icon}</span>
+                  <span style={{fontSize:12,color:isActive?ws.color:"rgba(255,255,255,0.5)",flexShrink:0}}>{ws.icon}</span>
                   <div style={{flex:1,minWidth:0}}>
                     {ws.id===0?(
-                      <div style={{fontSize:12,fontWeight:isActive?600:400,color:isActive?"#fff":"rgba(255,255,255,0.46)"}}>Integration Command</div>
+                      <div style={{fontSize:12,fontWeight:isActive?600:400,color:isActive?"#fff":"rgba(255,255,255,0.82)"}}>Integration Command</div>
                     ):(
                       <>
-                        <div style={{fontSize:8,color:ws.color,fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",marginBottom:1}}>{ws.code}</div>
-                        <div style={{fontSize:11,fontWeight:isActive?600:400,color:isActive?"#fff":"rgba(255,255,255,0.46)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{ws.name}</div>
-                        {ws.lead&&ws.lead!=="—"&&<div style={{fontSize:9,color:"rgba(255,255,255,0.22)",marginTop:1}}>{ws.lead}</div>}
+                        <div style={{fontSize:10,color:ws.color,fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",marginBottom:1}}>{ws.code}</div>
+                        <div style={{fontSize:13,fontWeight:isActive?600:400,color:isActive?"#fff":"rgba(255,255,255,0.82)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{ws.name}</div>
+                        {ws.lead&&ws.lead!=="—"&&<div style={{fontSize:11,color:"rgba(255,255,255,0.5)",marginTop:1}}>{ws.lead}</div>}
                       </>
                     )}
                   </div>
@@ -821,17 +1009,17 @@ function App(){
               );
             })}
           </nav>
-          <div style={{padding:"10px 13px",borderTop:"1px solid rgba(255,255,255,0.048)"}}>
+          <div style={{padding:"10px 13px",borderTop:"1px solid rgba(255,255,255,0.5)"}}>
             <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:isConfigured?10:0}}>
               {Object.entries(RAG).map(([k,v])=>(
                 <div key={k} style={{display:"flex",alignItems:"center",gap:4}}>
                   <div style={{width:6,height:6,borderRadius:"50%",background:v.color}}/>
-                  <span style={{fontSize:9,color:"rgba(255,255,255,0.28)",fontFamily:"DM Mono,monospace"}}>{v.label}</span>
+                  <span style={{fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>{v.label}</span>
                 </div>
               ))}
             </div>
             {isConfigured&&(
-              <button onClick={refresh} disabled={loading} style={{width:"100%",padding:"7px",borderRadius:7,background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.12)",color:"rgba(255,255,255,0.6)",fontSize:10,cursor:loading?"wait":"pointer",fontFamily:"DM Mono,monospace",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+              <button onClick={refresh} disabled={loading} style={{width:"100%",padding:"7px",borderRadius:7,background:"rgba(255,255,255,0.5)",border:"1px solid rgba(255,255,255,0.5)",color:"rgba(255,255,255,0.6)",fontSize:12,cursor:loading?"wait":"pointer",fontFamily:"DM Mono,monospace",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
                 <span className={loading?"spin":""} style={{display:"inline-block"}}>↻</span>
                 {loading?"Refreshing…":"Refresh from Sheets"}
               </button>
@@ -841,19 +1029,19 @@ function App(){
 
         {/* Main content */}
         <div style={{flex:1,overflow:"hidden",display:"flex",flexDirection:"column"}}>
-          <div style={{padding:"13px 24px",borderBottom:"1px solid rgba(255,255,255,0.048)",display:"flex",alignItems:"center",justifyContent:"space-between",background:"rgba(255,255,255,0.006)",flexShrink:0}}>
+          <div style={{padding:"13px 24px",borderBottom:"1px solid rgba(255,255,255,0.5)",display:"flex",alignItems:"center",justifyContent:"space-between",background:"rgba(255,255,255,0.5)",flexShrink:0}}>
             <div>
-              <div style={{fontSize:9,color:active===0?"#C9A84C":currentWS?.color,fontFamily:"DM Mono,monospace",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:2}}>{active===0?"Integration Command Centre":`${currentWS?.code} — Workstream Dashboard`}</div>
+              <div style={{fontSize:11,color:active===0?"#C9A84C":currentWS?.color,fontFamily:"DM Mono,monospace",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:2}}>{active===0?"Integration Command Centre":`${currentWS?.code} — Workstream Dashboard`}</div>
               <div style={{fontSize:15,fontFamily:"Playfair Display,serif",color:"#fff"}}>{active===0?"Master Integration Dashboard":currentWS?.name}</div>
             </div>
             <div style={{display:"flex",alignItems:"center",gap:10}}>
-              {error&&<div style={{fontSize:10,color:"#ef4444",fontFamily:"DM Mono,monospace",maxWidth:220}}>⚠ {error}</div>}
-              <div style={{padding:"5px 12px",borderRadius:20,background:"rgba(255,255,255,0.038)",border:"1px solid rgba(255,255,255,0.065)",fontSize:10,color:"rgba(255,255,255,0.38)",fontFamily:"DM Mono,monospace"}}>EOR Integration · 2026</div>
+              {error&&<div style={{fontSize:12,color:"#ef4444",fontFamily:"DM Mono,monospace",maxWidth:220}}>⚠ {error}</div>}
+              <div style={{padding:"5px 12px",borderRadius:20,background:"rgba(255,255,255,0.5)",border:"1px solid rgba(255,255,255,0.5)",fontSize:12,color:"rgba(255,255,255,0.72)",fontFamily:"DM Mono,monospace"}}>EOR Integration · 2026</div>
             </div>
           </div>
           <div style={{flex:1,overflowY:"auto",padding:"20px 24px"}}>
             {active===0
-              ?<Master wsList={wsList} onSelect={setActive} lastRefresh={lastRefresh}/>
+              ?<Master wsList={wsList} onSelect={setActive} lastRefresh={lastRefresh} history={history}/>
               :currentWS&&<WSDash ws={currentWS} cardData={cardData} onCardOpen={setActiveCard}/>
             }
           </div>
