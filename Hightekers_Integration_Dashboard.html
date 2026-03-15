@@ -494,18 +494,31 @@ const GANTT_START=new Date("2026-01-01"),GANTT_END=new Date("2026-12-31"),GANTT_
 function ganttPct(d){return Math.max(0,Math.min(100,((new Date(d)-GANTT_START)/GANTT_SPAN)*100));}
 const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 function GanttHeader(){
-  return <div style={{position:"relative",height:18,marginBottom:4}}>{MONTHS.map((m,i)=><div key={m} style={{position:"absolute",left:`${(i/12)*100}%`,fontSize:13,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",transform:"translateX(-50%)"}}>{m}</div>)}</div>;
+  return(
+    <div style={{display:"grid",gridTemplateColumns:"200px 1fr",marginBottom:4,alignItems:"center"}}>
+      <div/>
+      <div style={{position:"relative",height:18}}>
+        {MONTHS.map((m,i)=>(
+          <div key={m} style={{position:"absolute",left:`${(i/12)*100}%`,
+            fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",
+            transform:"translateX(-50%)",whiteSpace:"nowrap"}}>{m}</div>
+        ))}
+      </div>
+    </div>
+  );
 }
 function GanttRow({project,color}){
-  const left=ganttPct(project.start),right=100-ganttPct(project.end);
+  const startPct=ganttPct(project.start),endPct=ganttPct(project.end);
+  const barWidth=endPct-startPct;
+  const fillWidth=barWidth*(project.progress/100);
   const plan=plannedPct(project.start,project.end),v=project.progress-plan,bc=varianceColor(v);
   const todayPct=ganttPct(TODAY.toISOString().slice(0,10));
   return(
     <div style={{position:"relative",height:22,marginBottom:2}}>
-      <div style={{position:"absolute",top:7,left:0,right:0,height:8,borderRadius:4,background:"rgba(255,255,255,0.022)"}}/>
-      <div style={{position:"absolute",top:7,left:`${left}%`,right:`${right}%`,height:8,borderRadius:4,background:`${color}30`,border:`1px dashed ${color}60`}}/>
-      <div style={{position:"absolute",top:7,left:`${left}%`,width:`${(1-(right/100)-(left/100))*project.progress/100*100}%`,height:8,borderRadius:4,background:`linear-gradient(90deg,${bc}88,${bc})`,transition:"width 0.4s"}}/>
-      <div style={{position:"absolute",top:2,left:`${todayPct}%`,width:2,height:18,background:"rgba(255,255,255,0.022)",borderRadius:2}}/>
+      <div style={{position:"absolute",top:7,left:0,right:0,height:8,borderRadius:4,background:"rgba(255,255,255,0.04)"}}/>
+      <div style={{position:"absolute",top:7,left:`${startPct}%`,width:`${barWidth}%`,height:8,borderRadius:4,background:`${color}25`,border:`1px dashed ${color}55`}}/>
+      <div style={{position:"absolute",top:7,left:`${startPct}%`,width:`${fillWidth}%`,height:8,borderRadius:4,background:`linear-gradient(90deg,${bc}88,${bc})`,transition:"width 0.4s"}}/>
+      <div style={{position:"absolute",top:0,left:`${todayPct}%`,width:2,height:22,background:"rgba(255,255,255,0.9)",borderRadius:1}}/>
     </div>
   );
 }
@@ -875,7 +888,7 @@ function WSDash({ws,cardData,onCardOpen}){
       {view==="gantt"&&(
         <div style={{background:"rgba(255,255,255,0.022)",border:"1px solid rgba(255,255,255,0.055)",borderRadius:10,padding:"16px 18px",marginBottom:22}}>
           <div style={{display:"flex",gap:16,marginBottom:12,flexWrap:"wrap"}}>
-            {[["rgba(255,255,255,0.62)","1px dashed rgba(255,255,255,0.72)","Planned duration"],["#4C9AC9","none","Actual progress"],["rgba(255,255,255,0.82)","none","Today"]].map(([bg,border,label],i)=>(
+            {[["rgba(255,255,255,0.62)","1px dashed rgba(255,255,255,0.72)","Planned duration"],["#4C9AC9","none","Actual progress"],["rgba(255,255,255,0.9)","none","Today"]].map(([bg,border,label],i)=>(
               <div key={i} style={{display:"flex",alignItems:"center",gap:6}}>
                 {i<2?<div style={{width:24,height:7,borderRadius:3,background:bg,border}}/>:<div style={{width:2,height:14,borderRadius:2,background:bg}}/>}
                 <span style={{fontSize:12,color:"rgba(255,255,255,0.72)",fontFamily:"DM Mono,monospace"}}>{label}</span>
