@@ -607,7 +607,7 @@ function CrossGantt({wsList}){
                   );
                 })()}
                 {/* Today line */}
-                <div style={{position:"absolute",top:0,bottom:0,left:`${todayPct}%`,width:1.5,background:"rgba(255,255,255,0.022)"}}/>
+                <div style={{position:"absolute",top:0,bottom:0,left:`${todayPct}%`,width:2,background:"rgba(255,255,255,0.9)"}}/>
               </div>
             </div>
             {/* Expanded project rows */}
@@ -625,7 +625,7 @@ function CrossGantt({wsList}){
                   <div style={{position:"relative",height:10,background:"rgba(255,255,255,0.04)",borderRadius:2,overflow:"hidden"}}>
                     <div style={{position:"absolute",top:0,bottom:0,left:`${left}%`,right:`${right}%`,background:`${ws.color}20`,border:`1px dashed ${ws.color}50`,borderRadius:2}}/>
                     <div style={{position:"absolute",top:0,bottom:0,left:`${left}%`,width:`${fillW}%`,background:ws.color,borderRadius:2,opacity:0.85}}/>
-                    <div style={{position:"absolute",top:0,bottom:0,left:`${todayPct}%`,width:1,background:"rgba(255,255,255,0.022)"}}/>
+                    <div style={{position:"absolute",top:0,bottom:0,left:`${todayPct}%`,width:2,background:"rgba(255,255,255,0.9)"}}/>
                   </div>
                 </div>
               );
@@ -720,7 +720,7 @@ function Master({wsList,onSelect,lastRefresh,history}){
                 <span style={{fontSize:12,color:"rgba(255,255,255,0.62)"}}>{ws.initiatives.length} initiatives</span>
                 <span style={{fontSize:12,color:"rgba(255,255,255,0.62)"}}>{allProjects(ws).length} projects</span>
               </div>
-              {history[ws.code]&&history[ws.code].length>=2&&<div style={{marginTop:6}}><Sparkline data={history[ws.code]} color={ws.color} width={70} height={22}/></div>}
+              {history[ws.code]&&history[ws.code].length>=1&&<div style={{marginTop:6}}><Sparkline data={history[ws.code]} color={ws.color} width={70} height={22}/></div>}
             </div>
           );
         })}

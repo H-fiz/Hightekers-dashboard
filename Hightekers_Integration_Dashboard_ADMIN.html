@@ -754,10 +754,41 @@ function ProjectCardModal({project,card,milestones,wsColor,onClose,onSave}){
 }
 
 
+function OwnerTag({label,name}){
+  if(!name||name==="—")return null;
+  return <span style={{fontSize:13,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}><span style={{color:"rgba(255,255,255,0.5)"}}>{label}: </span>{name}</span>;
+}
+
+// Gantt
+const GANTT_START=new Date("2026-01-01"),GANTT_END=new Date("2026-12-31"),GANTT_SPAN=GANTT_END-GANTT_START;
+function ganttPct(d){return Math.max(0,Math.min(100,((new Date(d)-GANTT_START)/GANTT_SPAN)*100));}
+const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function GanttHeader(){
+  return <div style={{position:"relative",height:18,marginBottom:4}}>{MONTHS.map((m,i)=><div key={m} style={{position:"absolute",left:`${(i/12)*100}%`,fontSize:13,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",transform:"translateX(-50%)"}}>{m}</div>)}</div>;
+}
+function GanttRow({project,color}){
+  const left=ganttPct(project.start),right=100-ganttPct(project.end);
+  const plan=plannedPct(project.start,project.end),v=project.progress-plan,bc=varianceColor(v);
+  const todayPct=ganttPct(TODAY.toISOString().slice(0,10));
+  return(
+    <div style={{position:"relative",height:22,marginBottom:2}}>
+      <div style={{position:"absolute",top:7,left:0,right:0,height:8,borderRadius:4,background:"rgba(255,255,255,0.022)"}}/>
+      <div style={{position:"absolute",top:7,left:`${left}%`,right:`${right}%`,height:8,borderRadius:4,background:`${color}30`,border:`1px dashed ${color}60`}}/>
+      <div style={{position:"absolute",top:7,left:`${left}%`,width:`${(1-(right/100)-(left/100))*project.progress/100*100}%`,height:8,borderRadius:4,background:`linear-gradient(90deg,${bc}88,${bc})`,transition:"width 0.4s"}}/>
+      <div style={{position:"absolute",top:2,left:`${todayPct}%`,width:2,height:18,background:"rgba(255,255,255,0.022)",borderRadius:2}}/>
+    </div>
+  );
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SPARKLINE — trend chart for workstream progress
+// ─────────────────────────────────────────────────────────────────────────────
 function WSDash({ws,onUpdate,markDirty,cardData,onCardOpen}){
   const [openInit,setOpenInit]=useState(null);
   const [modal,setModal]=useState(null);
   const [confirm,setConfirm]=useState(null);
+  const [view,setView]=useState("table");
 
   const all=allProjects(ws);
   const act=wsActual(ws),plan=wsPlanned(ws);
@@ -811,6 +842,9 @@ function WSDash({ws,onUpdate,markDirty,cardData,onCardOpen}){
     {key:"risk",label:"Risk / Issue (leave blank if none)",type:"textarea",value:proj.risk||""},
   ];
 
+  const tabBtn=(label,val)=>(
+    <button onClick={()=>setView(val)} style={{padding:"5px 14px",borderRadius:6,cursor:"pointer",fontSize:13,fontFamily:"DM Mono,monospace",border:`1px solid ${view===val?ws.color+"60":"rgba(255,255,255,0.1)"}`,background:view===val?`${ws.color}18`:"transparent",color:view===val?ws.color:"rgba(255,255,255,0.72)",transition:"all 0.15s"}}>{label}</button>
+  );
   return(
     <div>
       {modal?.type==="init"&&(
@@ -861,6 +895,8 @@ function WSDash({ws,onUpdate,markDirty,cardData,onCardOpen}){
 
       {/* Initiatives */}
       <div style={{fontSize:12,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:9}}>Initiatives &amp; Projects</div>
+      <div style={{display:"flex",gap:6,marginBottom:14}}>{tabBtn("📋 Table","table")}{tabBtn("📅 Gantt","gantt")}</div>
+      {view==="table"&&(
       <div style={{display:"flex",flexDirection:"column",gap:7,marginBottom:16}}>
         {ws.initiatives.map(init=>{
           const open=openInit===init.id,ip=initActual(init),iplan=initPlanned(init),ir=initRag(init);
@@ -934,6 +970,43 @@ function WSDash({ws,onUpdate,markDirty,cardData,onCardOpen}){
           );
         })}
       </div>
+      )}
+
+      {view==="gantt"&&(
+        <div style={{background:"rgba(255,255,255,0.022)",border:"1px solid rgba(255,255,255,0.055)",borderRadius:10,padding:"16px 18px",marginBottom:22}}>
+          <div style={{display:"flex",gap:16,marginBottom:12,flexWrap:"wrap"}}>
+            {[["rgba(255,255,255,0.62)","1px dashed rgba(255,255,255,0.72)","Planned duration"],["#4C9AC9","none","Actual progress"],["rgba(255,255,255,0.82)","none","Today"]].map(([bg,border,label],i)=>(
+              <div key={i} style={{display:"flex",alignItems:"center",gap:6}}>
+                {i<2?<div style={{width:24,height:7,borderRadius:3,background:bg,border}}/>:<div style={{width:2,height:14,borderRadius:2,background:bg}}/>}
+                <span style={{fontSize:12,color:"rgba(255,255,255,0.72)",fontFamily:"DM Mono,monospace"}}>{label}</span>
+              </div>
+            ))}
+          </div>
+          <GanttHeader/>
+          {ws.initiatives.map(init=>(
+            <div key={init.id} style={{marginBottom:14}}>
+              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:5,paddingBottom:4,borderBottom:"1px solid rgba(255,255,255,0.055)"}}>
+                <span style={{fontSize:12,color:ws.color,fontFamily:"DM Mono,monospace",letterSpacing:"0.08em"}}>{init.id} {init.name}</span>
+                <OwnerTag label="Owner" name={init.owner}/>
+              </div>
+              {init.projects.map(pr=>{
+                const pplan=plannedPct(pr.start,pr.end);
+                return(
+                  <div key={pr.id} style={{display:"grid",gridTemplateColumns:"200px 1fr 90px 80px",alignItems:"center",gap:10,marginBottom:4}}>
+                    <div>
+                      <div onClick={()=>onCardOpen&&onCardOpen({project:pr,wsColor:ws.color})} style={{fontSize:13,color:"rgba(255,255,255,0.7)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",cursor:"pointer"}} title={`${pr.name} — click for project card`}>{pr.name}</div>
+                      <OwnerTag label="Owner" name={pr.owner}/>
+                    </div>
+                    <GanttRow project={pr} color={ws.color}/>
+                    <VariancePill actual={pr.progress} planned={pplan}/>
+                    <RAGBadge rag={pr.rag} tiny/>
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+      )}
       {/* add initiative */}
       <button className="add-btn" style={{marginBottom:24}} onClick={addInit}>+ Add Initiative</button>
     </div>
@@ -1037,7 +1110,7 @@ function CrossGantt({wsList}){
                   );
                 })()}
                 {/* Today line */}
-                <div style={{position:"absolute",top:0,bottom:0,left:`${todayPct}%`,width:1.5,background:"rgba(255,255,255,0.022)"}}/>
+                <div style={{position:"absolute",top:0,bottom:0,left:`${todayPct}%`,width:2,background:"rgba(255,255,255,0.9)"}}/>
               </div>
             </div>
             {/* Expanded project rows */}
@@ -1055,7 +1128,7 @@ function CrossGantt({wsList}){
                   <div style={{position:"relative",height:10,background:"rgba(255,255,255,0.04)",borderRadius:2,overflow:"hidden"}}>
                     <div style={{position:"absolute",top:0,bottom:0,left:`${left}%`,right:`${right}%`,background:`${ws.color}20`,border:`1px dashed ${ws.color}50`,borderRadius:2}}/>
                     <div style={{position:"absolute",top:0,bottom:0,left:`${left}%`,width:`${fillW}%`,background:ws.color,borderRadius:2,opacity:0.85}}/>
-                    <div style={{position:"absolute",top:0,bottom:0,left:`${todayPct}%`,width:1,background:"rgba(255,255,255,0.022)"}}/>
+                    <div style={{position:"absolute",top:0,bottom:0,left:`${todayPct}%`,width:2,background:"rgba(255,255,255,0.9)"}}/>
                   </div>
                 </div>
               );
@@ -1329,7 +1402,7 @@ function Master({wsList,onSelect,lastRefresh,history}){
                 <span style={{fontSize:12,color:"rgba(255,255,255,0.62)"}}>{ws.initiatives.length} initiatives</span>
                 <span style={{fontSize:12,color:"rgba(255,255,255,0.62)"}}>{allProjects(ws).length} projects</span>
               </div>
-              {history[ws.code]&&history[ws.code].length>=2&&<div style={{marginTop:6}}><Sparkline data={history[ws.code]} color={ws.color} width={70} height={22}/></div>}
+              {history[ws.code]&&history[ws.code].length>=1&&<div style={{marginTop:6}}><Sparkline data={history[ws.code]} color={ws.color} width={70} height={22}/></div>}
             </div>
           );
         })}
@@ -1498,6 +1571,18 @@ function App(){
                   {loading?"Refreshing…":"↓ Refresh from Sheets"}
                 </button>
               )}
+              <button onClick={()=>{
+                fetch(CONFIG.APPS_SCRIPT_URL+"?action=report",{mode:"no-cors"}).then(()=>{}).catch(()=>{});
+                showSuccess("Report triggered — check your email in ~1 min");
+              }} style={{width:"100%",padding:"7px",borderRadius:7,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",color:"rgba(255,255,255,0.62)",fontSize:12,cursor:"pointer",fontFamily:"DM Mono,monospace",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+                &#128196; Generate Status Report
+              </button>
+              <button onClick={()=>{
+                fetch(CONFIG.APPS_SCRIPT_URL+"?action=report",{mode:"no-cors"}).then(()=>{}).catch(()=>{});
+                showSuccess("Report triggered — check your email in ~1 min");
+              }} style={{width:"100%",padding:"7px",borderRadius:7,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",color:"rgba(255,255,255,0.62)",fontSize:12,cursor:"pointer",fontFamily:"DM Mono,monospace",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+                &#128196; Generate Status Report
+              </button>
               <button onClick={saveToSheets} disabled={saving||!dirty} style={{width:"100%",padding:"8px",borderRadius:7,background:dirty?"#C9A84C":"rgba(255,255,255,0.04)",border:dirty?"none":"1px solid rgba(255,255,255,0.08)",color:dirty?"#0a0d12":"rgba(255,255,255,0.62)",fontSize:13,fontWeight:700,cursor:dirty&&!saving?"pointer":"not-allowed",fontFamily:"DM Mono,monospace",display:"flex",alignItems:"center",justifyContent:"center",gap:6,transition:"all .2s"}}>
                 <span className={saving?"spin":""} style={{display:"inline-block"}}>↑</span>
                 {saving?"Saving…":dirty?"↑ Save to Sheets":"No Unsaved Changes"}
