@@ -66,6 +66,7 @@ const CONFIG = {
   MILESTONES_TAB:   "Milestones",
   HISTORY_TAB:      "History",
   REFRESH_INTERVAL: 0, // admin: manual refresh only by default
+  APPS_SCRIPT_URL:  "https://script.google.com/macros/s/AKfycby5-srw7r9X3siQLS5xwqNlVLItkggfO0xAlR7XD8aq4AbhTxn8lXlo4pLCQc1cLrLY/exec",
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -765,7 +766,7 @@ function ganttPct(d){return Math.max(0,Math.min(100,((new Date(d)-GANTT_START)/G
 const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 function GanttHeader(){
   return(
-    <div style={{display:"grid",gridTemplateColumns:"200px 1fr",marginBottom:4,alignItems:"center"}}>
+    <div style={{display:"grid",gridTemplateColumns:"240px 1fr",marginBottom:4,alignItems:"center"}}>
       <div/>
       <div style={{position:"relative",height:18}}>
         {MONTHS.map((m,i)=>(
@@ -1005,7 +1006,7 @@ function WSDash({ws,onUpdate,markDirty,cardData,onCardOpen}){
               {init.projects.map(pr=>{
                 const pplan=plannedPct(pr.start,pr.end);
                 return(
-                  <div key={pr.id} style={{display:"grid",gridTemplateColumns:"200px 1fr 90px 80px",alignItems:"center",gap:10,marginBottom:4}}>
+                  <div key={pr.id} style={{display:"grid",gridTemplateColumns:"240px 1fr 80px 70px",alignItems:"center",gap:10,marginBottom:4}}>
                     <div>
                       <div onClick={()=>onCardOpen&&onCardOpen({project:pr,wsColor:ws.color})} style={{fontSize:13,color:"rgba(255,255,255,0.7)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",cursor:"pointer"}} title={`${pr.name} — click for project card`}>{pr.name}</div>
                       <OwnerTag label="Owner" name={pr.owner}/>
@@ -1031,13 +1032,21 @@ function WSDash({ws,onUpdate,markDirty,cardData,onCardOpen}){
 // SPARKLINE — trend chart for workstream progress
 // ─────────────────────────────────────────────────────────────────────────────
 function Sparkline({data,color,width=80,height=28}){
-  if(!data||data.length<2) return(
-    <div style={{width,height,display:"flex",alignItems:"center",justifyContent:"center"}}>
-      <span style={{fontSize:13,color:"rgba(255,255,255,0.35)",fontFamily:"DM Mono,monospace"}}>No data</span>
-    </div>
-  );
+  if(!data||data.length<1) return null;
   const vals=data.map(d=>d.actual);
   const min=0,max=100;
+  // Single point — show a dot with the current value
+  if(vals.length===1){
+    const y=height-((vals[0]-min)/(max-min))*(height-4)-2;
+    return(
+      <div style={{display:"flex",alignItems:"center",gap:6}}>
+        <svg width={width} height={height} style={{overflow:"visible"}}>
+          <circle cx={width/2} cy={y} r={3} fill={color} opacity="0.8"/>
+        </svg>
+        <span style={{fontSize:11,color:"rgba(255,255,255,0.4)",fontFamily:"DM Mono,monospace"}}>—</span>
+      </div>
+    );
+  }
   const pts=vals.map((v,i)=>{
     const x=(i/(vals.length-1))*width;
     const y=height-((v-min)/(max-min))*(height-4)-2;
@@ -1057,7 +1066,7 @@ function Sparkline({data,color,width=80,height=28}){
           return i===vals.length-1?<circle key={i} cx={x} cy={y} r={2.5} fill={color}/>:null;
         })}
       </svg>
-      <span style={{fontSize:13,color:trendColor,fontFamily:"DM Mono,monospace",fontWeight:700,whiteSpace:"nowrap"}}>
+      <span style={{fontSize:11,color:trendColor,fontFamily:"DM Mono,monospace",fontWeight:700,whiteSpace:"nowrap"}}>
         {trend>0?"+":""}{trend}%
       </span>
     </div>
@@ -1584,12 +1593,6 @@ function App(){
                   {loading?"Refreshing…":"↓ Refresh from Sheets"}
                 </button>
               )}
-              <button onClick={()=>{
-                fetch(CONFIG.APPS_SCRIPT_URL+"?action=report",{mode:"no-cors"}).then(()=>{}).catch(()=>{});
-                showSuccess("Report triggered — check your email in ~1 min");
-              }} style={{width:"100%",padding:"7px",borderRadius:7,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",color:"rgba(255,255,255,0.62)",fontSize:12,cursor:"pointer",fontFamily:"DM Mono,monospace",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
-                &#128196; Generate Status Report
-              </button>
               <button onClick={()=>{
                 fetch(CONFIG.APPS_SCRIPT_URL+"?action=report",{mode:"no-cors"}).then(()=>{}).catch(()=>{});
                 showSuccess("Report triggered — check your email in ~1 min");
