@@ -14,35 +14,35 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#0a0d12;color:#fff;font-family:"DM Sans",sans-serif}
 ::-webkit-scrollbar{width:4px}
-::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:4px}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.5);border-radius:4px}
 .spin{animation:spin 1s linear infinite}
 @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px}
 /* modal */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.72);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px}
-.modal{background:#13171f;border:1px solid rgba(255,255,255,0.13);border-radius:14px;padding:28px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto}
+.modal{background:#13171f;border:1px solid rgba(255,255,255,0.5);border-radius:14px;padding:28px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto}
 /* form fields */
 .field{margin-bottom:13px}
-.field label{display:block;font-size:10px;color:rgba(255,255,255,0.38);font-family:"DM Mono",monospace;letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px}
-.field input,.field select,.field textarea{width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.13);border-radius:6px;color:#fff;font-size:13px;padding:8px 10px;outline:none;transition:border-color .15s;font-family:"DM Sans",sans-serif}
-.field input:focus,.field select:focus,.field textarea:focus{border-color:rgba(255,255,255,0.32)}
+.field label{display:block;font-size:10px;color:rgba(255,255,255,0.72);font-family:"DM Mono",monospace;letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px}
+.field input,.field select,.field textarea{width:100%;background:rgba(255,255,255,0.5);border:1px solid rgba(255,255,255,0.5);border-radius:6px;color:#fff;font-size:13px;padding:8px 10px;outline:none;transition:border-color .15s;font-family:"DM Sans",sans-serif}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:rgba(255,255,255,0.62)}
 .field select option{background:#13171f;color:#fff}
 /* buttons */
 .btn{padding:8px 18px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;border:none;transition:all .15s;font-family:"DM Sans",sans-serif}
 .btn-gold{background:#C9A84C;color:#0a0d12}.btn-gold:hover{background:#d4b660}
-.btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.6)}.btn-ghost:hover{border-color:rgba(255,255,255,0.35);color:#fff}
+.btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.5);color:rgba(255,255,255,0.6)}.btn-ghost:hover{border-color:rgba(255,255,255,0.62);color:#fff}
 .btn-danger{background:transparent;border:1px solid rgba(239,68,68,0.35);color:#ef4444}.btn-danger:hover{background:rgba(239,68,68,0.1)}
 .btn-green{background:#22c55e;color:#0a0d12}.btn-green:hover{background:#16a34a}
 /* dirty indicator */
 .dirty-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#f59e0b;margin-left:5px;flex-shrink:0}
 /* inline admin controls */
 .admin-row{display:flex;align-items:center;gap:6px}
-.icon-btn{background:transparent;border:1px solid rgba(255,255,255,0.1);border-radius:5px;color:rgba(255,255,255,0.4);font-size:11px;padding:3px 7px;cursor:pointer;transition:all .15s;font-family:"DM Mono",monospace;white-space:nowrap}
-.icon-btn:hover{border-color:rgba(255,255,255,0.3);color:#fff}
+.icon-btn{background:transparent;border:1px solid rgba(255,255,255,0.5);border-radius:5px;color:rgba(255,255,255,0.72);font-size:11px;padding:3px 7px;cursor:pointer;transition:all .15s;font-family:"DM Mono",monospace;white-space:nowrap}
+.icon-btn:hover{border-color:rgba(255,255,255,0.62);color:#fff}
 .icon-btn.danger:hover{border-color:#ef4444;color:#ef4444}
-.add-row{display:flex;align-items:center;gap:6px;padding:7px 15px;border-top:1px solid rgba(255,255,255,0.045)}
-.add-btn{background:transparent;border:1px dashed rgba(255,255,255,0.18);border-radius:6px;color:rgba(255,255,255,0.38);font-size:11px;padding:4px 12px;cursor:pointer;transition:all .15s;font-family:"DM Mono",monospace}
-.add-btn:hover{border-color:rgba(255,255,255,0.4);color:rgba(255,255,255,0.75)}
+.add-row{display:flex;align-items:center;gap:6px;padding:7px 15px;border-top:1px solid rgba(255,255,255,0.5)}
+.add-btn{background:transparent;border:1px dashed rgba(255,255,255,0.5);border-radius:6px;color:rgba(255,255,255,0.72);font-size:11px;padding:4px 12px;cursor:pointer;transition:all .15s;font-family:"DM Mono",monospace}
+.add-btn:hover{border-color:rgba(255,255,255,0.72);color:rgba(255,255,255,0.75)}
 </style>
 </head>
 <body>
@@ -64,6 +64,7 @@ const CONFIG = {
   PROPOSALS_TAB:   "Proposals",
   PROJECT_CARDS_TAB: "ProjectCards",
   MILESTONES_TAB:   "Milestones",
+  HISTORY_TAB:      "History",
   REFRESH_INTERVAL: 0, // admin: manual refresh only by default
 };
 
@@ -428,6 +429,41 @@ async function saveProjectCard(projectId,cardFields,milestoneRows,accessToken){
     });
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HISTORY — load weekly snapshots for trend sparklines
+// ─────────────────────────────────────────────────────────────────────────────
+async function loadHistory(){
+  const {SHEET_ID,API_KEY,HISTORY_TAB}=CONFIG;
+  if(!SHEET_ID||SHEET_ID==="YOUR_SHEET_ID_HERE") return {};
+  try{
+    const res=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(HISTORY_TAB+"!A2:F2000")}?key=${API_KEY}`);
+    const json=await res.json();
+    const rows=json.values||[];
+    const byWS={};
+    rows.forEach(row=>{
+      const [date,projId,wsCode,actual,planned,rag]=row;
+      if(!wsCode) return;
+      if(!byWS[wsCode]) byWS[wsCode]=[];
+      byWS[wsCode].push({date:date||"",actual:parseInt(actual)||0,planned:parseInt(planned)||0,rag:rag||"G"});
+    });
+    const wsTrends={};
+    Object.entries(byWS).forEach(([ws,rows])=>{
+      const byDate={};
+      rows.forEach(r=>{
+        if(!byDate[r.date]) byDate[r.date]={actuals:[],planneds:[]};
+        byDate[r.date].actuals.push(r.actual);
+        byDate[r.date].planneds.push(r.planned);
+      });
+      wsTrends[ws]=Object.entries(byDate).sort((a,b)=>a[0]<b[0]?-1:1).map(([date,d])=>({
+        date,
+        actual:Math.round(d.actuals.reduce((a,b)=>a+b,0)/d.actuals.length),
+        planned:Math.round(d.planneds.reduce((a,b)=>a+b,0)/d.planneds.length),
+      }));
+    });
+    return wsTrends;
+  }catch(e){console.warn("History load failed:",e.message);return {};}
+}
 // ─────────────────────────────────────────────────────────────────────────────
 // OAUTH HELPER
 // ─────────────────────────────────────────────────────────────────────────────
@@ -487,12 +523,12 @@ function RAGBadge({rag,tiny}){
 }
 function Bar({pct,color,h=5}){
   const isHex=color.startsWith("#");
-  const fill=pct===0?"rgba(255,255,255,0.09)":isHex?`linear-gradient(90deg,${color}77,${color})`:color;
-  return <div style={{width:"100%",height:h,borderRadius:h,background:"rgba(255,255,255,0.07)",overflow:"hidden"}}><div style={{height:"100%",width:`${Math.min(100,Math.max(0,pct))}%`,borderRadius:h,background:fill,transition:"width 0.4s ease"}}/></div>;
+  const fill=pct===0?"rgba(255,255,255,0.5)":isHex?`linear-gradient(90deg,${color}77,${color})`:color;
+  return <div style={{width:"100%",height:h,borderRadius:h,background:"rgba(255,255,255,0.022)",overflow:"hidden"}}><div style={{height:"100%",width:`${Math.min(100,Math.max(0,pct))}%`,borderRadius:h,background:fill,transition:"width 0.4s ease"}}/></div>;
 }
 function VariancePill({actual,planned}){
   const v=actual-planned,col=varianceColor(v);
-  return <span style={{display:"inline-flex",alignItems:"center",gap:3,padding:"2px 8px",borderRadius:20,background:`${col}18`,border:`1px solid ${col}35`,color:col,fontSize:10,fontFamily:"DM Mono,monospace",fontWeight:700,whiteSpace:"nowrap"}}>{v>=0?"▲":"▼"} {varianceLabel(v)}</span>;
+  return <span style={{display:"inline-flex",alignItems:"center",gap:3,padding:"2px 8px",borderRadius:20,background:`${col}18`,border:`1px solid ${col}35`,color:col,fontSize:12,fontFamily:"DM Mono,monospace",fontWeight:700,whiteSpace:"nowrap"}}>{v>=0?"▲":"▼"} {varianceLabel(v)}</span>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -518,7 +554,7 @@ function EditModal({title,fields,onSave,onDelete,onClose,deleteLabel}){
             {f.type==="rag"?(
               <div style={{display:"flex",gap:8,marginTop:2}}>
                 {["G","A","R"].map(r=>(
-                  <button key={r} onClick={()=>set(f.key,r)} style={{flex:1,padding:"7px 0",borderRadius:7,cursor:"pointer",fontSize:11,fontFamily:"DM Mono,monospace",fontWeight:600,border:`2px solid ${form[f.key]===r?RAG[r].color:"rgba(255,255,255,0.12)"}`,background:form[f.key]===r?`${RAG[r].color}22`:"transparent",color:form[f.key]===r?RAG[r].color:"rgba(255,255,255,0.45)",transition:"all .15s"}}>
+                  <button key={r} onClick={()=>set(f.key,r)} style={{flex:1,padding:"7px 0",borderRadius:7,cursor:"pointer",fontSize:13,fontFamily:"DM Mono,monospace",fontWeight:600,border:`2px solid ${form[f.key]===r?RAG[r].color:"rgba(255,255,255,0.5)"}`,background:form[f.key]===r?`${RAG[r].color}22`:"transparent",color:form[f.key]===r?RAG[r].color:"rgba(255,255,255,0.72)",transition:"all .15s"}}>
                     {RAG[r].label}
                   </button>
                 ))}
@@ -570,11 +606,11 @@ function Confirm({message,onConfirm,onClose}){
 const MS_STATUS={
   "Complete":{color:"#22c55e",bg:"rgba(34,197,94,0.1)",border:"rgba(34,197,94,0.25)"},
   "In Progress":{color:"#f59e0b",bg:"rgba(245,158,11,0.1)",border:"rgba(245,158,11,0.25)"},
-  "Not Started":{color:"rgba(255,255,255,0.35)",bg:"rgba(255,255,255,0.04)",border:"rgba(255,255,255,0.1)"},
+  "Not Started":{color:"rgba(255,255,255,0.62)",bg:"rgba(255,255,255,0.5)",border:"rgba(255,255,255,0.055)"},
 };
 function MilestoneStatusBadge({status}){
   const s=MS_STATUS[status]||MS_STATUS["Not Started"];
-  return <span style={{fontSize:9,fontFamily:"DM Mono,monospace",fontWeight:600,padding:"2px 8px",borderRadius:20,background:s.bg,border:`1px solid ${s.border}`,color:s.color,whiteSpace:"nowrap"}}>{status}</span>;
+  return <span style={{fontSize:11,fontFamily:"DM Mono,monospace",fontWeight:600,padding:"2px 8px",borderRadius:20,background:s.bg,border:`1px solid ${s.border}`,color:s.color,whiteSpace:"nowrap"}}>{status}</span>;
 }
 function ProjectCardModal({project,card,milestones,wsColor,onClose,onSave}){
   const pplan=plannedPct(project.start,project.end);
@@ -596,42 +632,42 @@ function ProjectCardModal({project,card,milestones,wsColor,onClose,onSave}){
     await onSave(project.id,{description:form.description,scope:form.scope,outputs:form.outputs,kpis:form.kpis,dependencies:form.dependencies},validMS);
     setSaving(false);setEditing(false);
   };
-  const fieldStyle={width:"100%",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:7,color:"#fff",fontSize:13,padding:"9px 12px",outline:"none",fontFamily:"DM Sans,sans-serif",resize:"vertical",lineHeight:1.5};
-  const labelStyle={fontSize:9,color:"rgba(255,255,255,0.35)",fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:6,display:"flex",alignItems:"center",gap:5};
-  const viewStyle=(val)=>({fontSize:13,color:val?"rgba(255,255,255,0.78)":"rgba(255,255,255,0.22)",lineHeight:1.6,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:7,padding:"9px 12px",fontStyle:val?"normal":"italic",whiteSpace:"pre-wrap"});
+  const fieldStyle={width:"100%",background:"rgba(255,255,255,0.022)",border:"1px solid rgba(255,255,255,0.055)",borderRadius:7,color:"#fff",fontSize:13,padding:"9px 12px",outline:"none",fontFamily:"DM Sans,sans-serif",resize:"vertical",lineHeight:1.5};
+  const labelStyle={fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:6,display:"flex",alignItems:"center",gap:5};
+  const viewStyle=(val)=>({fontSize:13,color:val?"rgba(255,255,255,0.78)":"rgba(255,255,255,0.5)",lineHeight:1.6,background:"rgba(255,255,255,0.022)",border:"1px solid rgba(255,255,255,0.055)",borderRadius:7,padding:"9px 12px",fontStyle:val?"normal":"italic",whiteSpace:"pre-wrap"});
   return(
     <div className="overlay" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
       <div style={{background:"#13171f",border:`1px solid ${wsColor}35`,borderRadius:14,width:"100%",maxWidth:700,maxHeight:"92vh",overflow:"hidden",display:"flex",flexDirection:"column"}}>
         {/* Header */}
-        <div style={{padding:"18px 22px 14px",borderBottom:"1px solid rgba(255,255,255,0.07)",background:`linear-gradient(135deg,${wsColor}10 0%,transparent 60%)`}}>
+        <div style={{padding:"18px 22px 14px",borderBottom:"1px solid rgba(255,255,255,0.055)",background:`linear-gradient(135deg,${wsColor}10 0%,transparent 60%)`}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12}}>
             <div style={{flex:1}}>
-              <div style={{fontSize:9,color:wsColor,fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",marginBottom:3}}>{project.id}</div>
+              <div style={{fontSize:11,color:wsColor,fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",marginBottom:3}}>{project.id}</div>
               <div style={{fontSize:18,fontFamily:"Playfair Display,serif",color:"#fff",marginBottom:7,lineHeight:1.3}}>{project.name}</div>
               <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>
                 <RAGBadge rag={project.rag} tiny/>
                 <VariancePill actual={project.progress} planned={pplan}/>
-                <span style={{fontSize:10,color:"rgba(255,255,255,0.35)",fontFamily:"DM Mono,monospace"}}>Owner: <span style={{color:"rgba(255,255,255,0.6)"}}>{project.owner}</span></span>
+                <span style={{fontSize:12,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>Owner: <span style={{color:"rgba(255,255,255,0.6)"}}>{project.owner}</span></span>
               </div>
             </div>
             <div style={{display:"flex",gap:6,flexShrink:0,alignItems:"center"}}>
-              {!editing&&<button onClick={()=>setEditing(true)} style={{padding:"5px 13px",borderRadius:7,background:"rgba(201,168,76,0.15)",border:"1px solid rgba(201,168,76,0.35)",color:"#C9A84C",fontSize:11,cursor:"pointer",fontFamily:"DM Mono,monospace",fontWeight:600}}>&#9998; Edit</button>}
-              {editing&&<button onClick={handleSave} disabled={saving} style={{padding:"5px 13px",borderRadius:7,background:"#C9A84C",border:"none",color:"#0a0d12",fontSize:11,cursor:saving?"wait":"pointer",fontFamily:"DM Mono,monospace",fontWeight:700}}>{saving?"Saving…":"✓ Save"}</button>}
-              {editing&&<button onClick={()=>setEditing(false)} style={{padding:"5px 13px",borderRadius:7,background:"transparent",border:"1px solid rgba(255,255,255,0.12)",color:"rgba(255,255,255,0.5)",fontSize:11,cursor:"pointer",fontFamily:"DM Mono,monospace"}}>Cancel</button>}
-              <button onClick={onClose} style={{background:"transparent",border:"1px solid rgba(255,255,255,0.12)",borderRadius:6,color:"rgba(255,255,255,0.4)",fontSize:14,padding:"4px 10px",cursor:"pointer"}}>✕</button>
+              {!editing&&<button onClick={()=>setEditing(true)} style={{padding:"5px 13px",borderRadius:7,background:"rgba(201,168,76,0.15)",border:"1px solid rgba(201,168,76,0.35)",color:"#C9A84C",fontSize:13,cursor:"pointer",fontFamily:"DM Mono,monospace",fontWeight:600}}>&#9998; Edit</button>}
+              {editing&&<button onClick={handleSave} disabled={saving} style={{padding:"5px 13px",borderRadius:7,background:"#C9A84C",border:"none",color:"#0a0d12",fontSize:13,cursor:saving?"wait":"pointer",fontFamily:"DM Mono,monospace",fontWeight:700}}>{saving?"Saving…":"✓ Save"}</button>}
+              {editing&&<button onClick={()=>setEditing(false)} style={{padding:"5px 13px",borderRadius:7,background:"transparent",border:"1px solid rgba(255,255,255,0.055)",color:"rgba(255,255,255,0.82)",fontSize:13,cursor:"pointer",fontFamily:"DM Mono,monospace"}}>Cancel</button>}
+              <button onClick={onClose} style={{background:"transparent",border:"1px solid rgba(255,255,255,0.055)",borderRadius:6,color:"rgba(255,255,255,0.72)",fontSize:14,padding:"4px 10px",cursor:"pointer"}}>✕</button>
             </div>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginTop:11}}>
             <div>
-              <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{fontSize:8,color:"rgba(255,255,255,0.3)",fontFamily:"DM Mono,monospace"}}>ACTUAL</span><span style={{fontSize:8,color:wsColor,fontFamily:"DM Mono,monospace"}}>{project.progress}%</span></div>
+              <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{fontSize:10,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>ACTUAL</span><span style={{fontSize:10,color:wsColor,fontFamily:"DM Mono,monospace"}}>{project.progress}%</span></div>
               <Bar pct={project.progress} color={wsColor} h={5}/>
             </div>
             <div>
-              <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{fontSize:8,color:"rgba(255,255,255,0.3)",fontFamily:"DM Mono,monospace"}}>PLANNED</span><span style={{fontSize:8,color:"rgba(255,255,255,0.4)",fontFamily:"DM Mono,monospace"}}>{pplan}%</span></div>
+              <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{fontSize:10,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>PLANNED</span><span style={{fontSize:10,color:"rgba(255,255,255,0.72)",fontFamily:"DM Mono,monospace"}}>{pplan}%</span></div>
               <Bar pct={pplan} color="#666e7a" h={5}/>
             </div>
           </div>
-          {project.risk&&<div style={{marginTop:9,fontSize:11,color:"#f59e0b",background:"rgba(245,158,11,0.08)",border:"1px solid rgba(245,158,11,0.2)",borderRadius:6,padding:"5px 9px"}}>&#9888; {project.risk}</div>}
+          {project.risk&&<div style={{marginTop:9,fontSize:13,color:"#f59e0b",background:"rgba(245,158,11,0.08)",border:"1px solid rgba(245,158,11,0.2)",borderRadius:6,padding:"5px 9px"}}>&#9888; {project.risk}</div>}
         </div>
         {/* Body */}
         <div style={{flex:1,overflowY:"auto",padding:"16px 22px"}}>
@@ -681,17 +717,17 @@ function ProjectCardModal({project,card,milestones,wsColor,onClose,onSave}){
               <div style={{display:"flex",flexDirection:"column",gap:6}}>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 130px 130px",gap:8,padding:"3px 0"}}>
                   {["Milestone Name","Date","Status"].map((h,i)=>(
-                    <span key={i} style={{fontSize:9,color:"rgba(255,255,255,0.3)",fontFamily:"DM Mono,monospace",letterSpacing:"0.08em",textTransform:"uppercase"}}>{h}</span>
+                    <span key={i} style={{fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",letterSpacing:"0.08em",textTransform:"uppercase"}}>{h}</span>
                   ))}
                 </div>
                 {form.milestones.map((ms,i)=>(
                   <div key={i} style={{display:"grid",gridTemplateColumns:"1fr 130px 130px",gap:8,alignItems:"center"}}>
                     <input type="text" value={ms.name} onChange={e=>setMS(i,"name",e.target.value)} placeholder={"Milestone "+(i+1)}
-                      style={{background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.13)",borderRadius:6,color:"#fff",fontSize:12,padding:"6px 9px",outline:"none",fontFamily:"DM Sans,sans-serif"}}/>
+                      style={{background:"rgba(255,255,255,0.022)",border:"1px solid rgba(255,255,255,0.055)",borderRadius:6,color:"#fff",fontSize:12,padding:"6px 9px",outline:"none",fontFamily:"DM Sans,sans-serif"}}/>
                     <input type="date" value={ms.date} onChange={e=>setMS(i,"date",e.target.value)}
-                      style={{background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.13)",borderRadius:6,color:"#fff",fontSize:12,padding:"6px 9px",outline:"none",fontFamily:"DM Sans,sans-serif"}}/>
+                      style={{background:"rgba(255,255,255,0.022)",border:"1px solid rgba(255,255,255,0.055)",borderRadius:6,color:"#fff",fontSize:12,padding:"6px 9px",outline:"none",fontFamily:"DM Sans,sans-serif"}}/>
                     <select value={ms.status} onChange={e=>setMS(i,"status",e.target.value)}
-                      style={{background:"#13171f",border:"1px solid rgba(255,255,255,0.13)",borderRadius:6,color:"#fff",fontSize:12,padding:"6px 9px",outline:"none",fontFamily:"DM Sans,sans-serif"}}>
+                      style={{background:"#13171f",border:"1px solid rgba(255,255,255,0.055)",borderRadius:6,color:"#fff",fontSize:12,padding:"6px 9px",outline:"none",fontFamily:"DM Sans,sans-serif"}}>
                       <option>Not Started</option><option>In Progress</option><option>Complete</option>
                     </select>
                   </div>
@@ -700,13 +736,13 @@ function ProjectCardModal({project,card,milestones,wsColor,onClose,onSave}){
             ):(
               <div style={{display:"flex",flexDirection:"column",gap:5}}>
                 {(milestones&&milestones.length>0)?milestones.map((ms,i)=>(
-                  <div key={i} style={{display:"grid",gridTemplateColumns:"1fr 110px 110px",gap:10,alignItems:"center",padding:"7px 11px",background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:7}}>
+                  <div key={i} style={{display:"grid",gridTemplateColumns:"1fr 110px 110px",gap:10,alignItems:"center",padding:"7px 11px",background:"rgba(255,255,255,0.022)",border:"1px solid rgba(255,255,255,0.055)",borderRadius:7}}>
                     <div style={{fontSize:12,color:"rgba(255,255,255,0.78)"}}>{ms.name||"—"}</div>
-                    <div style={{fontSize:11,color:"rgba(255,255,255,0.4)",fontFamily:"DM Mono,monospace"}}>{fmtMD(ms.date)}</div>
+                    <div style={{fontSize:13,color:"rgba(255,255,255,0.72)",fontFamily:"DM Mono,monospace"}}>{fmtMD(ms.date)}</div>
                     <MilestoneStatusBadge status={ms.status}/>
                   </div>
                 )):(
-                  <div style={{fontSize:12,color:"rgba(255,255,255,0.25)",fontStyle:"italic",padding:"8px 0"}}>No milestones added yet. Click Edit to add them.</div>
+                  <div style={{fontSize:12,color:"rgba(255,255,255,0.62)",fontStyle:"italic",padding:"8px 0"}}>No milestones added yet. Click Edit to add them.</div>
                 )}
               </div>
             )}
@@ -796,18 +832,18 @@ function WSDash({ws,onUpdate,markDirty,cardData,onCardOpen}){
         <div style={{display:"flex",alignItems:"center",gap:14}}>
           <div style={{fontSize:28,color:ws.color}}>{ws.icon}</div>
           <div>
-            <div style={{fontSize:9,color:ws.color,fontFamily:"DM Mono,monospace",letterSpacing:"0.12em",marginBottom:3}}>{ws.code} · {ws.subtitle}</div>
+            <div style={{fontSize:11,color:ws.color,fontFamily:"DM Mono,monospace",letterSpacing:"0.12em",marginBottom:3}}>{ws.code} · {ws.subtitle}</div>
             <div style={{fontSize:18,fontFamily:"Playfair Display,serif",color:"#fff"}}>{ws.name}</div>
             <div style={{display:"flex",alignItems:"center",gap:8,marginTop:4}}>
-              <span style={{fontSize:11,color:"rgba(255,255,255,0.38)"}}>Workstream Lead:</span>
-              <span style={{fontSize:11,color:"rgba(255,255,255,0.75)"}}>{ws.lead}</span>
+              <span style={{fontSize:13,color:"rgba(255,255,255,0.72)"}}>Workstream Lead:</span>
+              <span style={{fontSize:13,color:"rgba(255,255,255,0.75)"}}>{ws.lead}</span>
             </div>
           </div>
         </div>
         <div style={{textAlign:"right"}}>
           <div style={{display:"flex",alignItems:"flex-end",gap:12,justifyContent:"flex-end",marginBottom:4}}>
-            <div><div style={{fontSize:9,color:"rgba(255,255,255,0.35)",fontFamily:"DM Mono,monospace",marginBottom:1}}>ACTUAL</div><div style={{fontSize:34,fontFamily:"Playfair Display,serif",color:ws.color,lineHeight:1}}>{act}%</div></div>
-            <div style={{paddingBottom:4}}><div style={{fontSize:9,color:"rgba(255,255,255,0.35)",fontFamily:"DM Mono,monospace",marginBottom:1}}>PLANNED</div><div style={{fontSize:22,fontFamily:"Playfair Display,serif",color:"rgba(255,255,255,0.45)",lineHeight:1}}>{plan}%</div></div>
+            <div><div style={{fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",marginBottom:1}}>ACTUAL</div><div style={{fontSize:34,fontFamily:"Playfair Display,serif",color:ws.color,lineHeight:1}}>{act}%</div></div>
+            <div style={{paddingBottom:4}}><div style={{fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",marginBottom:1}}>PLANNED</div><div style={{fontSize:22,fontFamily:"Playfair Display,serif",color:"rgba(255,255,255,0.72)",lineHeight:1}}>{plan}%</div></div>
           </div>
           <VariancePill actual={act} planned={plan}/>
         </div>
@@ -816,40 +852,40 @@ function WSDash({ws,onUpdate,markDirty,cardData,onCardOpen}){
       {/* KPIs */}
       <div style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:9,marginBottom:18}}>
         {[{l:"Initiatives",v:ws.initiatives.length},{l:"Projects",v:all.length},{l:"Variance",v:varianceLabel(act-plan),col:varianceColor(act-plan)},{l:"On Track",v:rc.G,col:RAG.G.color},{l:"At Risk",v:rc.A,col:RAG.A.color},{l:"Off Track",v:rc.R,col:RAG.R.color}].map((k,i)=>(
-          <div key={i} style={{background:k.col?`${k.col}0C`:"rgba(255,255,255,0.03)",border:`1px solid ${k.col?k.col+"20":"rgba(255,255,255,0.06)"}`,borderRadius:8,padding:"11px 12px"}}>
-            <div style={{fontSize:9,color:"rgba(255,255,255,0.36)",fontFamily:"DM Mono,monospace",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:4}}>{k.l}</div>
+          <div key={i} style={{background:k.col?`${k.col}0C`:"rgba(255,255,255,0.5)",border:`1px solid ${k.col?k.col+"20":"rgba(255,255,255,0.5)"}`,borderRadius:8,padding:"11px 12px"}}>
+            <div style={{fontSize:11,color:"rgba(255,255,255,0.72)",fontFamily:"DM Mono,monospace",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:4}}>{k.l}</div>
             <div style={{fontSize:20,fontFamily:"Playfair Display,serif",color:k.col||"#fff"}}>{k.v}</div>
           </div>
         ))}
       </div>
 
       {/* Initiatives */}
-      <div style={{fontSize:10,color:"rgba(255,255,255,0.28)",fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:9}}>Initiatives &amp; Projects</div>
+      <div style={{fontSize:12,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:9}}>Initiatives &amp; Projects</div>
       <div style={{display:"flex",flexDirection:"column",gap:7,marginBottom:16}}>
         {ws.initiatives.map(init=>{
           const open=openInit===init.id,ip=initActual(init),iplan=initPlanned(init),ir=initRag(init);
           return(
-            <div key={init.id} style={{border:`1px solid ${open?ws.color+"40":"rgba(255,255,255,0.07)"}`,borderRadius:9,overflow:"hidden",transition:"border-color 0.18s"}}>
+            <div key={init.id} style={{border:`1px solid ${open?ws.color+"40":"rgba(255,255,255,0.5)"}`,borderRadius:9,overflow:"hidden",transition:"border-color 0.18s"}}>
               {/* initiative header */}
-              <div style={{padding:"11px 14px",background:open?`${ws.color}09`:"rgba(255,255,255,0.015)",display:"flex",alignItems:"center",gap:8}}>
+              <div style={{padding:"11px 14px",background:open?`${ws.color}09`:"rgba(255,255,255,0.5)",display:"flex",alignItems:"center",gap:8}}>
                 <div onClick={()=>setOpenInit(open?null:init.id)} style={{flex:1,minWidth:0,cursor:"pointer"}}>
                   <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:4,flexWrap:"wrap"}}>
-                    <span style={{fontSize:9,color:ws.color,fontFamily:"DM Mono,monospace"}}>{init.id}</span>
+                    <span style={{fontSize:11,color:ws.color,fontFamily:"DM Mono,monospace"}}>{init.id}</span>
                     <span style={{fontSize:13,fontWeight:600,color:"#fff"}}>{init.name}</span>
                     <RAGBadge rag={ir} tiny/>
                     <VariancePill actual={ip} planned={iplan}/>
                   </div>
                   <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:5}}>
-                    <span style={{fontSize:10,color:"rgba(255,255,255,0.35)",fontFamily:"DM Mono,monospace"}}>Initiative Owner: <span style={{color:"rgba(255,255,255,0.6)"}}>{init.owner}</span></span>
-                    <span style={{fontSize:10,color:"rgba(255,255,255,0.22)"}}>{init.projects.length} projects</span>
+                    <span style={{fontSize:12,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>Initiative Owner: <span style={{color:"rgba(255,255,255,0.6)"}}>{init.owner}</span></span>
+                    <span style={{fontSize:12,color:"rgba(255,255,255,0.5)"}}>{init.projects.length} projects</span>
                   </div>
                   <div style={{display:"flex",gap:8,alignItems:"center"}}>
                     <div style={{flex:1}}>
-                      <div style={{display:"flex",justifyContent:"space-between",marginBottom:2}}><span style={{fontSize:8,color:"rgba(255,255,255,0.3)",fontFamily:"DM Mono,monospace"}}>ACTUAL</span><span style={{fontSize:8,color:ws.color,fontFamily:"DM Mono,monospace"}}>{ip}%</span></div>
+                      <div style={{display:"flex",justifyContent:"space-between",marginBottom:2}}><span style={{fontSize:10,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>ACTUAL</span><span style={{fontSize:10,color:ws.color,fontFamily:"DM Mono,monospace"}}>{ip}%</span></div>
                       <Bar pct={ip} color={ws.color}/>
                     </div>
                     <div style={{flex:1}}>
-                      <div style={{display:"flex",justifyContent:"space-between",marginBottom:2}}><span style={{fontSize:8,color:"rgba(255,255,255,0.3)",fontFamily:"DM Mono,monospace"}}>PLANNED</span><span style={{fontSize:8,color:"rgba(255,255,255,0.45)",fontFamily:"DM Mono,monospace"}}>{iplan}%</span></div>
+                      <div style={{display:"flex",justifyContent:"space-between",marginBottom:2}}><span style={{fontSize:10,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>PLANNED</span><span style={{fontSize:10,color:"rgba(255,255,255,0.72)",fontFamily:"DM Mono,monospace"}}>{iplan}%</span></div>
                       <Bar pct={iplan} color="#666e7a"/>
                     </div>
                   </div>
@@ -858,33 +894,33 @@ function WSDash({ws,onUpdate,markDirty,cardData,onCardOpen}){
                 <div style={{display:"flex",gap:5,flexShrink:0,alignItems:"center"}}>
                   <button className="icon-btn" onClick={()=>setModal({type:"init",init})}>✎ Edit</button>
                   <button className="icon-btn danger" onClick={()=>setConfirm({msg:`Delete initiative "${init.name}" and all its projects?`,fn:()=>deleteInit(init.id)})}>✕</button>
-                  <span onClick={()=>setOpenInit(open?null:init.id)} style={{cursor:"pointer",fontSize:10,color:"rgba(255,255,255,0.22)",padding:"3px 6px"}}>{open?"▲":"▼"}</span>
+                  <span onClick={()=>setOpenInit(open?null:init.id)} style={{cursor:"pointer",fontSize:12,color:"rgba(255,255,255,0.5)",padding:"3px 6px"}}>{open?"▲":"▼"}</span>
                 </div>
               </div>
 
               {/* project rows */}
               {open&&(
                 <div style={{borderTop:"1px solid rgba(255,255,255,0.055)"}}>
-                  <div style={{display:"grid",gridTemplateColumns:"1fr 56px 56px 90px 130px 80px 70px",padding:"6px 14px",background:"rgba(255,255,255,0.02)",borderBottom:"1px solid rgba(255,255,255,0.045)"}}>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 56px 56px 90px 130px 80px 70px",padding:"6px 14px",background:"rgba(255,255,255,0.022)",borderBottom:"1px solid rgba(255,255,255,0.055)"}}>
                     {["Project / Owner","Actual","Planned","Variance","Dates","RAG",""].map((h,i)=>(
-                      <span key={i} style={{fontSize:9,color:"rgba(255,255,255,0.26)",fontFamily:"DM Mono,monospace",letterSpacing:"0.07em",textTransform:"uppercase"}}>{h}</span>
+                      <span key={i} style={{fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",letterSpacing:"0.07em",textTransform:"uppercase"}}>{h}</span>
                     ))}
                   </div>
                   {init.projects.map((pr,pi)=>{
                     const pplan=plannedPct(pr.start,pr.end);
                     return(
-                      <div key={pr.id} style={{display:"grid",gridTemplateColumns:"1fr 56px 56px 90px 130px 80px 70px",padding:"9px 14px",alignItems:"center",borderBottom:"1px solid rgba(255,255,255,0.032)",background:pi%2===0?"transparent":"rgba(255,255,255,0.011)"}}>
+                      <div key={pr.id} style={{display:"grid",gridTemplateColumns:"1fr 56px 56px 90px 130px 80px 70px",padding:"9px 14px",alignItems:"center",borderBottom:"1px solid rgba(255,255,255,0.055)",background:pi%2===0?"transparent":"rgba(255,255,255,0.5)"}}>
                         <div>
-                          <div onClick={()=>onCardOpen&&onCardOpen({project:pr,wsColor:ws.color})} style={{fontSize:12,color:"rgba(255,255,255,0.82)",marginBottom:2,cursor:"pointer",display:"flex",alignItems:"center",gap:5}}>{pr.name}<span style={{fontSize:9,color:"rgba(255,255,255,0.18)",fontFamily:"DM Mono,monospace"}}>&#9658; card</span></div>
-                          <div style={{fontSize:9,color:"rgba(255,255,255,0.32)",fontFamily:"DM Mono,monospace"}}>Owner: {pr.owner}</div>
-                          {pr.risk&&<div style={{fontSize:10,color:"#f59e0b",marginTop:3}}>⚠ {pr.risk}</div>}
+                          <div onClick={()=>onCardOpen&&onCardOpen({project:pr,wsColor:ws.color})} style={{fontSize:12,color:"rgba(255,255,255,0.82)",marginBottom:2,cursor:"pointer",display:"flex",alignItems:"center",gap:5}}>{pr.name}<span style={{fontSize:11,color:"rgba(255,255,255,0.5)",fontFamily:"DM Mono,monospace"}}>&#9658; card</span></div>
+                          <div style={{fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>Owner: {pr.owner}</div>
+                          {pr.risk&&<div style={{fontSize:12,color:"#f59e0b",marginTop:3}}>⚠ {pr.risk}</div>}
                         </div>
-                        <div style={{fontSize:11,color:ws.color,fontFamily:"DM Mono,monospace",fontWeight:600}}>{pr.progress}%</div>
-                        <div style={{fontSize:11,color:"rgba(255,255,255,0.45)",fontFamily:"DM Mono,monospace"}}>{pplan}%</div>
+                        <div style={{fontSize:13,color:ws.color,fontFamily:"DM Mono,monospace",fontWeight:600}}>{pr.progress}%</div>
+                        <div style={{fontSize:13,color:"rgba(255,255,255,0.72)",fontFamily:"DM Mono,monospace"}}>{pplan}%</div>
                         <VariancePill actual={pr.progress} planned={pplan}/>
-                        <div style={{fontSize:9,color:"rgba(255,255,255,0.35)",fontFamily:"DM Mono,monospace",lineHeight:1.7}}>{fmtDate(pr.start)}<br/>→ {fmtDate(pr.end)}</div>
+                        <div style={{fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",lineHeight:1.7}}>{fmtDate(pr.start)}<br/>→ {fmtDate(pr.end)}</div>
                         <RAGBadge rag={pr.rag} tiny/>
-                        <button className="icon-btn" style={{fontSize:10}} onClick={()=>setModal({type:"proj",proj:pr,initId:init.id})}>✎ Edit</button>
+                        <button className="icon-btn" style={{fontSize:12}} onClick={()=>setModal({type:"proj",proj:pr,initId:init.id})}>✎ Edit</button>
                       </div>
                     );
                   })}
@@ -905,6 +941,140 @@ function WSDash({ws,onUpdate,markDirty,cardData,onCardOpen}){
 }
 
 
+// ─────────────────────────────────────────────────────────────────────────────
+// SPARKLINE — trend chart for workstream progress
+// ─────────────────────────────────────────────────────────────────────────────
+function Sparkline({data,color,width=80,height=28}){
+  if(!data||data.length<2) return(
+    <div style={{width,height,display:"flex",alignItems:"center",justifyContent:"center"}}>
+      <span style={{fontSize:11,color:"rgba(255,255,255,0.35)",fontFamily:"DM Mono,monospace"}}>No data</span>
+    </div>
+  );
+  const vals=data.map(d=>d.actual);
+  const min=0,max=100;
+  const pts=vals.map((v,i)=>{
+    const x=(i/(vals.length-1))*width;
+    const y=height-((v-min)/(max-min))*(height-4)-2;
+    return `${x},${y}`;
+  }).join(' ');
+  const last=vals[vals.length-1];
+  const prev=vals[vals.length-2];
+  const trend=last-prev;
+  const trendColor=trend>0?"#22c55e":trend<0?"#ef4444":"rgba(255,255,255,0.4)";
+  return(
+    <div style={{display:"flex",alignItems:"center",gap:6}}>
+      <svg width={width} height={height} style={{overflow:"visible"}}>
+        <polyline points={pts} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.7"/>
+        {vals.map((v,i)=>{
+          const x=(i/(vals.length-1))*width;
+          const y=height-((v-min)/(max-min))*(height-4)-2;
+          return i===vals.length-1?<circle key={i} cx={x} cy={y} r={2.5} fill={color}/>:null;
+        })}
+      </svg>
+      <span style={{fontSize:11,color:trendColor,fontFamily:"DM Mono,monospace",fontWeight:700,whiteSpace:"nowrap"}}>
+        {trend>0?"+":""}{trend}%
+      </span>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CROSS-WORKSTREAM GANTT
+// ─────────────────────────────────────────────────────────────────────────────
+function CrossGantt({wsList}){
+  const [expandedWS,setExpandedWS]=useState(null);
+  const GANTT_S=new Date("2026-01-01"),GANTT_E=new Date("2026-12-31");
+  const SPAN=GANTT_E-GANTT_S;
+  const pct=d=>Math.max(0,Math.min(100,((new Date(d)-GANTT_S)/SPAN)*100));
+  const todayPct=pct(new Date());
+  const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+  return(
+    <div>
+      <div style={{fontSize:12,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:12}}>Cross-Workstream Gantt — 2026</div>
+      {/* Month headers */}
+      <div style={{display:"grid",gridTemplateColumns:"200px 1fr",gap:0,marginBottom:4}}>
+        <div/>
+        <div style={{position:"relative",height:18}}>
+          {MONTHS.map((m,i)=>(
+            <div key={m} style={{position:"absolute",left:`${(i/12)*100}%`,fontSize:11,color:"rgba(255,255,255,0.5)",fontFamily:"DM Mono,monospace",transform:"translateX(-50%)"}}>{m}</div>
+          ))}
+        </div>
+      </div>
+      {/* Workstream rows */}
+      {wsList.map(ws=>{
+        const allProj=ws.initiatives.flatMap(i=>i.projects);
+        const isExpanded=expandedWS===ws.code;
+        const wsActPct=allProj.length?Math.round(allProj.reduce((a,p)=>a+p.progress,0)/allProj.length):0;
+        const wsRagColor={"G":"#22c55e","A":"#f59e0b","R":"#ef4444"}[ws.initiatives.flatMap(i=>i.projects).reduce((w,p)=>p.rag==="R"?"R":p.rag==="A"&&w!=="R"?"A":w,"G")]||"#22c55e";
+        return(
+          <div key={ws.code} style={{marginBottom:2}}>
+            {/* WS summary row */}
+            <div style={{display:"grid",gridTemplateColumns:"200px 1fr",gap:0,alignItems:"center",cursor:"pointer",padding:"3px 0"}}
+              onClick={()=>setExpandedWS(isExpanded?null:ws.code)}>
+              <div style={{display:"flex",alignItems:"center",gap:6,paddingRight:8}}>
+                <span style={{fontSize:13,color:ws.color}}>{ws.icon}</span>
+                <span style={{fontSize:12,color:"rgba(255,255,255,0.9)",fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{ws.code}</span>
+                <span style={{fontSize:11,color:wsRagColor,marginLeft:"auto"}}>●</span>
+                <span style={{fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>{isExpanded?"▲":"▼"}</span>
+              </div>
+              <div style={{position:"relative",height:14,background:"rgba(255,255,255,0.05)",borderRadius:3,overflow:"hidden"}}>
+                {/* WS extent bar */}
+                {(()=>{
+                  const starts=allProj.map(p=>new Date(p.start)).filter(d=>!isNaN(d));
+                  const ends=allProj.map(p=>new Date(p.end)).filter(d=>!isNaN(d));
+                  if(!starts.length) return null;
+                  const wsStart=new Date(Math.min(...starts));
+                  const wsEnd=new Date(Math.max(...ends));
+                  const left=pct(wsStart);
+                  const right=100-pct(wsEnd);
+                  const fillWidth=(pct(wsEnd)-pct(wsStart))*(wsActPct/100);
+                  return(
+                    <>
+                      <div style={{position:"absolute",top:0,bottom:0,left:`${left}%`,right:`${right}%`,background:`${ws.color}25`,borderRadius:2}}/>
+                      <div style={{position:"absolute",top:0,bottom:0,left:`${left}%`,width:`${fillWidth}%`,background:ws.color,borderRadius:2,opacity:0.8}}/>
+                    </>
+                  );
+                })()}
+                {/* Today line */}
+                <div style={{position:"absolute",top:0,bottom:0,left:`${todayPct}%`,width:1.5,background:"rgba(255,255,255,0.022)"}}/>
+              </div>
+            </div>
+            {/* Expanded project rows */}
+            {isExpanded&&allProj.map((pr,pi)=>{
+              const left=pct(pr.start),right=100-pct(pr.end);
+              const planPct=plannedPct(pr.start,pr.end);
+              const fillW=(pct(pr.end)-pct(pr.start))*(pr.progress/100);
+              const ragC={"G":"#22c55e","A":"#f59e0b","R":"#ef4444"}[pr.rag]||"#22c55e";
+              return(
+                <div key={pr.id} style={{display:"grid",gridTemplateColumns:"200px 1fr",gap:0,alignItems:"center",padding:"2px 0",background:pi%2===0?"transparent":"rgba(255,255,255,0.015)"}}>
+                  <div style={{paddingLeft:16,paddingRight:8,overflow:"hidden"}}>
+                    <div style={{fontSize:11,color:"rgba(255,255,255,0.82)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}} title={pr.name}>{pr.name}</div>
+                    <div style={{fontSize:10,color:"rgba(255,255,255,0.5)",fontFamily:"DM Mono,monospace"}}>{pr.progress}% <span style={{color:ragC}}>●</span></div>
+                  </div>
+                  <div style={{position:"relative",height:10,background:"rgba(255,255,255,0.04)",borderRadius:2,overflow:"hidden"}}>
+                    <div style={{position:"absolute",top:0,bottom:0,left:`${left}%`,right:`${right}%`,background:`${ws.color}20`,border:`1px dashed ${ws.color}50`,borderRadius:2}}/>
+                    <div style={{position:"absolute",top:0,bottom:0,left:`${left}%`,width:`${fillW}%`,background:ws.color,borderRadius:2,opacity:0.85}}/>
+                    <div style={{position:"absolute",top:0,bottom:0,left:`${todayPct}%`,width:1,background:"rgba(255,255,255,0.022)"}}/>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        );
+      })}
+      {/* Legend */}
+      <div style={{display:"flex",gap:16,marginTop:10,flexWrap:"wrap"}}>
+        {[["rgba(255,255,255,0.25)","1px dashed rgba(255,255,255,0.4)","Planned duration"],["#4C9AC9","none","Actual progress"],["rgba(255,255,255,0.7)","none","Today"]].map(([bg,border,label],i)=>(
+          <div key={i} style={{display:"flex",alignItems:"center",gap:5}}>
+            {i<2?<div style={{width:20,height:6,borderRadius:2,background:bg,border}}/>:<div style={{width:2,height:12,borderRadius:1,background:bg}}/>}
+            <span style={{fontSize:11,color:"rgba(255,255,255,0.5)",fontFamily:"DM Mono,monospace"}}>{label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 // ─────────────────────────────────────────────────────────────────────────────
 // PROPOSALS REVIEW PANEL
 // ─────────────────────────────────────────────────────────────────────────────
@@ -981,10 +1151,10 @@ function ProposalsPanel({wsList,onUpdate,markDirty,accessToken,onTokenRefresh}){
     <div>
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:18}}>
         <div>
-          <div style={{fontSize:10,color:"rgba(255,255,255,0.28)",fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:3}}>Workstream Lead Submissions</div>
+          <div style={{fontSize:12,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:3}}>Workstream Lead Submissions</div>
           <div style={{fontSize:18,fontFamily:"Playfair Display,serif",color:"#fff"}}>Pending Proposals</div>
         </div>
-        <button onClick={load} disabled={loading} style={{padding:"6px 14px",borderRadius:7,background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.12)",color:"rgba(255,255,255,0.55)",fontSize:10,cursor:"pointer",fontFamily:"DM Mono,monospace",display:"flex",alignItems:"center",gap:5}}>
+        <button onClick={load} disabled={loading} style={{padding:"6px 14px",borderRadius:7,background:"rgba(255,255,255,0.022)",border:"1px solid rgba(255,255,255,0.055)",color:"rgba(255,255,255,0.82)",fontSize:12,cursor:"pointer",fontFamily:"DM Mono,monospace",display:"flex",alignItems:"center",gap:5}}>
           <span className={loading?"spin":""} style={{display:"inline-block"}}>↻</span> Refresh
         </button>
       </div>
@@ -992,13 +1162,13 @@ function ProposalsPanel({wsList,onUpdate,markDirty,accessToken,onTokenRefresh}){
       {msg&&<div style={{fontSize:12,color:"#22c55e",background:"rgba(34,197,94,0.08)",border:"1px solid rgba(34,197,94,0.2)",borderRadius:7,padding:"8px 14px",marginBottom:14}}>{msg}</div>}
       {error&&<div style={{fontSize:12,color:"#ef4444",background:"rgba(239,68,68,0.08)",border:"1px solid rgba(239,68,68,0.2)",borderRadius:7,padding:"8px 14px",marginBottom:14}}>{error}</div>}
 
-      {loading&&<div style={{textAlign:"center",padding:40,color:"rgba(255,255,255,0.3)",fontSize:13}}>Loading proposals…</div>}
+      {loading&&<div style={{textAlign:"center",padding:40,color:"rgba(255,255,255,0.62)",fontSize:13}}>Loading proposals…</div>}
 
       {!loading&&proposals.length===0&&(
-        <div style={{textAlign:"center",padding:"48px 24px",background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12}}>
+        <div style={{textAlign:"center",padding:"48px 24px",background:"rgba(255,255,255,0.022)",border:"1px solid rgba(255,255,255,0.055)",borderRadius:12}}>
           <div style={{fontSize:28,marginBottom:12}}>✓</div>
-          <div style={{fontSize:14,color:"rgba(255,255,255,0.5)"}}>No pending proposals</div>
-          <div style={{fontSize:12,color:"rgba(255,255,255,0.28)",marginTop:4}}>All submissions have been reviewed, or none have been made yet.</div>
+          <div style={{fontSize:14,color:"rgba(255,255,255,0.82)"}}>No pending proposals</div>
+          <div style={{fontSize:12,color:"rgba(255,255,255,0.62)",marginTop:4}}>All submissions have been reviewed, or none have been made yet.</div>
         </div>
       )}
 
@@ -1007,9 +1177,9 @@ function ProposalsPanel({wsList,onUpdate,markDirty,accessToken,onTokenRefresh}){
         return(
           <div key={wsCode} style={{marginBottom:20}}>
             <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10,paddingBottom:6,borderBottom:`1px solid ${wsMeta.color}30`}}>
-              <span style={{fontSize:11,color:wsMeta.color,fontFamily:"DM Mono,monospace",fontWeight:600}}>{wsMeta.code}</span>
+              <span style={{fontSize:13,color:wsMeta.color,fontFamily:"DM Mono,monospace",fontWeight:600}}>{wsMeta.code}</span>
               <span style={{fontSize:13,color:"rgba(255,255,255,0.7)"}}>{wsMeta.name}</span>
-              <span style={{fontSize:10,color:"rgba(255,255,255,0.28)",fontFamily:"DM Mono,monospace"}}>{props.length} pending</span>
+              <span style={{fontSize:12,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>{props.length} pending</span>
             </div>
             <div style={{display:"flex",flexDirection:"column",gap:8}}>
               {props.map(p=>{
@@ -1019,59 +1189,59 @@ function ProposalsPanel({wsList,onUpdate,markDirty,accessToken,onTokenRefresh}){
                 const riskChanged=(p.oldRisk||"")!==(p.newRisk||"");
                 const ts=p.timestamp?new Date(p.timestamp).toLocaleString("en-GB",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"}):"—";
                 return(
-                  <div key={p.rowIndex} style={{background:"rgba(255,255,255,0.025)",border:`1px solid ${wsMeta.color}25`,borderRadius:10,padding:"14px 16px"}}>
+                  <div key={p.rowIndex} style={{background:"rgba(255,255,255,0.022)",border:`1px solid ${wsMeta.color}25`,borderRadius:10,padding:"14px 16px"}}>
                     <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:12,marginBottom:12}}>
                       <div>
                         <div style={{fontSize:13,fontWeight:600,color:"#fff",marginBottom:3}}>{p.projectName}</div>
                         <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
-                          <span style={{fontSize:10,color:"rgba(255,255,255,0.35)",fontFamily:"DM Mono,monospace"}}>Submitted by: <span style={{color:"rgba(255,255,255,0.6)"}}>{p.submittedBy}</span></span>
-                          <span style={{fontSize:10,color:"rgba(255,255,255,0.35)",fontFamily:"DM Mono,monospace"}}>{ts}</span>
+                          <span style={{fontSize:12,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>Submitted by: <span style={{color:"rgba(255,255,255,0.6)"}}>{p.submittedBy}</span></span>
+                          <span style={{fontSize:12,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>{ts}</span>
                         </div>
                       </div>
                       <div style={{display:"flex",gap:6,flexShrink:0}}>
-                        <button onClick={()=>handleReject(p)} disabled={!!acting_state} style={{padding:"6px 14px",borderRadius:7,background:"transparent",border:"1px solid rgba(239,68,68,0.3)",color:"#ef4444",fontSize:11,fontWeight:600,cursor:acting_state?"wait":"pointer",fontFamily:"DM Mono,monospace",opacity:acting_state?0.6:1}}>
+                        <button onClick={()=>handleReject(p)} disabled={!!acting_state} style={{padding:"6px 14px",borderRadius:7,background:"transparent",border:"1px solid rgba(239,68,68,0.3)",color:"#ef4444",fontSize:13,fontWeight:600,cursor:acting_state?"wait":"pointer",fontFamily:"DM Mono,monospace",opacity:acting_state?0.6:1}}>
                           {acting_state==="rejecting"?"Rejecting…":"✗ Reject"}
                         </button>
-                        <button onClick={()=>handleApprove(p)} disabled={!!acting_state} style={{padding:"6px 14px",borderRadius:7,background:acting_state?"rgba(34,197,94,0.1)":"#22c55e",border:"none",color:acting_state?"#22c55e":"#0a0d12",fontSize:11,fontWeight:700,cursor:acting_state?"wait":"pointer",fontFamily:"DM Mono,monospace",opacity:acting_state?0.7:1}}>
+                        <button onClick={()=>handleApprove(p)} disabled={!!acting_state} style={{padding:"6px 14px",borderRadius:7,background:acting_state?"rgba(34,197,94,0.1)":"#22c55e",border:"none",color:acting_state?"#22c55e":"#0a0d12",fontSize:13,fontWeight:700,cursor:acting_state?"wait":"pointer",fontFamily:"DM Mono,monospace",opacity:acting_state?0.7:1}}>
                           {acting_state==="approving"?"Approving…":"✓ Approve"}
                         </button>
                       </div>
                     </div>
                     {/* changes grid */}
                     <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}}>
-                      <div style={{background:progChanged?"rgba(245,158,11,0.06)":"rgba(255,255,255,0.02)",border:`1px solid ${progChanged?"rgba(245,158,11,0.2)":"rgba(255,255,255,0.06)"}`,borderRadius:7,padding:"10px 12px"}}>
-                        <div style={{fontSize:9,color:"rgba(255,255,255,0.35)",fontFamily:"DM Mono,monospace",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6}}>% Complete</div>
+                      <div style={{background:progChanged?"rgba(245,158,11,0.06)":"rgba(255,255,255,0.5)",border:`1px solid ${progChanged?"rgba(245,158,11,0.2)":"rgba(255,255,255,0.5)"}`,borderRadius:7,padding:"10px 12px"}}>
+                        <div style={{fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6}}>% Complete</div>
                         {progChanged?(
                           <div style={{display:"flex",alignItems:"center",gap:8}}>
-                            <span style={{fontSize:18,fontFamily:"Playfair Display,serif",color:"rgba(255,255,255,0.35)",textDecoration:"line-through"}}>{p.oldProgress}%</span>
+                            <span style={{fontSize:18,fontFamily:"Playfair Display,serif",color:"rgba(255,255,255,0.62)",textDecoration:"line-through"}}>{p.oldProgress}%</span>
                             <span style={{color:"#f59e0b",fontSize:12}}>→</span>
                             <span style={{fontSize:22,fontFamily:"Playfair Display,serif",color:"#22c55e"}}>{p.newProgress}%</span>
                           </div>
                         ):(
-                          <span style={{fontSize:18,fontFamily:"Playfair Display,serif",color:"rgba(255,255,255,0.4)"}}>{p.oldProgress}% <span style={{fontSize:10,color:"rgba(255,255,255,0.25)"}}>unchanged</span></span>
+                          <span style={{fontSize:18,fontFamily:"Playfair Display,serif",color:"rgba(255,255,255,0.72)"}}>{p.oldProgress}% <span style={{fontSize:12,color:"rgba(255,255,255,0.62)"}}>unchanged</span></span>
                         )}
                       </div>
-                      <div style={{background:ragChanged?"rgba(245,158,11,0.06)":"rgba(255,255,255,0.02)",border:`1px solid ${ragChanged?"rgba(245,158,11,0.2)":"rgba(255,255,255,0.06)"}`,borderRadius:7,padding:"10px 12px"}}>
-                        <div style={{fontSize:9,color:"rgba(255,255,255,0.35)",fontFamily:"DM Mono,monospace",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6}}>RAG Status</div>
+                      <div style={{background:ragChanged?"rgba(245,158,11,0.06)":"rgba(255,255,255,0.5)",border:`1px solid ${ragChanged?"rgba(245,158,11,0.2)":"rgba(255,255,255,0.5)"}`,borderRadius:7,padding:"10px 12px"}}>
+                        <div style={{fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6}}>RAG Status</div>
                         {ragChanged?(
                           <div style={{display:"flex",alignItems:"center",gap:7,flexWrap:"wrap"}}>
-                            <span style={{fontSize:11,color:RAG[p.oldRag]?.color,fontFamily:"DM Mono,monospace",opacity:0.5,textDecoration:"line-through"}}>{RAG[p.oldRag]?.label}</span>
+                            <span style={{fontSize:13,color:RAG[p.oldRag]?.color,fontFamily:"DM Mono,monospace",opacity:0.5,textDecoration:"line-through"}}>{RAG[p.oldRag]?.label}</span>
                             <span style={{color:"#f59e0b",fontSize:12}}>→</span>
-                            <span style={{fontSize:11,color:RAG[p.newRag]?.color,fontFamily:"DM Mono,monospace",fontWeight:700}}>{RAG[p.newRag]?.label}</span>
+                            <span style={{fontSize:13,color:RAG[p.newRag]?.color,fontFamily:"DM Mono,monospace",fontWeight:700}}>{RAG[p.newRag]?.label}</span>
                           </div>
                         ):(
-                          <span style={{fontSize:11,color:RAG[p.oldRag]?.color,fontFamily:"DM Mono,monospace"}}>{RAG[p.oldRag]?.label} <span style={{fontSize:10,color:"rgba(255,255,255,0.25)",color:"rgba(255,255,255,0.25)"}}>unchanged</span></span>
+                          <span style={{fontSize:13,color:RAG[p.oldRag]?.color,fontFamily:"DM Mono,monospace"}}>{RAG[p.oldRag]?.label} <span style={{fontSize:12,color:"rgba(255,255,255,0.62)",color:"rgba(255,255,255,0.62)"}}>unchanged</span></span>
                         )}
                       </div>
-                      <div style={{background:riskChanged?"rgba(245,158,11,0.06)":"rgba(255,255,255,0.02)",border:`1px solid ${riskChanged?"rgba(245,158,11,0.2)":"rgba(255,255,255,0.06)"}`,borderRadius:7,padding:"10px 12px"}}>
-                        <div style={{fontSize:9,color:"rgba(255,255,255,0.35)",fontFamily:"DM Mono,monospace",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6}}>Risk / Issue</div>
+                      <div style={{background:riskChanged?"rgba(245,158,11,0.06)":"rgba(255,255,255,0.5)",border:`1px solid ${riskChanged?"rgba(245,158,11,0.2)":"rgba(255,255,255,0.5)"}`,borderRadius:7,padding:"10px 12px"}}>
+                        <div style={{fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6}}>Risk / Issue</div>
                         {riskChanged?(
                           <div>
-                            {p.oldRisk&&<div style={{fontSize:11,color:"rgba(255,255,255,0.35)",textDecoration:"line-through",marginBottom:3}}>{p.oldRisk}</div>}
-                            <div style={{fontSize:11,color:p.newRisk?"#f59e0b":"rgba(255,255,255,0.45)"}}>{p.newRisk||"(cleared)"}</div>
+                            {p.oldRisk&&<div style={{fontSize:13,color:"rgba(255,255,255,0.62)",textDecoration:"line-through",marginBottom:3}}>{p.oldRisk}</div>}
+                            <div style={{fontSize:13,color:p.newRisk?"#f59e0b":"rgba(255,255,255,0.72)"}}>{p.newRisk||"(cleared)"}</div>
                           </div>
                         ):(
-                          <div style={{fontSize:11,color:"rgba(255,255,255,0.35)"}}>{p.oldRisk||"None"} <span style={{fontSize:10,color:"rgba(255,255,255,0.25)"}}>unchanged</span></div>
+                          <div style={{fontSize:13,color:"rgba(255,255,255,0.62)"}}>{p.oldRisk||"None"} <span style={{fontSize:12,color:"rgba(255,255,255,0.62)"}}>unchanged</span></div>
                         )}
                       </div>
                     </div>
@@ -1089,7 +1259,8 @@ function ProposalsPanel({wsList,onUpdate,markDirty,accessToken,onTokenRefresh}){
 // ─────────────────────────────────────────────────────────────────────────────
 // MASTER DASHBOARD (read-only summary, same as viewer)
 // ─────────────────────────────────────────────────────────────────────────────
-function Master({wsList,onSelect,lastRefresh}){
+function Master({wsList,onSelect,lastRefresh,history}){
+  const [masterView,setMasterView]=useState('overview');
   const all=wsList.flatMap(allProjects);
   const rc={G:0,A:0,R:0};all.forEach(p=>rc[p.rag]++);
   const overallActual=avgNums(wsList.map(ws=>wsActual(ws)));
@@ -1099,7 +1270,7 @@ function Master({wsList,onSelect,lastRefresh}){
   const totalInits=wsList.reduce((a,ws)=>a+ws.initiatives.length,0);
   return(
     <div>
-      {lastRefresh&&<div style={{fontSize:9,color:"rgba(255,255,255,0.2)",fontFamily:"DM Mono,monospace",marginBottom:14,textAlign:"right"}}>Last synced from Sheets: {lastRefresh}</div>}
+      {lastRefresh&&<div style={{fontSize:11,color:"rgba(255,255,255,0.5)",fontFamily:"DM Mono,monospace",marginBottom:14,textAlign:"right"}}>Last synced from Sheets: {lastRefresh}</div>}
       <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:10,marginBottom:20}}>
         {[
           {l:"Actual Progress",v:`${overallActual}%`,sub:"across all workstreams"},
@@ -1108,10 +1279,10 @@ function Master({wsList,onSelect,lastRefresh}){
           {l:"Initiatives / Projects",v:`${totalInits} / ${all.length}`,sub:`${totalInits} initiatives · ${all.length} projects`},
           {l:"Open Risks",v:risks.length,sub:risks.length>0?"requiring attention":"none logged",col:risks.length>0?"#ef4444":null},
         ].map((k,i)=>(
-          <div key={i} style={{background:k.col?`${k.col}0E`:"rgba(255,255,255,0.03)",border:`1px solid ${k.col?k.col+"25":"rgba(255,255,255,0.07)"}`,borderRadius:10,padding:"15px 16px"}}>
-            <div style={{fontSize:10,color:"rgba(255,255,255,0.38)",fontFamily:"DM Mono,monospace",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:5}}>{k.l}</div>
+          <div key={i} style={{background:k.col?`${k.col}0E`:"rgba(255,255,255,0.5)",border:`1px solid ${k.col?k.col+"25":"rgba(255,255,255,0.5)"}`,borderRadius:10,padding:"15px 16px"}}>
+            <div style={{fontSize:12,color:"rgba(255,255,255,0.72)",fontFamily:"DM Mono,monospace",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:5}}>{k.l}</div>
             <div style={{fontSize:26,fontFamily:"Playfair Display,serif",color:k.col||"#fff",lineHeight:1,marginBottom:3}}>{k.v}</div>
-            <div style={{fontSize:11,color:"rgba(255,255,255,0.28)"}}>{k.sub}</div>
+            <div style={{fontSize:13,color:"rgba(255,255,255,0.62)"}}>{k.sub}</div>
           </div>
         ))}
       </div>
@@ -1119,53 +1290,62 @@ function Master({wsList,onSelect,lastRefresh}){
         {["G","A","R"].map(r=>(
           <div key={r} style={{background:RAG[r].bg,border:`1px solid ${RAG[r].border}`,borderRadius:10,padding:"13px 16px",display:"flex",alignItems:"center",gap:12}}>
             <div style={{width:36,height:36,borderRadius:"50%",background:RAG[r].color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,fontWeight:700,color:"#0a0d12",flexShrink:0}}>{rc[r]}</div>
-            <div><div style={{fontSize:13,color:RAG[r].color,fontWeight:600}}>{RAG[r].label}</div><div style={{fontSize:11,color:"rgba(255,255,255,0.32)"}}>projects</div></div>
+            <div><div style={{fontSize:13,color:RAG[r].color,fontWeight:600}}>{RAG[r].label}</div><div style={{fontSize:13,color:"rgba(255,255,255,0.62)"}}>projects</div></div>
           </div>
         ))}
       </div>
-      <div style={{fontSize:10,color:"rgba(255,255,255,0.28)",fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:9}}>Workstream Status — click to edit</div>
+      <div style={{display:"flex",gap:6,marginBottom:16}}>
+        {[["overview","Overview"],["gantt","Cross-Workstream Gantt"]].map(([v,label])=>(
+          <button key={v} onClick={()=>setMasterView(v)} style={{padding:"5px 14px",borderRadius:6,cursor:"pointer",fontSize:12,fontFamily:"DM Mono,monospace",border:`1px solid ${masterView===v?"rgba(201,168,76,0.6)":"rgba(255,255,255,0.15)"}`,background:masterView===v?"rgba(201,168,76,0.15)":"transparent",color:masterView===v?"#C9A84C":"rgba(255,255,255,0.6)",transition:"all 0.15s"}}>{label}</button>
+        ))}
+      </div>
+      {masterView==="gantt"&&<CrossGantt wsList={wsList}/>}
+      {masterView==="overview"&&<div style={{fontSize:12,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:9}}>Workstream Status — click to edit</div>}
+      {masterView==="overview"&&
       <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:9,marginBottom:26}}>
         {wsList.map(ws=>{
           const act=wsActual(ws),plan=wsPlanned(ws),rag=wsRag(ws);
           return(
             <div key={ws.id} onClick={()=>onSelect(ws.id)} style={{background:"rgba(255,255,255,0.022)",border:"1px solid rgba(255,255,255,0.055)",borderLeft:`3px solid ${ws.color}`,borderRadius:10,padding:"13px 15px",cursor:"pointer",transition:"background 0.16s"}}
-              onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.055)"}
-              onMouseLeave={e=>e.currentTarget.style.background="rgba(255,255,255,0.022)"}>
+              onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.5)"}
+              onMouseLeave={e=>e.currentTarget.style.background="rgba(255,255,255,0.5)"}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:9,gap:8}}>
                 <div style={{flex:1}}>
-                  <div style={{fontSize:9,color:ws.color,fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",marginBottom:2}}>{ws.code}</div>
+                  <div style={{fontSize:11,color:ws.color,fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",marginBottom:2}}>{ws.code}</div>
                   <div style={{fontSize:13,fontWeight:600,color:"#fff",lineHeight:1.3}}>{ws.name}</div>
-                  <div style={{fontSize:10,color:"rgba(255,255,255,0.32)",marginTop:3}}>Lead: <span style={{color:"rgba(255,255,255,0.6)"}}>{ws.lead}</span></div>
+                  <div style={{fontSize:12,color:"rgba(255,255,255,0.62)",marginTop:3}}>Lead: <span style={{color:"rgba(255,255,255,0.6)"}}>{ws.lead}</span></div>
                 </div>
                 <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:5}}><RAGBadge rag={rag} tiny/><VariancePill actual={act} planned={plan}/></div>
               </div>
               <div style={{marginBottom:5}}>
-                <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{fontSize:9,color:"rgba(255,255,255,0.35)",fontFamily:"DM Mono,monospace"}}>ACTUAL</span><span style={{fontSize:9,color:ws.color,fontFamily:"DM Mono,monospace"}}>{act}%</span></div>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>ACTUAL</span><span style={{fontSize:11,color:ws.color,fontFamily:"DM Mono,monospace"}}>{act}%</span></div>
                 <Bar pct={act} color={ws.color}/>
               </div>
               <div>
-                <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{fontSize:9,color:"rgba(255,255,255,0.35)",fontFamily:"DM Mono,monospace"}}>PLANNED</span><span style={{fontSize:9,color:"rgba(255,255,255,0.45)",fontFamily:"DM Mono,monospace"}}>{plan}%</span></div>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>PLANNED</span><span style={{fontSize:11,color:"rgba(255,255,255,0.72)",fontFamily:"DM Mono,monospace"}}>{plan}%</span></div>
                 <Bar pct={plan} color="#666e7a"/>
               </div>
               <div style={{display:"flex",gap:12,marginTop:8}}>
-                <span style={{fontSize:10,color:"rgba(255,255,255,0.28)"}}>{ws.initiatives.length} initiatives</span>
-                <span style={{fontSize:10,color:"rgba(255,255,255,0.28)"}}>{allProjects(ws).length} projects</span>
+                <span style={{fontSize:12,color:"rgba(255,255,255,0.62)"}}>{ws.initiatives.length} initiatives</span>
+                <span style={{fontSize:12,color:"rgba(255,255,255,0.62)"}}>{allProjects(ws).length} projects</span>
               </div>
+              {history[ws.code]&&history[ws.code].length>=2&&<div style={{marginTop:6}}><Sparkline data={history[ws.code]} color={ws.color} width={70} height={22}/></div>}
             </div>
           );
         })}
       </div>
       {risks.length>0&&(
         <div>
-          <div style={{fontSize:10,color:"rgba(255,255,255,0.28)",fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:9}}>Consolidated Risk Register</div>
-          <div style={{border:"1px solid rgba(255,255,255,0.07)",borderRadius:10,overflow:"hidden"}}>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 70px 80px",padding:"7px 16px",background:"rgba(255,255,255,0.025)",borderBottom:"1px solid rgba(255,255,255,0.055)"}}>
-              {["Risk / Issue","WS","Status"].map((h,i)=><span key={i} style={{fontSize:9,color:"rgba(255,255,255,0.28)",fontFamily:"DM Mono,monospace",letterSpacing:"0.08em",textTransform:"uppercase"}}>{h}</span>)}
+          }
+      <div style={{fontSize:12,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:9}}>Consolidated Risk Register</div>
+          <div style={{border:"1px solid rgba(255,255,255,0.055)",borderRadius:10,overflow:"hidden"}}>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 70px 80px",padding:"7px 16px",background:"rgba(255,255,255,0.022)",borderBottom:"1px solid rgba(255,255,255,0.055)"}}>
+              {["Risk / Issue","WS","Status"].map((h,i)=><span key={i} style={{fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",letterSpacing:"0.08em",textTransform:"uppercase"}}>{h}</span>)}
             </div>
             {risks.map((r,i)=>(
-              <div key={i} style={{display:"grid",gridTemplateColumns:"1fr 70px 80px",padding:"10px 16px",alignItems:"center",borderBottom:i<risks.length-1?"1px solid rgba(255,255,255,0.04)":"none",background:i%2===0?"transparent":"rgba(255,255,255,0.012)"}}>
-                <div><div style={{fontSize:12,color:"rgba(255,255,255,0.8)",marginBottom:2}}>{r.name}</div><div style={{fontSize:11,color:"#f59e0b"}}>⚠ {r.risk}</div></div>
-                <div style={{fontSize:11,color:r.wsColor,fontFamily:"DM Mono,monospace"}}>{r.wsCode}</div>
+              <div key={i} style={{display:"grid",gridTemplateColumns:"1fr 70px 80px",padding:"10px 16px",alignItems:"center",borderBottom:i<risks.length-1?"1px solid rgba(255,255,255,0.5)":"none",background:i%2===0?"transparent":"rgba(255,255,255,0.5)"}}>
+                <div><div style={{fontSize:12,color:"rgba(255,255,255,0.8)",marginBottom:2}}>{r.name}</div><div style={{fontSize:13,color:"#f59e0b"}}>⚠ {r.risk}</div></div>
+                <div style={{fontSize:13,color:r.wsColor,fontFamily:"DM Mono,monospace"}}>{r.wsCode}</div>
                 <RAGBadge rag={r.rag} tiny/>
               </div>
             ))}
@@ -1185,6 +1365,7 @@ function App(){
   const [accessToken,setAccessToken]=useState(null);
   const [cardData,setCardData]=useState({cards:{},milestones:{}});
   const [activeCard,setActiveCard]=useState(null);
+  const [history,setHistory]=useState({});
   const [wsList,setWsList]=useState(FALLBACK_DATA);
   const [dirty,setDirty]=useState(false);
   const [loading,setLoading]=useState(false);
@@ -1206,6 +1387,7 @@ function App(){
       const data=await loadFromSheets();
       if(data){setWsList(data);setUsingSheets(true);setLastRefresh(new Date().toLocaleTimeString());setDirty(false);showSuccess("Refreshed from Google Sheets");}
       try{const cd=await loadProjectCards();setCardData(cd);}catch(_){}
+      try{const h=await loadHistory();setHistory(h);}catch(_){}
     }catch(e){setError(e.message);}
     finally{setLoading(false);}
   },[isConfigured]);
@@ -1246,18 +1428,18 @@ function App(){
         <div style={{display:"flex",height:"100vh",overflow:"hidden"}}>
 
           {/* ── Sidebar ── */}
-          <div style={{width:262,flexShrink:0,background:"rgba(255,255,255,0.014)",borderRight:"1px solid rgba(255,255,255,0.055)",display:"flex",flexDirection:"column",overflow:"hidden"}}>
-            <div style={{padding:"18px 16px 14px",borderBottom:"1px solid rgba(255,255,255,0.048)"}}>
-              <div style={{fontSize:9,color:"rgba(255,255,255,0.26)",fontFamily:"DM Mono,monospace",letterSpacing:"0.14em",textTransform:"uppercase",marginBottom:4}}>Post-Acquisition Integration</div>
+          <div style={{width:262,flexShrink:0,background:"rgba(255,255,255,0.022)",borderRight:"1px solid rgba(255,255,255,0.055)",display:"flex",flexDirection:"column",overflow:"hidden"}}>
+            <div style={{padding:"18px 16px 14px",borderBottom:"1px solid rgba(255,255,255,0.055)"}}>
+              <div style={{fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",letterSpacing:"0.14em",textTransform:"uppercase",marginBottom:4}}>Post-Acquisition Integration</div>
               <div style={{fontSize:19,fontFamily:"Playfair Display,serif",color:"#fff"}}>Hightekers</div>
-              <div style={{fontSize:10,color:"rgba(255,255,255,0.28)",marginTop:3}}>Serviap · EOS · Rivermate</div>
+              <div style={{fontSize:12,color:"rgba(255,255,255,0.62)",marginTop:3}}>Serviap · EOS · Rivermate</div>
               <div style={{marginTop:9,height:1,background:"linear-gradient(90deg,#C9A84C50,transparent)"}}/>
               <div style={{display:"flex",alignItems:"center",gap:6,marginTop:6}}>
-                <div style={{fontSize:9,color:"#C9A84C",fontFamily:"DM Mono,monospace",letterSpacing:"0.05em"}}>ADMIN MODE</div>
-                <div style={{fontSize:8,background:"#C9A84C22",border:"1px solid #C9A84C44",borderRadius:4,padding:"1px 6px",color:"#C9A84C",fontFamily:"DM Mono,monospace"}}>✎</div>
+                <div style={{fontSize:11,color:"#C9A84C",fontFamily:"DM Mono,monospace",letterSpacing:"0.05em"}}>ADMIN MODE</div>
+                <div style={{fontSize:10,background:"#C9A84C22",border:"1px solid #C9A84C44",borderRadius:4,padding:"1px 6px",color:"#C9A84C",fontFamily:"DM Mono,monospace"}}>✎</div>
                 {dirty&&<div className="dirty-dot" title="Unsaved changes"/>}
               </div>
-              {usingSheets&&<div style={{marginTop:4,fontSize:8,color:"rgba(34,197,94,0.7)",fontFamily:"DM Mono,monospace",letterSpacing:"0.05em"}}>● LIVE FROM GOOGLE SHEETS</div>}
+              {usingSheets&&<div style={{marginTop:4,fontSize:10,color:"rgba(34,197,94,0.7)",fontFamily:"DM Mono,monospace",letterSpacing:"0.05em"}}>● LIVE FROM GOOGLE SHEETS</div>}
             </div>
             <nav style={{flex:1,overflowY:"auto",padding:"7px"}}>
               {navItems.map(ws=>{
@@ -1266,17 +1448,17 @@ function App(){
                 const rag=liveWS?wsRag(liveWS):null;
                 return(
                   <div key={ws.id} onClick={()=>setActive(ws.id)} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:7,cursor:"pointer",marginBottom:1,background:isActive?`${ws.color}15`:"transparent",border:`1px solid ${isActive?ws.color+"35":"transparent"}`,transition:"all 0.13s"}}
-                    onMouseEnter={e=>{if(!isActive)e.currentTarget.style.background="rgba(255,255,255,0.032)";}}
+                    onMouseEnter={e=>{if(!isActive)e.currentTarget.style.background="rgba(255,255,255,0.5)";}}
                     onMouseLeave={e=>{if(!isActive)e.currentTarget.style.background="transparent";}}>
-                    <span style={{fontSize:12,color:isActive?ws.color:"rgba(255,255,255,0.22)",flexShrink:0}}>{ws.icon}</span>
+                    <span style={{fontSize:12,color:isActive?ws.color:"rgba(255,255,255,0.5)",flexShrink:0}}>{ws.icon}</span>
                     <div style={{flex:1,minWidth:0}}>
                       {ws.id===0?(
-                        <div style={{fontSize:12,fontWeight:isActive?600:400,color:isActive?"#fff":"rgba(255,255,255,0.46)"}}>Integration Command</div>
+                        <div style={{fontSize:12,fontWeight:isActive?600:400,color:isActive?"#fff":"rgba(255,255,255,0.82)"}}>Integration Command</div>
                       ):(
                         <>
-                          <div style={{fontSize:8,color:ws.color,fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",marginBottom:1}}>{ws.code}</div>
-                          <div style={{fontSize:11,fontWeight:isActive?600:400,color:isActive?"#fff":"rgba(255,255,255,0.46)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{ws.name}</div>
-                          {ws.lead&&ws.lead!=="—"&&<div style={{fontSize:9,color:"rgba(255,255,255,0.22)",marginTop:1}}>{ws.lead}</div>}
+                          <div style={{fontSize:10,color:ws.color,fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",marginBottom:1}}>{ws.code}</div>
+                          <div style={{fontSize:13,fontWeight:isActive?600:400,color:isActive?"#fff":"rgba(255,255,255,0.82)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{ws.name}</div>
+                          {ws.lead&&ws.lead!=="—"&&<div style={{fontSize:11,color:"rgba(255,255,255,0.5)",marginTop:1}}>{ws.lead}</div>}
                         </>
                       )}
                     </div>
@@ -1287,55 +1469,55 @@ function App(){
             </nav>
 
             {/* Proposals button */}
-            <div style={{padding:"6px 7px",borderTop:"1px solid rgba(255,255,255,0.04)"}}>
+            <div style={{padding:"6px 7px",borderTop:"1px solid rgba(255,255,255,0.055)"}}>
               <div onClick={()=>setAdminView(adminView==="proposals"?"dashboard":"proposals")} style={{display:"flex",alignItems:"center",gap:8,padding:"9px 10px",borderRadius:7,cursor:"pointer",background:adminView==="proposals"?"rgba(201,168,76,0.15)":"transparent",border:`1px solid ${adminView==="proposals"?"rgba(201,168,76,0.35)":"transparent"}`,transition:"all 0.13s"}}
-                onMouseEnter={e=>{if(adminView!=="proposals")e.currentTarget.style.background="rgba(255,255,255,0.032)";}}
+                onMouseEnter={e=>{if(adminView!=="proposals")e.currentTarget.style.background="rgba(255,255,255,0.5)";}}
                 onMouseLeave={e=>{if(adminView!=="proposals")e.currentTarget.style.background="transparent";}}>
                 <span style={{fontSize:14,flexShrink:0}}>📬</span>
                 <div style={{flex:1}}>
-                  <div style={{fontSize:11,fontWeight:adminView==="proposals"?600:400,color:adminView==="proposals"?"#fff":"rgba(255,255,255,0.55)"}}>Review Proposals</div>
-                  <div style={{fontSize:9,color:"rgba(255,255,255,0.25)",fontFamily:"DM Mono,monospace"}}>Lead submissions</div>
+                  <div style={{fontSize:13,fontWeight:adminView==="proposals"?600:400,color:adminView==="proposals"?"#fff":"rgba(255,255,255,0.82)"}}>Review Proposals</div>
+                  <div style={{fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>Lead submissions</div>
                 </div>
-                {adminView==="proposals"&&<span style={{fontSize:9,color:"#C9A84C",fontFamily:"DM Mono,monospace"}}>●</span>}
+                {adminView==="proposals"&&<span style={{fontSize:11,color:"#C9A84C",fontFamily:"DM Mono,monospace"}}>●</span>}
               </div>
             </div>
 
             {/* Sidebar footer — action buttons */}
-            <div style={{padding:"10px 11px",borderTop:"1px solid rgba(255,255,255,0.048)",display:"flex",flexDirection:"column",gap:7}}>
+            <div style={{padding:"10px 11px",borderTop:"1px solid rgba(255,255,255,0.055)",display:"flex",flexDirection:"column",gap:7}}>
               <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:3}}>
                 {Object.entries(RAG).map(([k,v])=>(
                   <div key={k} style={{display:"flex",alignItems:"center",gap:4}}>
                     <div style={{width:6,height:6,borderRadius:"50%",background:v.color}}/>
-                    <span style={{fontSize:9,color:"rgba(255,255,255,0.28)",fontFamily:"DM Mono,monospace"}}>{v.label}</span>
+                    <span style={{fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>{v.label}</span>
                   </div>
                 ))}
               </div>
               {isConfigured&&(
-                <button onClick={refresh} disabled={loading} style={{width:"100%",padding:"7px",borderRadius:7,background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.12)",color:"rgba(255,255,255,0.6)",fontSize:10,cursor:loading?"wait":"pointer",fontFamily:"DM Mono,monospace",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+                <button onClick={refresh} disabled={loading} style={{width:"100%",padding:"7px",borderRadius:7,background:"rgba(255,255,255,0.022)",border:"1px solid rgba(255,255,255,0.055)",color:"rgba(255,255,255,0.6)",fontSize:12,cursor:loading?"wait":"pointer",fontFamily:"DM Mono,monospace",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
                   <span className={loading?"spin":""} style={{display:"inline-block"}}>↻</span>
                   {loading?"Refreshing…":"↓ Refresh from Sheets"}
                 </button>
               )}
-              <button onClick={saveToSheets} disabled={saving||!dirty} style={{width:"100%",padding:"8px",borderRadius:7,background:dirty?"#C9A84C":"rgba(255,255,255,0.04)",border:dirty?"none":"1px solid rgba(255,255,255,0.08)",color:dirty?"#0a0d12":"rgba(255,255,255,0.25)",fontSize:11,fontWeight:700,cursor:dirty&&!saving?"pointer":"not-allowed",fontFamily:"DM Mono,monospace",display:"flex",alignItems:"center",justifyContent:"center",gap:6,transition:"all .2s"}}>
+              <button onClick={saveToSheets} disabled={saving||!dirty} style={{width:"100%",padding:"8px",borderRadius:7,background:dirty?"#C9A84C":"rgba(255,255,255,0.5)",border:dirty?"none":"1px solid rgba(255,255,255,0.5)",color:dirty?"#0a0d12":"rgba(255,255,255,0.62)",fontSize:13,fontWeight:700,cursor:dirty&&!saving?"pointer":"not-allowed",fontFamily:"DM Mono,monospace",display:"flex",alignItems:"center",justifyContent:"center",gap:6,transition:"all .2s"}}>
                 <span className={saving?"spin":""} style={{display:"inline-block"}}>↑</span>
                 {saving?"Saving…":dirty?"↑ Save to Sheets":"No Unsaved Changes"}
               </button>
-              {!oauthReady&&<div style={{fontSize:9,color:"rgba(245,158,11,0.6)",fontFamily:"DM Mono,monospace",textAlign:"center"}}>Add OAuth Client ID to enable write-back</div>}
+              {!oauthReady&&<div style={{fontSize:11,color:"rgba(245,158,11,0.6)",fontFamily:"DM Mono,monospace",textAlign:"center"}}>Add OAuth Client ID to enable write-back</div>}
             </div>
           </div>
 
           {/* ── Main ── */}
           <div style={{flex:1,overflow:"hidden",display:"flex",flexDirection:"column"}}>
             {/* Topbar */}
-            <div style={{padding:"11px 22px",borderBottom:"1px solid rgba(255,255,255,0.048)",display:"flex",alignItems:"center",justifyContent:"space-between",background:"rgba(255,255,255,0.006)",flexShrink:0}}>
+            <div style={{padding:"11px 22px",borderBottom:"1px solid rgba(255,255,255,0.055)",display:"flex",alignItems:"center",justifyContent:"space-between",background:"rgba(255,255,255,0.022)",flexShrink:0}}>
               <div>
-                <div style={{fontSize:9,color:active===0?"#C9A84C":currentWS?.color,fontFamily:"DM Mono,monospace",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:2}}>{active===0?"Integration Command Centre":`${currentWS?.code} — Admin`}</div>
+                <div style={{fontSize:11,color:active===0?"#C9A84C":currentWS?.color,fontFamily:"DM Mono,monospace",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:2}}>{active===0?"Integration Command Centre":`${currentWS?.code} — Admin`}</div>
                 <div style={{fontSize:15,fontFamily:"Playfair Display,serif",color:"#fff"}}>{active===0?"Master Integration Dashboard":currentWS?.name}</div>
               </div>
               <div style={{display:"flex",alignItems:"center",gap:10}}>
-                {successMsg&&<div style={{fontSize:10,color:"#22c55e",fontFamily:"DM Mono,monospace",background:"rgba(34,197,94,0.08)",border:"1px solid rgba(34,197,94,0.25)",borderRadius:6,padding:"4px 10px"}}>✓ {successMsg}</div>}
-                {error&&<div style={{fontSize:10,color:"#ef4444",fontFamily:"DM Mono,monospace",background:"rgba(239,68,68,0.08)",border:"1px solid rgba(239,68,68,0.25)",borderRadius:6,padding:"4px 10px",maxWidth:260}}>⚠ {error}</div>}
-                <div style={{padding:"5px 12px",borderRadius:20,background:"rgba(201,168,76,0.12)",border:"1px solid rgba(201,168,76,0.3)",fontSize:10,color:"#C9A84C",fontFamily:"DM Mono,monospace",fontWeight:600}}>ADMIN</div>
+                {successMsg&&<div style={{fontSize:12,color:"#22c55e",fontFamily:"DM Mono,monospace",background:"rgba(34,197,94,0.08)",border:"1px solid rgba(34,197,94,0.25)",borderRadius:6,padding:"4px 10px"}}>✓ {successMsg}</div>}
+                {error&&<div style={{fontSize:12,color:"#ef4444",fontFamily:"DM Mono,monospace",background:"rgba(239,68,68,0.08)",border:"1px solid rgba(239,68,68,0.25)",borderRadius:6,padding:"4px 10px",maxWidth:260}}>⚠ {error}</div>}
+                <div style={{padding:"5px 12px",borderRadius:20,background:"rgba(201,168,76,0.12)",border:"1px solid rgba(201,168,76,0.3)",fontSize:12,color:"#C9A84C",fontFamily:"DM Mono,monospace",fontWeight:600}}>ADMIN</div>
               </div>
             </div>
 
@@ -1344,7 +1526,7 @@ function App(){
               {adminView==="proposals"
                 ?<ProposalsPanel wsList={wsList} onUpdate={update} markDirty={markDirty} accessToken={accessToken} onTokenRefresh={setAccessToken}/>
                 :active===0
-                  ?<Master wsList={wsList} onSelect={setActive} lastRefresh={lastRefresh}/>
+                  ?<Master wsList={wsList} onSelect={setActive} lastRefresh={lastRefresh} history={history}/>
                   :currentWS&&<WSDash ws={currentWS} onUpdate={update} markDirty={markDirty} cardData={cardData} onCardOpen={setActiveCard}/>
               }
             </div>
