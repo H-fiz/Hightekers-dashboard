@@ -952,22 +952,22 @@ function WSDash({ws,onUpdate,markDirty,cardData,onCardOpen}){
               {/* project rows */}
               {open&&(
                 <div style={{borderTop:"1px solid rgba(255,255,255,0.055)"}}>
-                  <div style={{display:"grid",gridTemplateColumns:"1fr 56px 56px 90px 130px 80px 70px",padding:"6px 14px",background:"rgba(255,255,255,0.022)",borderBottom:"1px solid rgba(255,255,255,0.055)"}}>
-                    {["Project / Owner","Actual","Planned","Variance","Dates","RAG",""].map((h,i)=>(
+                  <div style={{display:"grid",gridTemplateColumns:"180px 110px 70px 70px 90px 120px 80px 56px",padding:"6px 14px",background:"rgba(255,255,255,0.022)",borderBottom:"1px solid rgba(255,255,255,0.055)"}}>
+                    {["Project / Owner","Card","Actual","Planned","Variance","Dates","RAG",""].map((h,i)=>(
                       <span key={i} style={{fontSize:13,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",letterSpacing:"0.07em",textTransform:"uppercase"}}>{h}</span>
                     ))}
                   </div>
                   {init.projects.map((pr,pi)=>{
                     const pplan=plannedPct(pr.start,pr.end);
                     return(
-                      <div key={pr.id} style={{display:"grid",gridTemplateColumns:"1fr 56px 56px 90px 130px 80px 70px",padding:"9px 14px",alignItems:"center",borderBottom:"1px solid rgba(255,255,255,0.055)",background:pi%2===0?"transparent":"rgba(255,255,255,0.02)"}}>
+                      <div key={pr.id} style={{display:"grid",gridTemplateColumns:"180px 110px 70px 70px 90px 120px 80px 56px",padding:"9px 14px",alignItems:"center",borderBottom:"1px solid rgba(255,255,255,0.055)",background:pi%2===0?"transparent":"rgba(255,255,255,0.02)"}}>
                         <div>
-                          <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:3}}>
-                            <div style={{fontSize:12,color:"rgba(255,255,255,0.82)"}}>{pr.name}</div>
-                            <button onClick={()=>onCardOpen&&onCardOpen({project:pr,wsColor:ws.color})} style={{fontSize:11,padding:"2px 8px",borderRadius:5,background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.18)",color:"rgba(255,255,255,0.75)",cursor:"pointer",fontFamily:"DM Mono,monospace",letterSpacing:"0.04em",flexShrink:0}}>&#128203; Project Card</button>
-                          </div>
+                          <div style={{fontSize:12,color:"rgba(255,255,255,0.82)",marginBottom:3}}>{pr.name}</div>
                           <div style={{fontSize:12,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>Owner: {pr.owner}</div>
                           {pr.risk&&<div style={{fontSize:12,color:"#f59e0b",marginTop:3}}>⚠ {pr.risk}</div>}
+                        </div>
+                        <div style={{display:"flex",alignItems:"center"}}>
+                          <button onClick={()=>onCardOpen&&onCardOpen({project:pr,wsColor:ws.color})} style={{fontSize:11,padding:"3px 8px",borderRadius:5,background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.18)",color:"rgba(255,255,255,0.75)",cursor:"pointer",fontFamily:"DM Mono,monospace",letterSpacing:"0.04em"}}>&#128203; Card</button>
                         </div>
                         <div style={{fontSize:13,color:ws.color,fontFamily:"DM Mono,monospace",fontWeight:600}}>{pr.progress}%</div>
                         <div style={{fontSize:13,color:"rgba(255,255,255,0.72)",fontFamily:"DM Mono,monospace"}}>{pplan}%</div>
