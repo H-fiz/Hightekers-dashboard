@@ -544,10 +544,11 @@ function Sparkline({data,color,width=80,height=28}){
       </div>
     );
   }
-  // If all values identical, draw flat line at mid-height
+  // If all values identical, draw flat line at correct Y position
   const allSame=vals.every(v=>v===vals[0]);
+  const flatY=allSame?height-((vals[0]-min)/(max-min))*(height-4)-2:0;
   const pts=allSame
-    ?`0,${height/2} ${width},${height/2}`
+    ?`0,${flatY} ${width},${flatY}`
     :vals.map((v,i)=>{
         const x=(i/(vals.length-1))*width;
         const y=height-((v-min)/(max-min))*(height-4)-2;
@@ -876,7 +877,10 @@ function WSDash({ws,cardData,onCardOpen}){
                       return(
                         <div key={pr.id} style={{display:"grid",gridTemplateColumns:"1fr 56px 56px 90px 130px 80px",padding:"9px 15px",alignItems:"center",borderBottom:"1px solid rgba(255,255,255,0.055)",background:pi%2===0?"transparent":"rgba(255,255,255,0.02)"}}>
                           <div>
-                            <div onClick={()=>onCardOpen&&onCardOpen({project:pr,wsColor:ws.color})} style={{fontSize:12,color:"rgba(255,255,255,0.82)",marginBottom:2,cursor:"pointer",display:"flex",alignItems:"center",gap:5}}>{pr.name}<span style={{fontSize:13,color:"rgba(255,255,255,0.5)",fontFamily:"DM Mono,monospace"}}>▸ card</span></div>
+                            <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:3}}>
+                              <div style={{fontSize:12,color:"rgba(255,255,255,0.82)"}}>{pr.name}</div>
+                              <button onClick={()=>onCardOpen&&onCardOpen({project:pr,wsColor:ws.color})} style={{fontSize:11,padding:"2px 8px",borderRadius:5,background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.18)",color:"rgba(255,255,255,0.75)",cursor:"pointer",fontFamily:"DM Mono,monospace",letterSpacing:"0.04em",flexShrink:0}}>&#128203; Project Card</button>
+                            </div>
                             {/* project owner displayed on its own line */}
                             <OwnerTag label="Project Owner" name={pr.owner}/>
                             {pr.risk&&<div style={{fontSize:12,color:"#f59e0b",marginTop:4}}>⚠ {pr.risk}</div>}
@@ -920,7 +924,10 @@ function WSDash({ws,cardData,onCardOpen}){
                 return(
                   <div key={pr.id} style={{display:"grid",gridTemplateColumns:"240px 1fr 80px 70px",alignItems:"center",gap:10,marginBottom:4}}>
                     <div>
-                      <div onClick={()=>onCardOpen&&onCardOpen({project:pr,wsColor:ws.color})} style={{fontSize:13,color:"rgba(255,255,255,0.7)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",cursor:"pointer"}} title={`${pr.name} — click for project card`}>{pr.name}</div>
+                      <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:3}}>
+                        <div style={{fontSize:13,color:"rgba(255,255,255,0.82)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}} title={pr.name}>{pr.name}</div>
+                        <button onClick={()=>onCardOpen&&onCardOpen({project:pr,wsColor:ws.color})} style={{fontSize:11,padding:"2px 7px",borderRadius:5,background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.18)",color:"rgba(255,255,255,0.75)",cursor:"pointer",fontFamily:"DM Mono,monospace",letterSpacing:"0.04em",whiteSpace:"nowrap",flexShrink:0}}>&#128203; Project Card</button>
+                      </div>
                       <OwnerTag label="Owner" name={pr.owner}/>
                     </div>
                     <GanttRow project={pr} color={ws.color}/>
