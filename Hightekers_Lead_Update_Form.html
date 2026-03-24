@@ -125,6 +125,7 @@ async function submitProposals(proposals, accessToken, submitterEmail, wsCode){
     p.newRag,
     p.oldRisk||"",
     p.newRisk||"",
+    p.comment||"",
     "Pending",
   ]);
   // If a Web App webhook URL is configured, POST to it (triggers email notification)
@@ -313,7 +314,7 @@ function UpdateForm({user,wsCode,wsData,onSubmitDone,onSignOut}){
     const map={};
     wsData.forEach(init=>{
       init.projects.forEach(pr=>{
-        map[pr.id]={progress:pr.progress,rag:pr.rag,risk:pr.risk||"",dirty:false};
+        map[pr.id]={progress:pr.progress,rag:pr.rag,risk:pr.risk||"",comment:"",dirty:false};
       });
     });
     return map;
@@ -339,6 +340,7 @@ function UpdateForm({user,wsCode,wsData,onSubmitDone,onSignOut}){
           oldProgress:pr.progress,newProgress:e.progress,
           oldRag:pr.rag,newRag:e.rag,
           oldRisk:pr.risk||"",newRisk:e.risk||"",
+          comment:e.comment||"",
           submitterName:user.name,
         });
       });
@@ -460,6 +462,11 @@ function UpdateForm({user,wsCode,wsData,onSubmitDone,onSignOut}){
                               <textarea rows={2} value={e.risk} onChange={ev=>setField(pr.id,"risk",ev.target.value)} placeholder="Describe any risk or issue, or leave blank" style={{width:"100%",resize:"vertical",fontSize:12,padding:"6px 8px"}}/>
                               {(pr.risk||"")!==(e.risk||"")&&<div style={{fontSize:13,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",marginTop:2}}>Was: {pr.risk||"(none)"}</div>}
                             </div>
+                          </div>
+                          {/* Comment */}
+                          <div style={{marginTop:10}}>
+                            <div style={{fontSize:13,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:6}}>Comments / Notes <span style={{fontSize:11,color:"rgba(255,255,255,0.35)",textTransform:"none",letterSpacing:0}}>(optional — visible to programme manager)</span></div>
+                            <textarea rows={2} value={e.comment||""} onChange={ev=>setField(pr.id,"comment",ev.target.value)} placeholder="Any context or notes for the programme manager..." style={{width:"100%",resize:"vertical",fontSize:12,padding:"6px 8px",boxSizing:"border-box"}}/>
                           </div>
                         </div>
                       );
