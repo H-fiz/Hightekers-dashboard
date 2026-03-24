@@ -223,7 +223,7 @@ async function loadFromSheets() {
   if (SHEET_ID === "YOUR_SHEET_ID_HERE" || API_KEY === "YOUR_API_KEY_HERE") {
     return null;
   }
-  const range = encodeURIComponent(`${SHEET_TAB}!A2:M500`);
+  const range = encodeURIComponent(`${SHEET_TAB}!A2:N500`);
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?key=${API_KEY}`;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Sheets API error: ${res.status} ${res.statusText}`);
@@ -288,6 +288,7 @@ async function loadFromSheets() {
       risk:     risk?.trim() || null,
       start:    start?.trim() || "2026-01-01",
       end:      end?.trim()   || "2026-12-31",
+      notes:    row[13]?.trim() || "",
     });
   });
 
@@ -867,15 +868,15 @@ function WSDash({ws,cardData,onCardOpen}){
                 {/* project rows */}
                 {open&&(
                   <div style={{borderTop:"1px solid rgba(255,255,255,0.055)"}}>
-                    <div style={{display:"grid",gridTemplateColumns:"180px 110px 70px 70px 90px 120px 80px",padding:"6px 15px",background:"rgba(255,255,255,0.022)",borderBottom:"1px solid rgba(255,255,255,0.055)"}}>
-                      {["Project / Owner","Card","Actual","Planned","Variance","Dates","RAG"].map((h,i)=>(
+                    <div style={{display:"grid",gridTemplateColumns:"180px 110px 70px 70px 90px 120px 80px 180px",padding:"6px 15px",background:"rgba(255,255,255,0.022)",borderBottom:"1px solid rgba(255,255,255,0.055)"}}>
+                      {["Project / Owner","Card","Actual","Planned","Variance","Dates","RAG","Notes"].map((h,i)=>(
                         <span key={i} style={{fontSize:13,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",letterSpacing:"0.07em",textTransform:"uppercase"}}>{h}</span>
                       ))}
                     </div>
                     {init.projects.map((pr,pi)=>{
                       const pplan=plannedPct(pr.start,pr.end);
                       return(
-                        <div key={pr.id} style={{display:"grid",gridTemplateColumns:"180px 110px 70px 70px 90px 120px 80px",padding:"9px 15px",alignItems:"center",borderBottom:"1px solid rgba(255,255,255,0.055)",background:pi%2===0?"transparent":"rgba(255,255,255,0.02)"}}>
+                        <div key={pr.id} style={{display:"grid",gridTemplateColumns:"180px 110px 70px 70px 90px 120px 80px 180px",padding:"9px 15px",alignItems:"center",borderBottom:"1px solid rgba(255,255,255,0.055)",background:pi%2===0?"transparent":"rgba(255,255,255,0.02)"}}>
                           <div>
                             <div style={{fontSize:12,color:"rgba(255,255,255,0.82)",marginBottom:3}}>{pr.name}</div>
                             {/* project owner displayed on its own line */}
@@ -890,6 +891,8 @@ function WSDash({ws,cardData,onCardOpen}){
                           <VariancePill actual={pr.progress} planned={pplan}/>
                           <div style={{fontSize:13,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",lineHeight:1.7}}>{fmtDate(pr.start)}<br/>→ {fmtDate(pr.end)}</div>
                           <RAGBadge rag={pr.rag} tiny/>
+                          {pr.notes&&<div style={{fontSize:11,color:"rgba(255,255,255,0.62)",
+                            fontStyle:"italic",lineHeight:1.4,paddingTop:2}}>{pr.notes}</div>}
                         </div>
                       );
                     })}
