@@ -970,7 +970,8 @@ function WSDash({ws,onUpdate,markDirty,cardData,onCardOpen}){
                   {init.projects.map((pr,pi)=>{
                     const pplan=plannedPct(pr.start,pr.end);
                     return(
-                      <div key={pr.id} style={{display:"grid",gridTemplateColumns:"180px 110px 70px 70px 90px 120px 80px 56px",padding:"9px 14px",alignItems:"center",borderBottom:"1px solid rgba(255,255,255,0.055)",background:pi%2===0?"transparent":"rgba(255,255,255,0.02)"}}>
+                      <>
+                      <div key={pr.id} style={{display:"grid",gridTemplateColumns:"180px 110px 70px 70px 90px 120px 80px 56px",padding:"9px 14px",alignItems:"center",borderBottom:"none",background:pi%2===0?"transparent":"rgba(255,255,255,0.02)"}}>
                         <div>
                           <div style={{fontSize:12,color:"rgba(255,255,255,0.82)",marginBottom:3}}>{pr.name}</div>
                           <div style={{fontSize:12,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>Owner: {pr.owner}</div>
@@ -1000,6 +1001,7 @@ function WSDash({ws,onUpdate,markDirty,cardData,onCardOpen}){
                             borderRadius:5,color:"rgba(255,255,255,0.82)",width:"100%",
                             fontFamily:"DM Sans,sans-serif",lineHeight:1.4,boxSizing:"border-box"}}/>
                       </div>
+                      </>
                     );
                   })}
                   {/* add project */}
