@@ -345,21 +345,21 @@ async function loadProposals(){
 
 async function updateProposalStatus(rowIndex, status, accessToken, rejectionReason){
   const {SHEET_ID,PROPOSALS_TAB}=CONFIG;
-  // Write status to col M and optionally rejection reason to col O
-  const values=rejectionReason
-    ?[[status,"",rejectionReason]]  // M=status, N=comment (unchanged), O=rejection reason
-    :[[status]];
-  const rangeRef=rejectionReason
-    ?`${PROPOSALS_TAB}!M${rowIndex}:O${rowIndex}`
-    :`${PROPOSALS_TAB}!M${rowIndex}`;
-  const range=encodeURIComponent(rangeRef);
-  const url=`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`;
-  const res=await fetch(url,{
-    method:"PUT",
-    headers:{"Authorization":`Bearer ${accessToken}`,"Content-Type":"application/json"},
-    body:JSON.stringify({range:rangeRef,majorDimension:"ROWS",values}),
-  });
-  if(!res.ok){const e=await res.json();throw new Error(e.error?.message||`Status update error ${res.status}`);}
+  const putRange=async(ref,vals)=>{
+    const url=`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(ref)}?valueInputOption=RAW`;
+    const res=await fetch(url,{
+      method:"PUT",
+      headers:{"Authorization":`Bearer ${accessToken}`,"Content-Type":"application/json"},
+      body:JSON.stringify({range:ref,majorDimension:"ROWS",values:vals}),
+    });
+    if(!res.ok){const e=await res.json();throw new Error(e.error?.message||`Status update error ${res.status}`);}
+  };
+  // Write status to col M only — never touch col N (comment)
+  await putRange(`${PROPOSALS_TAB}!M${rowIndex}`,[[status]]);
+  // If rejecting, write rejection reason to col O separately
+  if(rejectionReason&&rejectionReason.trim()){
+    await putRange(`${PROPOSALS_TAB}!O${rowIndex}`,[[rejectionReason.trim()]]);
+  }
 }
 
 
