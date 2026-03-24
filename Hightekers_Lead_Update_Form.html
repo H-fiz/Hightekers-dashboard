@@ -125,8 +125,8 @@ async function submitProposals(proposals, accessToken, submitterEmail, wsCode){
     p.newRag,
     p.oldRisk||"",
     p.newRisk||"",
-    p.comment||"",
     "Pending",
+    p.comment||"",
   ]);
   // If a Web App webhook URL is configured, POST to it (triggers email notification)
   if(WEBHOOK_URL&&WEBHOOK_URL!=="YOUR_WEBHOOK_URL_HERE"){
