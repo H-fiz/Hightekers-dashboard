@@ -876,7 +876,8 @@ function WSDash({ws,cardData,onCardOpen}){
                     {init.projects.map((pr,pi)=>{
                       const pplan=plannedPct(pr.start,pr.end);
                       return(
-                        <div key={pr.id} style={{display:"grid",gridTemplateColumns:"180px 110px 70px 70px 90px 120px 80px",padding:"9px 15px",alignItems:"center",borderBottom:"1px solid rgba(255,255,255,0.055)",background:pi%2===0?"transparent":"rgba(255,255,255,0.02)"}}>
+                        <>
+                        <div key={pr.id} style={{display:"grid",gridTemplateColumns:"180px 110px 70px 70px 90px 120px 80px",padding:"9px 15px",alignItems:"center",borderBottom:pr.notes?"none":"1px solid rgba(255,255,255,0.055)",background:pi%2===0?"transparent":"rgba(255,255,255,0.02)"}}>
                           <div>
                             <div style={{fontSize:12,color:"rgba(255,255,255,0.82)",marginBottom:3}}>{pr.name}</div>
                             {/* project owner displayed on its own line */}
@@ -899,6 +900,7 @@ function WSDash({ws,cardData,onCardOpen}){
                           <span style={{fontSize:12,color:"rgba(255,255,255,0.72)",fontStyle:"italic",lineHeight:1.5}}>{pr.notes}</span>
                         </div>
                       )}
+                        </>
                       );
                     })}
                   </div>
