@@ -892,7 +892,7 @@ function WSDash({ws,cardData,onCardOpen}){
                           <div style={{fontSize:13,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",lineHeight:1.7}}>{fmtDate(pr.start)}<br/>→ {fmtDate(pr.end)}</div>
                           <RAGBadge rag={pr.rag} tiny/>
                           {pr.notes&&<div style={{fontSize:11,color:"rgba(255,255,255,0.62)",
-                            fontStyle:"italic",lineHeight:1.4,paddingTop:2}}>{pr.notes}</div>}
+                            fontStyle:"italic",lineHeight:1.4,paddingTop:8}}>{pr.notes}</div>}
                         </div>
                       );
                     })}
