@@ -318,7 +318,7 @@ async function writeToSheets(wsList, accessToken){
 async function loadProposals(){
   const {SHEET_ID,API_KEY,PROPOSALS_TAB}=CONFIG;
   if(SHEET_ID==="YOUR_SHEET_ID_HERE"||API_KEY==="YOUR_API_KEY_HERE") return [];
-  const range=encodeURIComponent(`${PROPOSALS_TAB}!A2:M500`);
+  const range=encodeURIComponent(`${PROPOSALS_TAB}!A2:O500`);
   const url=`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?key=${API_KEY}`;
   const res=await fetch(url);
   if(!res.ok) throw new Error(`Proposals read error: ${res.status}`);
@@ -338,18 +338,26 @@ async function loadProposals(){
     newRag:row[9]||"G",
     oldRisk:row[10]||"",
     newRisk:row[11]||"",
+    comment:row[13]||"",
     status:row[12]||"Pending",
   })).filter(p=>p.status==="Pending");
 }
 
-async function updateProposalStatus(rowIndex, status, accessToken){
+async function updateProposalStatus(rowIndex, status, accessToken, rejectionReason){
   const {SHEET_ID,PROPOSALS_TAB}=CONFIG;
-  const range=encodeURIComponent(`${PROPOSALS_TAB}!M${rowIndex}`);
+  // Write status to col M and optionally rejection reason to col O
+  const values=rejectionReason
+    ?[[status,"",rejectionReason]]  // M=status, N=comment (unchanged), O=rejection reason
+    :[[status]];
+  const rangeRef=rejectionReason
+    ?`${PROPOSALS_TAB}!M${rowIndex}:O${rowIndex}`
+    :`${PROPOSALS_TAB}!M${rowIndex}`;
+  const range=encodeURIComponent(rangeRef);
   const url=`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?valueInputOption=RAW`;
   const res=await fetch(url,{
     method:"PUT",
     headers:{"Authorization":`Bearer ${accessToken}`,"Content-Type":"application/json"},
-    body:JSON.stringify({range:`${PROPOSALS_TAB}!M${rowIndex}`,majorDimension:"ROWS",values:[[status]]}),
+    body:JSON.stringify({range:rangeRef,majorDimension:"ROWS",values}),
   });
   if(!res.ok){const e=await res.json();throw new Error(e.error?.message||`Status update error ${res.status}`);}
 }
@@ -1224,6 +1232,7 @@ function ProposalsPanel({wsList,onUpdate,markDirty,accessToken,onTokenRefresh}){
       wsCode:p.wsCode,
       decision,
       reason:reason||"",
+      comment:p.comment||"",
       newProgress:String(p.newProgress),
       newRag:p.newRag,
     });
@@ -1274,7 +1283,7 @@ function ProposalsPanel({wsList,onUpdate,markDirty,accessToken,onTokenRefresh}){
     setActing(prev=>({...prev,[p.rowIndex]:"rejecting"}));
     try{
       const token=await getToken();
-      await updateProposalStatus(p.rowIndex,"Rejected",token);
+      await updateProposalStatus(p.rowIndex,"Rejected",token,rejectReason);
       await sendDecisionEmail(p,"Rejected",rejectReason);
       setProposals(prev=>prev.filter(x=>x.rowIndex!==p.rowIndex));
       showMsg(`✗ Rejected: ${p.projectName} — lead notified`);
@@ -1357,6 +1366,7 @@ function ProposalsPanel({wsList,onUpdate,markDirty,accessToken,onTokenRefresh}){
                           <span style={{fontSize:12,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>Submitted by: <span style={{color:"rgba(255,255,255,0.6)"}}>{p.submittedBy}</span></span>
                           <span style={{fontSize:12,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>{ts}</span>
                         </div>
+                        {p.comment&&<div style={{marginTop:6,fontSize:12,color:"rgba(255,255,255,0.72)",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:6,padding:"6px 10px",fontStyle:"italic"}}>&#128172; &ldquo;{p.comment}&rdquo;</div>}
                       </div>
                       <div style={{display:"flex",gap:6,flexShrink:0}}>
                         <button onClick={()=>handleRejectClick(p)} disabled={!!acting_state} style={{padding:"6px 14px",borderRadius:7,background:"transparent",border:"1px solid rgba(239,68,68,0.3)",color:"#ef4444",fontSize:13,fontWeight:600,cursor:acting_state?"wait":"pointer",fontFamily:"DM Mono,monospace",opacity:acting_state?0.6:1}}>
