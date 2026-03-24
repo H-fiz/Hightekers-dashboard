@@ -240,7 +240,7 @@ const FALLBACK_DATA = [
 async function loadFromSheets() {
   const {SHEET_ID,API_KEY,SHEET_TAB} = CONFIG;
   if(SHEET_ID==="YOUR_SHEET_ID_HERE"||API_KEY==="YOUR_API_KEY_HERE") return null;
-  const range = encodeURIComponent(`${SHEET_TAB}!A2:M500`);
+  const range = encodeURIComponent(`${SHEET_TAB}!A2:N500`);
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?key=${API_KEY}`;
   const res = await fetch(url);
   if(!res.ok) throw new Error(`Read error: ${res.status} ${res.statusText}`);
@@ -267,6 +267,7 @@ function parseRows(rows){
       progress:Math.min(100,Math.max(0,parseInt(progressRaw)||0)),
       rag,risk:risk?.trim()||null,
       start:start?.trim()||"2026-01-01",end:end?.trim()||"2026-12-31",
+      notes:row[13]?.trim()||"",
     });
   });
   return Object.values(wsMap).filter(ws=>ws.initiatives.length>0);
@@ -284,6 +285,7 @@ function flattenToRows(wsList){
           pr.name, pr.owner||"—",
           pr.start, pr.end,
           String(pr.progress), pr.rag, pr.risk||"",
+          pr.notes||"",
         ]);
       });
     });
@@ -295,7 +297,7 @@ async function writeToSheets(wsList, accessToken){
   const {SHEET_ID,SHEET_TAB} = CONFIG;
   const rows = flattenToRows(wsList);
   // 1. Clear existing data (keep header row)
-  const clearUrl=`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(SHEET_TAB+"!A2:M500")}:clear`;
+  const clearUrl=`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(SHEET_TAB+"!A2:N500")}:clear`;
   await fetch(clearUrl,{method:"POST",headers:{"Authorization":`Bearer ${accessToken}`,"Content-Type":"application/json"}});
   // 2. Write all rows
   const writeUrl=`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(SHEET_TAB+"!A2")}?valueInputOption=RAW`;
@@ -960,15 +962,15 @@ function WSDash({ws,onUpdate,markDirty,cardData,onCardOpen}){
               {/* project rows */}
               {open&&(
                 <div style={{borderTop:"1px solid rgba(255,255,255,0.055)"}}>
-                  <div style={{display:"grid",gridTemplateColumns:"180px 110px 70px 70px 90px 120px 80px 56px",padding:"6px 14px",background:"rgba(255,255,255,0.022)",borderBottom:"1px solid rgba(255,255,255,0.055)"}}>
-                    {["Project / Owner","Card","Actual","Planned","Variance","Dates","RAG",""].map((h,i)=>(
+                  <div style={{display:"grid",gridTemplateColumns:"180px 110px 70px 70px 90px 120px 80px 56px 180px",padding:"6px 14px",background:"rgba(255,255,255,0.022)",borderBottom:"1px solid rgba(255,255,255,0.055)"}}>
+                    {["Project / Owner","Card","Actual","Planned","Variance","Dates","RAG","","Notes"].map((h,i)=>(
                       <span key={i} style={{fontSize:13,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",letterSpacing:"0.07em",textTransform:"uppercase"}}>{h}</span>
                     ))}
                   </div>
                   {init.projects.map((pr,pi)=>{
                     const pplan=plannedPct(pr.start,pr.end);
                     return(
-                      <div key={pr.id} style={{display:"grid",gridTemplateColumns:"180px 110px 70px 70px 90px 120px 80px 56px",padding:"9px 14px",alignItems:"center",borderBottom:"1px solid rgba(255,255,255,0.055)",background:pi%2===0?"transparent":"rgba(255,255,255,0.02)"}}>
+                      <div key={pr.id} style={{display:"grid",gridTemplateColumns:"180px 110px 70px 70px 90px 120px 80px 56px 180px",padding:"9px 14px",alignItems:"center",borderBottom:"1px solid rgba(255,255,255,0.055)",background:pi%2===0?"transparent":"rgba(255,255,255,0.02)"}}>
                         <div>
                           <div style={{fontSize:12,color:"rgba(255,255,255,0.82)",marginBottom:3}}>{pr.name}</div>
                           <div style={{fontSize:12,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>Owner: {pr.owner}</div>
@@ -983,6 +985,17 @@ function WSDash({ws,onUpdate,markDirty,cardData,onCardOpen}){
                         <div style={{fontSize:13,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",lineHeight:1.7}}>{fmtDate(pr.start)}<br/>→ {fmtDate(pr.end)}</div>
                         <RAGBadge rag={pr.rag} tiny/>
                         <button className="icon-btn" style={{fontSize:12}} onClick={()=>setModal({type:"proj",proj:pr,initId:init.id})}>✎ Edit</button>
+                        <textarea rows={2} value={pr.notes||""}
+                          onChange={ev=>{
+                            onUpdate({...ws,initiatives:ws.initiatives.map(ini=>
+                              ini.id!==init.id?ini:{...ini,projects:ini.projects.map(p=>
+                                p.id!==pr.id?p:{...p,notes:ev.target.value})})});
+                            markDirty();}}
+                          placeholder="Admin notes..."
+                          style={{fontSize:11,padding:"4px 7px",resize:"vertical",
+                            background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",
+                            borderRadius:5,color:"rgba(255,255,255,0.82)",width:"100%",
+                            fontFamily:"DM Sans,sans-serif",lineHeight:1.4}}/>
                       </div>
                     );
                   })}
