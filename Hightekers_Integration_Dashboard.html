@@ -976,6 +976,67 @@ function WSDash({ws,cardData,onCardOpen}){
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// SEARCH RESULTS
+// ─────────────────────────────────────────────────────────────────────────────
+function SearchResults({results,query,onSelect,onCardOpen}){
+  if(!results.length) return(
+    <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:260,gap:10}}>
+      <div style={{fontSize:28,opacity:0.25}}>🔍</div>
+      <div style={{fontSize:14,color:"rgba(255,255,255,0.5)",fontFamily:"DM Mono,monospace"}}>No matches for <span style={{color:"rgba(255,255,255,0.8)"}}>&ldquo;{query}&rdquo;</span></div>
+      <div style={{fontSize:12,color:"rgba(255,255,255,0.35)"}}>Try project name, owner, workstream code, or risk keyword</div>
+    </div>
+  );
+  function Highlight({text}){
+    if(!text) return null;
+    const q=query.toLowerCase();
+    const idx=text.toLowerCase().indexOf(q);
+    if(idx<0) return <span>{text}</span>;
+    return <span>{text.slice(0,idx)}<mark style={{background:"rgba(201,168,76,0.35)",color:"#C9A84C",borderRadius:2,padding:"0 1px"}}>{text.slice(idx,idx+q.length)}</mark>{text.slice(idx+q.length)}</span>;
+  }
+  return(
+    <div>
+      <div style={{fontSize:12,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:12}}>
+        Search Results — {results.length} project{results.length!==1?"s":""} matching &ldquo;{query}&rdquo;
+      </div>
+      <div style={{border:"1px solid rgba(255,255,255,0.055)",borderRadius:10,overflow:"hidden"}}>
+        <div style={{display:"grid",gridTemplateColumns:"160px 1fr 140px 70px 90px 80px",padding:"7px 16px",background:"rgba(255,255,255,0.022)",borderBottom:"1px solid rgba(255,255,255,0.055)"}}>
+          {["Workstream","Project / Initiative","Owner","Actual","Variance","RAG"].map((h,i)=>(
+            <span key={i} style={{fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",letterSpacing:"0.08em",textTransform:"uppercase"}}>{h}</span>
+          ))}
+        </div>
+        {results.map((pr,i)=>{
+          const pplan=plannedPct(pr.start,pr.end);
+          return(
+            <div key={pr.id} style={{display:"grid",gridTemplateColumns:"160px 1fr 140px 70px 90px 80px",padding:"10px 16px",alignItems:"center",borderBottom:i<results.length-1?"1px solid rgba(255,255,255,0.055)":"none",background:i%2===0?"transparent":"rgba(255,255,255,0.02)",cursor:"pointer",transition:"background 0.13s"}}
+              onClick={()=>onSelect(pr.wsId)}
+              onMouseEnter={e=>e.currentTarget.style.background=`${pr.wsColor}12`}
+              onMouseLeave={e=>e.currentTarget.style.background=i%2===0?"transparent":"rgba(255,255,255,0.02)"}>
+              <div style={{display:"flex",alignItems:"center",gap:6}}>
+                <span style={{fontSize:13,color:pr.wsColor}}>{pr.wsIcon}</span>
+                <div>
+                  <div style={{fontSize:11,color:pr.wsColor,fontFamily:"DM Mono,monospace",letterSpacing:"0.08em"}}><Highlight text={pr.wsCode}/></div>
+                  <div style={{fontSize:11,color:"rgba(255,255,255,0.5)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:130}} title={pr.wsName}>{pr.wsName}</div>
+                </div>
+              </div>
+              <div>
+                <div style={{fontSize:12,color:"rgba(255,255,255,0.9)",marginBottom:2}}><Highlight text={pr.name}/></div>
+                <div style={{fontSize:11,color:"rgba(255,255,255,0.5)",fontFamily:"DM Mono,monospace"}}>{pr.id} · <Highlight text={pr.initName}/></div>
+                {pr.risk&&<div style={{fontSize:11,color:"#f59e0b",marginTop:2}}>⚠ <Highlight text={pr.risk}/></div>}
+              </div>
+              <div style={{fontSize:12,color:"rgba(255,255,255,0.72)",fontFamily:"DM Mono,monospace"}}><Highlight text={pr.owner}/></div>
+              <div style={{fontSize:13,color:pr.wsColor,fontFamily:"DM Mono,monospace",fontWeight:600}}>{pr.progress}%</div>
+              <VariancePill actual={pr.progress} planned={pplan}/>
+              <RAGBadge rag={pr.rag} tiny/>
+            </div>
+          );
+        })}
+      </div>
+      <div style={{marginTop:10,fontSize:12,color:"rgba(255,255,255,0.35)",fontFamily:"DM Mono,monospace"}}>Click a row to navigate to that workstream</div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // APP SHELL
 // ─────────────────────────────────────────────────────────────────────────────
 function App(){
@@ -988,6 +1049,7 @@ function App(){
   const [history,setHistory]=useState({});
   const [cardData,setCardData]=useState({cards:{},milestones:{}});
   const [activeCard,setActiveCard]=useState(null); // {project, wsColor}
+  const [searchQuery,setSearchQuery]=useState("");
 
   const isConfigured = CONFIG.SHEET_ID!=="YOUR_SHEET_ID_HERE" && CONFIG.API_KEY!=="YOUR_API_KEY_HERE";
 
@@ -1012,6 +1074,12 @@ function App(){
 
   const currentWS=wsList.find(w=>w.id===active);
   const navItems=[{id:0,code:"CMD",icon:"◈",color:"#C9A84C",name:"Integration Command",lead:null},...wsList];
+
+  const q=searchQuery.trim().toLowerCase();
+  const searchResults=q?wsList.flatMap(ws=>ws.initiatives.flatMap(init=>init.projects
+    .filter(pr=>[pr.name,pr.id,pr.owner,pr.risk||"",init.name,init.id,ws.name,ws.code,ws.lead||""].some(s=>s.toLowerCase().includes(q)))
+    .map(pr=>({...pr,wsCode:ws.code,wsName:ws.name,wsColor:ws.color,wsIcon:ws.icon,wsId:ws.id,initName:init.name}))
+  )):[];
 
   return(
     <div style={{minHeight:"100vh",background:"#0a0d12",fontFamily:"DM Sans,sans-serif",color:"#fff"}}>
@@ -1079,13 +1147,26 @@ function App(){
             </div>
             <div style={{display:"flex",alignItems:"center",gap:10}}>
               {error&&<div style={{fontSize:12,color:"#ef4444",fontFamily:"DM Mono,monospace",maxWidth:220}}>⚠ {error}</div>}
+              <div style={{position:"relative",display:"flex",alignItems:"center"}}>
+                <span style={{position:"absolute",left:9,fontSize:13,color:"rgba(255,255,255,0.4)",pointerEvents:"none"}}>🔍</span>
+                <input
+                  type="text"
+                  placeholder="Search projects, owners, risks…"
+                  value={searchQuery}
+                  onChange={e=>setSearchQuery(e.target.value)}
+                  style={{paddingLeft:30,paddingRight:searchQuery?28:10,paddingTop:5,paddingBottom:5,width:240,borderRadius:7,background:"rgba(255,255,255,0.055)",border:`1px solid ${searchQuery?"rgba(201,168,76,0.5)":"rgba(255,255,255,0.1)"}`,color:"#fff",fontSize:12,fontFamily:"DM Mono,monospace",outline:"none"}}
+                />
+                {searchQuery&&<button onClick={()=>setSearchQuery("")} style={{position:"absolute",right:7,background:"transparent",border:"none",color:"rgba(255,255,255,0.5)",cursor:"pointer",fontSize:14,padding:0,lineHeight:1}}>✕</button>}
+              </div>
               <div style={{padding:"5px 12px",borderRadius:20,background:"rgba(255,255,255,0.022)",border:"1px solid rgba(255,255,255,0.055)",fontSize:12,color:"rgba(255,255,255,0.72)",fontFamily:"DM Mono,monospace"}}>EOR Integration · 2026</div>
             </div>
           </div>
           <div style={{flex:1,overflowY:"auto",padding:"20px 24px"}}>
-            {active===0
-              ?<Master wsList={wsList} onSelect={setActive} lastRefresh={lastRefresh} history={history}/>
-              :currentWS&&<WSDash ws={currentWS} cardData={cardData} onCardOpen={setActiveCard}/>
+            {searchQuery.trim()
+              ?<SearchResults results={searchResults} query={searchQuery.trim()} onSelect={wsId=>{setActive(wsId);setSearchQuery("");}} onCardOpen={setActiveCard}/>
+              :active===0
+                ?<Master wsList={wsList} onSelect={setActive} lastRefresh={lastRefresh} history={history}/>
+                :currentWS&&<WSDash ws={currentWS} cardData={cardData} onCardOpen={setActiveCard}/>
             }
           </div>
         </div>
