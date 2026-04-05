@@ -31,9 +31,10 @@ const CONFIG = {
   SHEET_ID: "1iMDERwbcOxZU9QBLbCGU3sr1fk1hm1g2QFv0urm9q2M",
   API_KEY:  "AIzaSyBCMuPUGiry60b7rSFNb0yRSOMrBf3N014",
   SHEET_TAB: "Dashboard",
-  PROJECT_CARDS_TAB: "ProjectCards",
-  MILESTONES_TAB: "Milestones",
-  HISTORY_TAB: "History",
+  PROJECT_CARDS_TAB:  "ProjectCards",
+  MILESTONES_TAB:     "Milestones",
+  HISTORY_TAB:        "History",
+  RISK_REGISTER_TAB:  "RiskRegister",
   REFRESH_INTERVAL: 300000, // ms — set to 0 to disable auto-refresh
 };
 
@@ -441,6 +442,36 @@ async function loadHistory(){
     return wsTrends;
   }catch(e){console.warn("History load failed:",e.message);return {};}
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RISK REGISTER — read A2:M2000 from RiskRegister tab
+// ─────────────────────────────────────────────────────────────────────────────
+async function loadRiskRegister(){
+  const {SHEET_ID,API_KEY,RISK_REGISTER_TAB}=CONFIG;
+  if(!SHEET_ID||SHEET_ID==="YOUR_SHEET_ID_HERE") return [];
+  try{
+    const range=encodeURIComponent(`${RISK_REGISTER_TAB}!A2:M2000`);
+    const res=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?key=${API_KEY}`);
+    if(!res.ok) return [];
+    const json=await res.json();
+    return (json.values||[]).map(row=>({
+      riskId:      row[0]||"",
+      wsCode:      row[1]||"",
+      projectId:   row[2]||"",
+      projectName: row[3]||"",
+      riskDesc:    row[4]||"",
+      riskTitle:   row[5]||"",
+      probability: row[6]||"",
+      impact:      row[7]||"",
+      rag:         row[8]||"R",
+      mitigation:  row[9]||"",
+      owner:       row[10]||"",
+      dueDate:     row[11]||"",
+      status:      row[12]||"Open",
+    }));
+  }catch(e){console.warn("Risk register load failed:",e.message);return [];}
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // HELPERS & CALCULATIONS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -467,6 +498,9 @@ const initRag=init=>init.projects.reduce((w,p)=>p.rag==="R"?"R":p.rag==="A"&&w!=
 const fmtDate=str=>{const d=new Date(str);return d.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"2-digit"});};
 const varianceColor=v=>v>=0?"#22c55e":v>=-15?"#f59e0b":"#ef4444";
 const varianceLabel=v=>v>=0?`+${v}%`:`${v}%`;
+function openRisksForProject(riskData,projectId){
+  return riskData.filter(r=>r.projectId===projectId&&r.status==="Open").length;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MICRO COMPONENTS
@@ -676,7 +710,7 @@ function CrossGantt({wsList}){
 // ─────────────────────────────────────────────────────────────────────────────
 // MASTER DASHBOARD
 // ─────────────────────────────────────────────────────────────────────────────
-function Master({wsList,onSelect,lastRefresh,history}){
+function Master({wsList,onSelect,lastRefresh,history,riskData}){
   const [masterView,setMasterView]=useState('overview');
   const all=wsList.flatMap(allProjects);
   const rc={G:0,A:0,R:0};all.forEach(p=>rc[p.rag]++);
@@ -686,6 +720,7 @@ function Master({wsList,onSelect,lastRefresh,history}){
   const risks=wsList.flatMap(ws=>allProjects(ws).filter(p=>p.risk).map(p=>({...p,wsCode:ws.code,wsColor:ws.color})));
   const totalInitiatives=wsList.reduce((a,ws)=>a+ws.initiatives.length,0);
   const totalProjects=all.length;
+  const openRiskCount=(riskData||[]).filter(r=>r.status==="Open").length;
   return(
     <div>
       {lastRefresh&&<div style={{fontSize:13,color:"rgba(255,255,255,0.5)",fontFamily:"DM Mono,monospace",marginBottom:14,textAlign:"right"}}>Last refreshed: {lastRefresh}</div>}
@@ -695,7 +730,7 @@ function Master({wsList,onSelect,lastRefresh,history}){
           {l:"Planned Progress",v:`${overallPlanned}%`,sub:"as of today"},
           {l:"Variance",v:varianceLabel(overallVariance),sub:"actual vs planned",col:varianceColor(overallVariance)},
           {l:"Initiatives / Projects",v:`${totalInitiatives} / ${totalProjects}`,sub:`${totalInitiatives} initiatives · ${totalProjects} projects`},
-          {l:"Open Risks",v:risks.length,sub:risks.length>0?"requiring attention":"none logged",col:risks.length>0?"#ef4444":null},
+          {l:"Open Risks",v:openRiskCount,sub:openRiskCount>0?"requiring attention":"none logged",col:openRiskCount>0?"#ef4444":null},
         ].map((k,i)=>(
           <div key={i} style={{background:k.col?`${k.col}0E`:"rgba(255,255,255,0.04)",border:`1px solid ${k.col?k.col+"25":"rgba(255,255,255,0.07)"}`,borderRadius:10,padding:"15px 16px"}}>
             <div style={{fontSize:12,color:"rgba(255,255,255,0.72)",fontFamily:"DM Mono,monospace",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:5}}>{k.l}</div>
@@ -784,7 +819,7 @@ function Master({wsList,onSelect,lastRefresh,history}){
 // ─────────────────────────────────────────────────────────────────────────────
 // WORKSTREAM DASHBOARD
 // ─────────────────────────────────────────────────────────────────────────────
-function WSDash({ws,cardData,onCardOpen}){
+function WSDash({ws,cardData,onCardOpen,riskData}){
   const [openInit,setOpenInit]=useState(null);
   const [view,setView]=useState("table");
   const all=allProjects(ws);
@@ -875,6 +910,7 @@ function WSDash({ws,cardData,onCardOpen}){
                     </div>
                     {init.projects.map((pr,pi)=>{
                       const pplan=plannedPct(pr.start,pr.end);
+                      const riskCount=openRisksForProject(riskData||[],pr.id);
                       return(
                         <>
                         <div key={pr.id} style={{display:"grid",gridTemplateColumns:"180px 110px 70px 70px 90px 120px 80px",padding:"9px 15px",alignItems:"center",borderBottom:pr.notes?"none":"1px solid rgba(255,255,255,0.055)",background:pi%2===0?"transparent":"rgba(255,255,255,0.02)"}}>
@@ -883,6 +919,7 @@ function WSDash({ws,cardData,onCardOpen}){
                             {/* project owner displayed on its own line */}
                             <OwnerTag label="Project Owner" name={pr.owner}/>
                             {pr.risk&&<div style={{fontSize:12,color:"#f59e0b",marginTop:4}}>⚠ {pr.risk}</div>}
+                            {riskCount>0&&<div style={{display:"inline-flex",fontSize:11,color:"#ef4444",background:"rgba(239,68,68,0.12)",border:"1px solid rgba(239,68,68,0.3)",borderRadius:4,padding:"2px 7px",marginTop:4,fontFamily:"DM Mono,monospace"}}>⚠ {riskCount} open risk{riskCount>1?"s":""}</div>}
                           </div>
                           <div style={{display:"flex",alignItems:"center"}}>
                             <button onClick={()=>onCardOpen&&onCardOpen({project:pr,wsColor:ws.color})} style={{fontSize:11,padding:"3px 8px",borderRadius:5,background:"rgba(255,255,255,0.07)",border:"1px solid rgba(255,255,255,0.18)",color:"rgba(255,255,255,0.75)",cursor:"pointer",fontFamily:"DM Mono,monospace",letterSpacing:"0.04em"}}>&#128203; Card</button>
@@ -976,6 +1013,123 @@ function WSDash({ws,cardData,onCardOpen}){
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// RISK REGISTER VIEW — read-only for stakeholder viewers
+// ─────────────────────────────────────────────────────────────────────────────
+const RISK_STATUS_STYLES={
+  "Open":     {bg:"rgba(239,68,68,0.12)", border:"rgba(239,68,68,0.3)",  color:"#ef4444"},
+  "Mitigated":{bg:"rgba(245,158,11,0.12)",border:"rgba(245,158,11,0.3)", color:"#f59e0b"},
+  "Closed":   {bg:"rgba(34,197,94,0.12)", border:"rgba(34,197,94,0.3)",  color:"#22c55e"},
+};
+function StatusPill({status}){
+  const s=RISK_STATUS_STYLES[status]||{bg:"rgba(255,255,255,0.06)",border:"rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.6)"};
+  return <span style={{fontSize:11,fontFamily:"DM Mono,monospace",fontWeight:600,padding:"2px 8px",borderRadius:20,background:s.bg,border:`1px solid ${s.border}`,color:s.color,whiteSpace:"nowrap"}}>{status}</span>;
+}
+function RiskRegisterView({riskData}){
+  const [filterWS,setFilterWS]=useState("All");
+  const [filterStatus,setFilterStatus]=useState("All");
+  const [filterRAG,setFilterRAG]=useState("All");
+
+  const today=new Date();
+  const nextWeek=new Date(today.getTime()+7*24*60*60*1000);
+  const openCount=riskData.filter(r=>r.status==="Open").length;
+  const highProbCount=riskData.filter(r=>r.probability==="High"&&r.status==="Open").length;
+  const dueThisWeek=riskData.filter(r=>{
+    if(r.status!=="Open"||!r.dueDate) return false;
+    const d=new Date(r.dueDate);
+    return !isNaN(d)&&d>=today&&d<=nextWeek;
+  }).length;
+  const mitigatedCount=riskData.filter(r=>r.status==="Mitigated").length;
+
+  const filtered=riskData.filter(r=>{
+    if(filterWS!=="All"&&r.wsCode!==filterWS) return false;
+    if(filterStatus!=="All"&&r.status!==filterStatus) return false;
+    if(filterRAG!=="All"&&r.rag!==filterRAG) return false;
+    return true;
+  });
+
+  const wsCol=wsCode=>(WS_META[wsCode]||{}).color||"rgba(255,255,255,0.5)";
+  const ragBorderColor=rag=>({"R":"#ef4444","A":"#f59e0b","G":"#22c55e"}[rag]||"rgba(255,255,255,0.1)");
+  const probColor=p=>p==="High"?"#ef4444":p==="Medium"?"#f59e0b":"#22c55e";
+
+  const statCards=[
+    {l:"Total Open",       v:openCount,      col:"#ef4444",sub:"risks requiring attention"},
+    {l:"High Probability", v:highProbCount,  col:"#f59e0b",sub:"open, high probability"},
+    {l:"Due This Week",    v:dueThisWeek,    col:"#f59e0b",sub:"open, due within 7 days"},
+    {l:"Mitigated",        v:mitigatedCount, col:"#22c55e",sub:"actions in place"},
+  ];
+
+  return(
+    <div>
+      {/* Header */}
+      <div style={{background:"linear-gradient(135deg,rgba(245,158,11,0.08) 0%,transparent 55%)",border:"1px solid rgba(245,158,11,0.2)",borderRadius:12,padding:"19px 22px",marginBottom:20}}>
+        <div style={{fontSize:13,color:"#f59e0b",fontFamily:"DM Mono,monospace",letterSpacing:"0.12em",marginBottom:3}}>PROGRAMME RISK REGISTER</div>
+        <div style={{fontSize:18,fontFamily:"Playfair Display,serif",color:"#fff"}}>Risk Register</div>
+        <div style={{fontSize:13,color:"rgba(255,255,255,0.72)",marginTop:3}}>Programme-wide open risks and mitigations</div>
+      </div>
+
+      {/* Summary cards */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:20}}>
+        {statCards.map((k,i)=>(
+          <div key={i} style={{background:`${k.col}0E`,border:`1px solid ${k.col}25`,borderRadius:10,padding:"15px 16px"}}>
+            <div style={{fontSize:12,color:"rgba(255,255,255,0.72)",fontFamily:"DM Mono,monospace",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:5}}>{k.l}</div>
+            <div style={{fontSize:26,fontFamily:"Playfair Display,serif",color:k.col,lineHeight:1,marginBottom:3}}>{k.v}</div>
+            <div style={{fontSize:12,color:"rgba(255,255,255,0.62)"}}>{k.sub}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Filters */}
+      <div style={{display:"flex",gap:8,marginBottom:14,alignItems:"center",flexWrap:"wrap"}}>
+        {[
+          {val:filterWS,   set:setFilterWS,    opts:["All","WS1","WS2","WS3","WS4","WS5","WS6","WS7","WS8"]},
+          {val:filterStatus,set:setFilterStatus,opts:["All","Open","Mitigated","Closed"]},
+          {val:filterRAG,  set:setFilterRAG,   opts:["All","R","A","G"]},
+        ].map(({val,set,opts},i)=>(
+          <select key={i} value={val} onChange={e=>set(e.target.value)} style={{padding:"5px 10px",borderRadius:6,background:"rgba(255,255,255,0.055)",border:"1px solid rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.82)",fontSize:12,fontFamily:"DM Mono,monospace",cursor:"pointer",outline:"none"}}>
+            {opts.map(o=><option key={o} value={o} style={{background:"#0a0d12"}}>{o==="R"?"Red":o==="A"?"Amber":o==="G"?"Green":o}</option>)}
+          </select>
+        ))}
+        <span style={{fontSize:12,color:"rgba(255,255,255,0.5)",fontFamily:"DM Mono,monospace",marginLeft:"auto"}}>{filtered.length} risk{filtered.length!==1?"s":""}</span>
+      </div>
+
+      {/* Table */}
+      {filtered.length===0?(
+        <div style={{border:"1px solid rgba(255,255,255,0.055)",borderRadius:10,padding:40,textAlign:"center",color:"rgba(255,255,255,0.5)",fontSize:13}}>No risks match the current filters.</div>
+      ):(
+        <div style={{border:"1px solid rgba(255,255,255,0.055)",borderRadius:10,overflow:"hidden"}}>
+          <div style={{display:"grid",gridTemplateColumns:"70px 55px 130px 1fr 90px 75px 75px 120px 85px 90px",padding:"7px 14px",background:"rgba(255,255,255,0.022)",borderBottom:"1px solid rgba(255,255,255,0.055)"}}>
+            {["Risk ID","WS","Project","Risk Description","Probability","Impact","Severity","Owner","Due Date","Status"].map((h,i)=>(
+              <span key={i} style={{fontSize:11,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",letterSpacing:"0.07em",textTransform:"uppercase"}}>{h}</span>
+            ))}
+          </div>
+          {filtered.map((r,i)=>(
+            <div key={r.riskId||i} style={{display:"grid",gridTemplateColumns:"70px 55px 130px 1fr 90px 75px 75px 120px 85px 90px",padding:"10px 14px",alignItems:"start",borderLeft:`3px solid ${ragBorderColor(r.rag)}`,borderBottom:i<filtered.length-1?"1px solid rgba(255,255,255,0.055)":"none",background:i%2===0?"transparent":"rgba(255,255,255,0.02)",opacity:r.status==="Closed"?0.4:1}}>
+              <div style={{fontSize:12,color:wsCol(r.wsCode)||"#f59e0b",fontFamily:"DM Mono,monospace",paddingTop:2}}>{r.riskId}</div>
+              <div style={{fontSize:12,color:wsCol(r.wsCode),fontFamily:"DM Mono,monospace",paddingTop:2}}>{r.wsCode}</div>
+              <div style={{paddingTop:2}}>
+                <div style={{fontSize:11,color:"rgba(255,255,255,0.82)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}} title={r.projectName}>{r.projectName||r.projectId}</div>
+                <div style={{fontSize:11,color:"rgba(255,255,255,0.5)",fontFamily:"DM Mono,monospace"}}>{r.projectId}</div>
+              </div>
+              <div>
+                {r.riskTitle&&<div style={{fontSize:12,color:"rgba(255,255,255,0.9)",marginBottom:2,fontWeight:600}}>{r.riskTitle}</div>}
+                <div style={{fontSize:12,color:"rgba(255,255,255,0.72)",lineHeight:1.4}}>{r.riskDesc||"—"}</div>
+                {r.mitigation&&<div style={{fontSize:11,color:"rgba(34,197,94,0.72)",marginTop:3}}>→ {r.mitigation}</div>}
+              </div>
+              <div style={{fontSize:12,color:probColor(r.probability),fontFamily:"DM Mono,monospace",paddingTop:2}}>{r.probability||"—"}</div>
+              <div style={{fontSize:12,color:probColor(r.impact),fontFamily:"DM Mono,monospace",paddingTop:2}}>{r.impact||"—"}</div>
+              <div style={{paddingTop:2}}><RAGBadge rag={r.rag||"G"} tiny/></div>
+              <div style={{fontSize:12,color:"rgba(255,255,255,0.72)",fontFamily:"DM Mono,monospace",paddingTop:2}}>{r.owner||"—"}</div>
+              <div style={{fontSize:12,color:"rgba(255,255,255,0.72)",fontFamily:"DM Mono,monospace",paddingTop:2}}>{r.dueDate?fmtDate(r.dueDate):"—"}</div>
+              <div style={{paddingTop:2}}><StatusPill status={r.status||"Open"}/></div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // SEARCH RESULTS
 // ─────────────────────────────────────────────────────────────────────────────
 function SearchResults({results,query,onSelect,onCardOpen}){
@@ -1050,6 +1204,8 @@ function App(){
   const [cardData,setCardData]=useState({cards:{},milestones:{}});
   const [activeCard,setActiveCard]=useState(null); // {project, wsColor}
   const [searchQuery,setSearchQuery]=useState("");
+  const [riskData,setRiskData]=useState([]);
+  const [showRisks,setShowRisks]=useState(false);
 
   const isConfigured = CONFIG.SHEET_ID!=="YOUR_SHEET_ID_HERE" && CONFIG.API_KEY!=="YOUR_API_KEY_HERE";
 
@@ -1060,6 +1216,7 @@ function App(){
       const data=await loadFromSheets();
       if(data){setWsList(data);setUsingSheets(true);setLastRefresh(new Date().toLocaleTimeString());}
       try{const h=await loadHistory();setHistory(h);}catch(_){}
+      try{const rd=await loadRiskRegister();setRiskData(rd);}catch(_){}
       const cd=await loadProjectCards();setCardData(cd);
     }catch(e){setError(e.message);}
     finally{setLoading(false);}
@@ -1096,11 +1253,11 @@ function App(){
           </div>
           <nav style={{flex:1,overflowY:"auto",padding:"7px"}}>
             {navItems.map(ws=>{
-              const isActive=active===ws.id;
+              const isActive=active===ws.id&&!showRisks;
               const liveWS=wsList.find(w=>w.id===ws.id);
               const rag=liveWS?wsRag(liveWS):null;
               return(
-                <div key={ws.id} onClick={()=>setActive(ws.id)} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:7,cursor:"pointer",marginBottom:1,background:isActive?`${ws.color}15`:"transparent",border:`1px solid ${isActive?ws.color+"35":"transparent"}`,transition:"all 0.13s"}}
+                <div key={ws.id} onClick={()=>{setActive(ws.id);setShowRisks(false);}} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:7,cursor:"pointer",marginBottom:1,background:isActive?`${ws.color}15`:"transparent",border:`1px solid ${isActive?ws.color+"35":"transparent"}`,transition:"all 0.13s"}}
                   onMouseEnter={e=>{if(!isActive)e.currentTarget.style.background="rgba(255,255,255,0.05)";}}
                   onMouseLeave={e=>{if(!isActive)e.currentTarget.style.background="transparent";}}>
                   <span style={{fontSize:12,color:isActive?ws.color:"rgba(255,255,255,0.5)",flexShrink:0}}>{ws.icon}</span>
@@ -1119,6 +1276,26 @@ function App(){
                 </div>
               );
             })}
+            {/* Divider + Risk Register nav item */}
+            <div style={{height:1,background:"rgba(255,255,255,0.055)",margin:"6px 3px"}}/>
+            {(()=>{
+              const openCount=riskData.filter(r=>r.status==="Open").length;
+              return(
+                <div onClick={()=>{setShowRisks(!showRisks);}} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:7,cursor:"pointer",marginBottom:1,background:showRisks?"rgba(245,158,11,0.12)":"transparent",border:`1px solid ${showRisks?"rgba(245,158,11,0.35)":"transparent"}`,transition:"all 0.13s"}}
+                  onMouseEnter={e=>{if(!showRisks)e.currentTarget.style.background="rgba(255,255,255,0.05)";}}
+                  onMouseLeave={e=>{if(!showRisks)e.currentTarget.style.background="transparent";}}>
+                  <span style={{fontSize:13,color:showRisks?"#f59e0b":"rgba(255,255,255,0.5)",flexShrink:0}}>⚠</span>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{display:"flex",alignItems:"center",gap:6}}>
+                      <span style={{fontSize:13,fontWeight:showRisks?600:400,color:showRisks?"#fff":"rgba(255,255,255,0.82)"}}>Risk Register</span>
+                      {openCount>0&&<span style={{fontSize:11,fontWeight:700,color:"#fff",background:"#ef4444",borderRadius:"50%",width:17,height:17,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"DM Mono,monospace",flexShrink:0}}>{openCount}</span>}
+                    </div>
+                    <div style={{fontSize:12,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>Programme risks</div>
+                  </div>
+                  {showRisks&&<span style={{fontSize:13,color:"#f59e0b"}}>●</span>}
+                </div>
+              );
+            })()}
           </nav>
           <div style={{padding:"10px 13px",borderTop:"1px solid rgba(255,255,255,0.055)"}}>
             <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:isConfigured?10:0}}>
@@ -1142,8 +1319,8 @@ function App(){
         <div style={{flex:1,overflow:"hidden",display:"flex",flexDirection:"column"}}>
           <div style={{padding:"13px 24px",borderBottom:"1px solid rgba(255,255,255,0.055)",display:"flex",alignItems:"center",justifyContent:"space-between",background:"rgba(255,255,255,0.022)",flexShrink:0}}>
             <div>
-              <div style={{fontSize:13,color:active===0?"#C9A84C":currentWS?.color,fontFamily:"DM Mono,monospace",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:2}}>{active===0?"Integration Command Centre":`${currentWS?.code} — Workstream Dashboard`}</div>
-              <div style={{fontSize:15,fontFamily:"Playfair Display,serif",color:"#fff"}}>{active===0?"Master Integration Dashboard":currentWS?.name}</div>
+              <div style={{fontSize:13,color:showRisks?"#C9A84C":active===0?"#C9A84C":currentWS?.color,fontFamily:"DM Mono,monospace",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:2}}>{showRisks?"Risk Management":"Integration Command Centre"}{!showRisks&&active!==0&&` — ${currentWS?.code} — Workstream Dashboard`}</div>
+              <div style={{fontSize:15,fontFamily:"Playfair Display,serif",color:"#fff"}}>{showRisks?"Risk Register":active===0?"Master Integration Dashboard":currentWS?.name}</div>
             </div>
             <div style={{display:"flex",alignItems:"center",gap:10}}>
               {error&&<div style={{fontSize:12,color:"#ef4444",fontFamily:"DM Mono,monospace",maxWidth:220}}>⚠ {error}</div>}
@@ -1164,9 +1341,11 @@ function App(){
           <div style={{flex:1,overflowY:"auto",padding:"20px 24px"}}>
             {searchQuery.trim()
               ?<SearchResults results={searchResults} query={searchQuery.trim()} onSelect={wsId=>{setActive(wsId);setSearchQuery("");}} onCardOpen={setActiveCard}/>
-              :active===0
-                ?<Master wsList={wsList} onSelect={setActive} lastRefresh={lastRefresh} history={history}/>
-                :currentWS&&<WSDash ws={currentWS} cardData={cardData} onCardOpen={setActiveCard}/>
+              :showRisks
+                ?<RiskRegisterView riskData={riskData}/>
+                :active===0
+                  ?<Master wsList={wsList} onSelect={setActive} lastRefresh={lastRefresh} history={history} riskData={riskData}/>
+                  :currentWS&&<WSDash ws={currentWS} cardData={cardData} onCardOpen={setActiveCard} riskData={riskData}/>
             }
           </div>
         </div>
