@@ -47,14 +47,14 @@ const CONFIG = {
 // Workstream lead email map — who is allowed to update which workstream
 // Each lead can only see and edit their own workstream
 const LEAD_EMAILS = {
-  "WS1": ["william.benson@hightekers.com", "hafiz.ladha@hightekers.com"],
-  "WS2": ["wouter.jansen@hightekers.com", "hafiz.ladha@hightekers.com"],
-  "WS3": ["jenn.tang@hightekers.com", "hafiz.ladha@hightekers.com"],
-  "WS4": ["louis.sanchezdelozada@hightekers.com", "hafiz.ladha@hightekers.com"],
-  "WS5": ["ludovic.imbert@hightekers.com", "hafiz.ladha@hightekers.com"],
-  "WS6": ["jeff.daniel@hightekers.com", "hafiz.ladha@hightekers.com"],
-  "WS7": ["kelly.luker@hightekers.com", "hafiz.ladha@hightekers.com"],
-  "WS8": ["hafiz.ladha@hightekers.com", , "maria.rivas@hightekers.com"],
+  "WS1": ["william.benson@hightekers.com", "hafiz.ladha@hightekers.com", "maria.rivas@hightekers.com"],
+  "WS2": ["wouter.jansen@hightekers.com", "hafiz.ladha@hightekers.com", "maria.rivas@hightekers.com"],
+  "WS3": ["jenn.tang@hightekers.com", "hafiz.ladha@hightekers.com", "maria.rivas@hightekers.com"],
+  "WS4": ["louis.sanchezdelozada@hightekers.com", "hafiz.ladha@hightekers.com", "maria.rivas@hightekers.com"],
+  "WS5": ["ludovic.imbert@hightekers.com", "hafiz.ladha@hightekers.com", "maria.rivas@hightekers.com"],
+  "WS6": ["jeff.daniel@hightekers.com", "hafiz.ladha@hightekers.com", "maria.rivas@hightekers.com"],
+  "WS7": ["kelly.luker@hightekers.com", "hafiz.ladha@hightekers.com", "maria.rivas@hightekers.com"],
+  "WS8": ["hafiz.ladha@hightekers.com", "maria.rivas@hightekers.com"],
 };
 
 const WS_META = {
@@ -238,7 +238,7 @@ function MilestoneStatusPicker({value,onChange}){
 // ─────────────────────────────────────────────────────────────────────────────
 // PROJECT CARD MODAL — with milestone status editing
 // ─────────────────────────────────────────────────────────────────────────────
-function ProjectCardModal({project,card,milestones,wsColor,msEdits,onMsChange,onClose}){
+function ProjectCardModal({project,card,milestones,wsColor,msEdits,onMsChange,onMsCommentChange,onClose}){
   const pplan=plannedPct(project.start,project.end);
   const fmtMD=str=>{if(!str)return"—";const d=new Date(str);return isNaN(d)?str:d.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"});};
   const hasCard=card&&(card.description||card.scope||card.outputs||card.kpis||card.dependencies);
@@ -311,7 +311,20 @@ function ProjectCardModal({project,card,milestones,wsColor,msEdits,onMsChange,on
                         {changed&&<span style={{fontSize:11,color:"#f59e0b",fontFamily:"DM Mono,monospace",background:"rgba(245,158,11,0.1)",border:"1px solid rgba(245,158,11,0.25)",borderRadius:4,padding:"2px 6px",flexShrink:0}}>CHANGED</span>}
                       </div>
                       <MilestoneStatusPicker value={currentStatus} onChange={v=>onMsChange(project.id,ms.name,ms.status,v)}/>
-                      {changed&&<div style={{fontSize:11,color:"rgba(255,255,255,0.4)",fontFamily:"DM Mono,monospace",marginTop:5}}>Was: {ms.status}</div>}
+                      {changed&&<div style={{fontSize:11,color:"rgba(255,255,255,0.4)",fontFamily:"DM Mono,monospace",marginTop:5,marginBottom:8}}>Was: {ms.status}</div>}
+                      {changed&&(
+                        <div style={{marginTop:6}}>
+                          <div style={{fontSize:11,fontFamily:"DM Mono,monospace",letterSpacing:"0.06em",textTransform:"uppercase",marginBottom:5,color:!(msEdits[key]?.comment||"").trim()?"#f59e0b":"rgba(255,255,255,0.5)"}}>
+                            Comment <span style={{color:"#ef4444",fontWeight:700}}>* Required</span>
+                          </div>
+                          <textarea rows={2} value={msEdits[key]?.comment||""} onChange={ev=>onMsCommentChange(project.id,ms.name,ev.target.value)}
+                            placeholder="Explain the reason for the status change ..."
+                            style={{width:"100%",resize:"vertical",fontSize:12,padding:"6px 8px",boxSizing:"border-box",
+                              border:!(msEdits[key]?.comment||"").trim()?"1px solid rgba(245,158,11,0.5)":"1px solid rgba(255,255,255,0.08)",
+                              borderRadius:6,background:"rgba(255,255,255,0.04)",color:"#fff",transition:"border-color .15s"}}/>
+                          {!(msEdits[key]?.comment||"").trim()&&<div style={{fontSize:11,color:"#f59e0b",marginTop:3,fontFamily:"DM Mono,monospace"}}>⚠ Please add a comment before submitting</div>}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -498,7 +511,15 @@ function UpdateForm({user,wsCode,wsData,cardData,onSubmitDone,onSignOut}){
 
   const setMsField=(projId,msName,oldStatus,newStatus)=>{
     const key=`${projId}__${msName}`;
-    setMsEdits(prev=>({...prev,[key]:{oldStatus,newStatus,dirty:newStatus!==oldStatus}}));
+    setMsEdits(prev=>({...prev,[key]:{
+      ...prev[key],
+      oldStatus,newStatus,dirty:newStatus!==oldStatus,
+      comment:prev[key]?.comment||"",
+    }}));
+  };
+  const setMsComment=(projId,msName,comment)=>{
+    const key=`${projId}__${msName}`;
+    setMsEdits(prev=>({...prev,[key]:{...prev[key],comment}}));
   };
 
   const setField=(projId,field,value)=>{
@@ -537,11 +558,18 @@ function UpdateForm({user,wsCode,wsData,cardData,onSubmitDone,onSignOut}){
         projectId:projId,projectName:projName,
         milestoneName:msName,
         oldStatus:ms.oldStatus,newStatus:ms.newStatus,
-        comment:"",
+        comment:ms.comment||"",
         submitterName:user.name,
       });
     });
     if(!changed.length){setError("No changes to submit.");return;}
+    // Validate: comment required for every change
+    const missingComment=changed.filter(c=>!(c.comment||"").trim());
+    if(missingComment.length){
+      const names=missingComment.map(c=>c.rowType==="milestone"?`${c.projectName} (milestone: ${c.milestoneName})`:c.projectName);
+      setError(`A comment is required for every change. Please add a comment for: ${names.join(", ")}`);
+      return;
+    }
     setSubmitting(true);setError(null);
     try{
       await submitProposals(changed,user.token,user.email,wsCode);
@@ -662,10 +690,19 @@ function UpdateForm({user,wsCode,wsData,cardData,onSubmitDone,onSignOut}){
                               {(pr.risk||"")!==(e.risk||"")&&<div style={{fontSize:13,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",marginTop:2}}>Was: {pr.risk||"(none)"}</div>}
                             </div>
                           </div>
-                          {/* Comment */}
+                          {/* Comment — required when dirty */}
                           <div style={{marginTop:10}}>
-                            <div style={{fontSize:13,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:6}}>Comments / Notes <span style={{fontSize:11,color:"rgba(255,255,255,0.35)",textTransform:"none",letterSpacing:0}}>(optional — visible to programme manager)</span></div>
-                            <textarea rows={2} value={e.comment||""} onChange={ev=>setField(pr.id,"comment",ev.target.value)} placeholder="Provide any context or notes for the programme manager to explain the reason for the changes ..." style={{width:"100%",resize:"vertical",fontSize:12,padding:"6px 8px",boxSizing:"border-box"}}/>
+                            <div style={{fontSize:13,fontFamily:"DM Mono,monospace",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:6,color:e.dirty&&!(e.comment||"").trim()?"#f59e0b":"rgba(255,255,255,0.62)"}}>
+                              Comments / Notes
+                              {e.dirty&&<span style={{fontSize:11,color:"#ef4444",marginLeft:6,fontWeight:700}}>* Required</span>}
+                              {!e.dirty&&<span style={{fontSize:11,color:"rgba(255,255,255,0.35)",textTransform:"none",letterSpacing:0,marginLeft:6}}>(required if you make changes)</span>}
+                            </div>
+                            <textarea rows={2} value={e.comment||""} onChange={ev=>setField(pr.id,"comment",ev.target.value)}
+                              placeholder="Explain the reason for your changes — this is required before you can submit ..."
+                              style={{width:"100%",resize:"vertical",fontSize:12,padding:"6px 8px",boxSizing:"border-box",
+                                border:e.dirty&&!(e.comment||"").trim()?"1px solid rgba(245,158,11,0.5)":"1px solid rgba(255,255,255,0.08)",
+                                borderRadius:6,transition:"border-color .15s"}}/>
+                            {e.dirty&&!(e.comment||"").trim()&&<div style={{fontSize:11,color:"#f59e0b",marginTop:3,fontFamily:"DM Mono,monospace"}}>⚠ Please add a comment before submitting</div>}
                           </div>
                         </div>
                       );
@@ -689,6 +726,7 @@ function UpdateForm({user,wsCode,wsData,cardData,onSubmitDone,onSignOut}){
             wsColor={ws.color}
             msEdits={msEdits}
             onMsChange={setMsField}
+            onMsCommentChange={setMsComment}
             onClose={()=>setOpenCard(null)}
           />;
         })()}
