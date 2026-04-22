@@ -318,36 +318,51 @@ async function writeToSheets(wsList, accessToken){
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PROPOSALS — load pending, approve, reject
-// Proposals columns:
-// A=Timestamp B=SubmittedBy C=LeadEmail D=WSCode E=ProjectID F=ProjectName
-// G=Old% H=New% I=OldRAG J=NewRAG K=OldRisk L=NewRisk M=Status
+// Proposals columns (RowType in col A, everything shifted right by 1):
+// A=RowType B=Timestamp C=SubmittedBy D=LeadEmail E=WSCode F=ProjectID G=ProjectName
+// Project rows: H=Old% I=New% J=OldRAG K=NewRAG L=OldRisk M=NewRisk N=Status O=Comment
+// Milestone rows: H=MilestoneName L=OldStatus M=NewStatus N=Status O=Comment
 // ─────────────────────────────────────────────────────────────────────────────
 async function loadProposals(){
   const {SHEET_ID,API_KEY,PROPOSALS_TAB}=CONFIG;
   if(SHEET_ID==="YOUR_SHEET_ID_HERE"||API_KEY==="YOUR_API_KEY_HERE") return [];
-  const range=encodeURIComponent(`${PROPOSALS_TAB}!A2:O500`);
+  const range=encodeURIComponent(`${PROPOSALS_TAB}!A2:P500`);
   const url=`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?key=${API_KEY}`;
   const res=await fetch(url);
   if(!res.ok) throw new Error(`Proposals read error: ${res.status}`);
   const json=await res.json();
   const rows=json.values||[];
-  return rows.map((row,i)=>({
-    rowIndex:i+2, // 1-based, row 1 is header
-    timestamp:row[0]||"",
-    submittedBy:row[1]||"",
-    leadEmail:row[2]||"",
-    wsCode:row[3]||"",
-    projectId:row[4]||"",
-    projectName:row[5]||"",
-    oldProgress:parseInt(row[6])||0,
-    newProgress:parseInt(row[7])||0,
-    oldRag:row[8]||"G",
-    newRag:row[9]||"G",
-    oldRisk:row[10]||"",
-    newRisk:row[11]||"",
-    comment:row[13]||"",
-    status:row[12]||"Pending",
-  })).filter(p=>p.status==="Pending");
+  return rows.map((row,i)=>{
+    const rowType=row[0]||"project";
+    const base={
+      rowIndex:i+2,
+      rowType,
+      timestamp:row[1]||"",
+      submittedBy:row[2]||"",
+      leadEmail:row[3]||"",
+      wsCode:row[4]||"",
+      projectId:row[5]||"",
+      projectName:row[6]||"",
+      status:row[13]||"Pending",
+      comment:row[14]||"",
+    };
+    if(rowType==="milestone"){
+      return{...base,
+        milestoneName:row[7]||"",
+        oldStatus:row[11]||"",
+        newStatus:row[12]||"",
+      };
+    }
+    // project row
+    return{...base,
+      oldProgress:parseInt(row[7])||0,
+      newProgress:parseInt(row[8])||0,
+      oldRag:row[9]||"G",
+      newRag:row[10]||"G",
+      oldRisk:row[11]||"",
+      newRisk:row[12]||"",
+    };
+  }).filter(p=>p.status==="Pending");
 }
 
 async function updateProposalStatus(rowIndex, status, accessToken, rejectionReason){
@@ -361,11 +376,11 @@ async function updateProposalStatus(rowIndex, status, accessToken, rejectionReas
     });
     if(!res.ok){const e=await res.json();throw new Error(e.error?.message||`Status update error ${res.status}`);}
   };
-  // Write status to col M only — never touch col N (comment)
-  await putRange(`${PROPOSALS_TAB}!M${rowIndex}`,[[status]]);
-  // If rejecting, write rejection reason to col O separately
+  // Write status to col N (index 14, shifted by RowType col) — never touch col O (comment)
+  await putRange(`${PROPOSALS_TAB}!N${rowIndex}`,[[status]]);
+  // If rejecting, write rejection reason to col P separately
   if(rejectionReason&&rejectionReason.trim()){
-    await putRange(`${PROPOSALS_TAB}!O${rowIndex}`,[[rejectionReason.trim()]]);
+    await putRange(`${PROPOSALS_TAB}!P${rowIndex}`,[[rejectionReason.trim()]]);
   }
 }
 
@@ -1435,6 +1450,7 @@ function ProposalsPanel({wsList,onUpdate,markDirty,accessToken,onTokenRefresh}){
     if(!CONFIG.APPS_SCRIPT_URL||!p.leadEmail) return;
     const params=new URLSearchParams({
       action:"decision",
+      rowType:p.rowType||"project",
       leadEmail:p.leadEmail,
       submittedBy:p.submittedBy,
       projectId:p.projectId,
@@ -1443,10 +1459,14 @@ function ProposalsPanel({wsList,onUpdate,markDirty,accessToken,onTokenRefresh}){
       decision,
       reason:reason||"",
       comment:p.comment||"",
-      newProgress:String(p.newProgress),
-      newRag:p.newRag,
+      // Project-specific
+      newProgress:String(p.newProgress||""),
+      newRag:p.newRag||"",
       newRisk:p.newRisk||"",
       oldRisk:p.oldRisk||"",
+      // Milestone-specific
+      milestoneName:p.milestoneName||"",
+      newMsStatus:p.newStatus||"",
     });
     try{
       await fetch(`${CONFIG.APPS_SCRIPT_URL}?${params.toString()}`,{mode:"no-cors"});
@@ -1456,29 +1476,35 @@ function ProposalsPanel({wsList,onUpdate,markDirty,accessToken,onTokenRefresh}){
   const handleApprove=async(p)=>{
     setActing(prev=>({...prev,[p.rowIndex]:"approving"}));
     try{
-      // 1. Apply change to in-memory wsList
-      let applied=false;
-      const updated=wsList.map(ws=>{
-        if(ws.code!==p.wsCode) return ws;
-        return{...ws,initiatives:ws.initiatives.map(init=>({
-          ...init,projects:init.projects.map(pr=>{
-            if(pr.id!==p.projectId) return pr;
-            applied=true;
-            return{...pr,progress:p.newProgress,rag:p.newRag,risk:p.newRisk||null};
-          })
-        }))};
-      });
-      if(!applied){setError(`Project ${p.projectId} not found in master data — approve after refreshing.`);return;}
-      // 2. Mark row as Approved in sheet
       const token=await getToken();
-      await updateProposalStatus(p.rowIndex,"Approved",token);
-      // 3. Send notification email to lead
-      await sendDecisionEmail(p,"Approved","");
-      // 4. Update local state
-      onUpdate(updated.find(w=>w.code===p.wsCode));
-      markDirty();
-      setProposals(prev=>prev.filter(x=>x.rowIndex!==p.rowIndex));
-      showMsg(`✓ Approved: ${p.projectName} — lead notified`);
+      if(p.rowType==="milestone"){
+        // Milestone approval: Apps Script writes status back to Milestones tab
+        // No wsList update needed — milestone data lives in Milestones tab, not wsList
+        await updateProposalStatus(p.rowIndex,"Approved",token);
+        await sendDecisionEmail(p,"Approved","");
+        setProposals(prev=>prev.filter(x=>x.rowIndex!==p.rowIndex));
+        showMsg(`✓ Approved: "${p.milestoneName}" milestone update — lead notified`);
+      } else {
+        // Project approval: apply change to in-memory wsList + save to Sheets
+        let applied=false;
+        const updated=wsList.map(ws=>{
+          if(ws.code!==p.wsCode) return ws;
+          return{...ws,initiatives:ws.initiatives.map(init=>({
+            ...init,projects:init.projects.map(pr=>{
+              if(pr.id!==p.projectId) return pr;
+              applied=true;
+              return{...pr,progress:p.newProgress,rag:p.newRag,risk:p.newRisk||null};
+            })
+          }))};
+        });
+        if(!applied){setError(`Project ${p.projectId} not found in master data — approve after refreshing.`);return;}
+        await updateProposalStatus(p.rowIndex,"Approved",token);
+        await sendDecisionEmail(p,"Approved","");
+        onUpdate(updated.find(w=>w.code===p.wsCode));
+        markDirty();
+        setProposals(prev=>prev.filter(x=>x.rowIndex!==p.rowIndex));
+        showMsg(`✓ Approved: ${p.projectName} — lead notified`);
+      }
     }catch(e){setError(e.message);}
     finally{setActing(prev=>{const n={...prev};delete n[p.rowIndex];return n;});}
   };
@@ -1565,15 +1591,24 @@ function ProposalsPanel({wsList,onUpdate,markDirty,accessToken,onTokenRefresh}){
             <div style={{display:"flex",flexDirection:"column",gap:8}}>
               {props.map(p=>{
                 const acting_state=acting[p.rowIndex];
-                const progChanged=p.oldProgress!==p.newProgress;
-                const ragChanged=p.oldRag!==p.newRag;
-                const riskChanged=(p.oldRisk||"")!==(p.newRisk||"");
+                const isMilestone=p.rowType==="milestone";
+                const progChanged=!isMilestone&&p.oldProgress!==p.newProgress;
+                const ragChanged=!isMilestone&&p.oldRag!==p.newRag;
+                const riskChanged=!isMilestone&&(p.oldRisk||"")!==(p.newRisk||"");
+                const msStatusChanged=isMilestone&&p.oldStatus!==p.newStatus;
+                const MS_COLORS={"Complete":"#22c55e","In Progress":"#f59e0b","Not Started":"#a3aac4"};
                 const ts=p.timestamp?new Date(p.timestamp).toLocaleString("en-GB",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"}):"—";
                 return(
-                  <div key={p.rowIndex} style={{background:"#0f1930",border:`1px solid ${wsMeta.color}25`,borderRadius:12,padding:"14px 16px"}}>
+                  <div key={p.rowIndex} style={{background:"#0f1930",border:`1px solid ${isMilestone?"rgba(59,191,250,0.25)":wsMeta.color+"25"}`,borderLeft:`3px solid ${isMilestone?"#3bbffa":wsMeta.color}`,borderRadius:12,padding:"14px 16px"}}>
+                    {/* Card header */}
                     <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:12,marginBottom:12}}>
                       <div>
-                        <div style={{fontSize:13,fontWeight:600,color:"#fff",marginBottom:3}}>{p.projectName}</div>
+                        {/* Type badge */}
+                        <div style={{display:"inline-flex",alignItems:"center",gap:5,marginBottom:6,padding:"2px 8px",borderRadius:9999,background:isMilestone?"rgba(59,191,250,0.1)":"rgba(255,255,255,0.05)",border:`1px solid ${isMilestone?"rgba(59,191,250,0.3)":"rgba(255,255,255,0.1)"}`}}>
+                          <span style={{fontSize:11,fontFamily:"DM Mono,monospace",fontWeight:700,letterSpacing:"0.08em",color:isMilestone?"#3bbffa":"#a3aac4",textTransform:"uppercase"}}>{isMilestone?"Milestone Update":"Project Update"}</span>
+                        </div>
+                        <div style={{fontSize:13,fontWeight:600,color:"#dee5ff",marginBottom:2}}>{p.projectName}</div>
+                        {isMilestone&&<div style={{fontSize:12,color:"#3bbffa",fontFamily:"DM Mono,monospace",marginBottom:3}}>🏁 {p.milestoneName}</div>}
                         <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
                           <span style={{fontSize:12,color:"#a3aac4",fontFamily:"DM Mono,monospace"}}>Submitted by: <span style={{color:"rgba(255,255,255,0.6)"}}>{p.submittedBy}</span></span>
                           <span style={{fontSize:12,color:"#a3aac4",fontFamily:"DM Mono,monospace"}}>{ts}</span>
@@ -1588,51 +1623,75 @@ function ProposalsPanel({wsList,onUpdate,markDirty,accessToken,onTokenRefresh}){
                         </button>
                       </div>
                     </div>
-                    {/* changes grid */}
-                    <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10}}>
-                      <div style={{background:progChanged?"rgba(245,158,11,0.06)":"#141f38",border:`1px solid ${progChanged?"rgba(245,158,11,0.2)":"rgba(255,255,255,0.07)"}`,borderRadius:7,padding:"10px 12px"}}>
-                        <div style={{fontSize:13,color:"#a3aac4",fontFamily:"DM Mono,monospace",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6}}>% Complete</div>
-                        {progChanged?(
-                          <div style={{display:"flex",alignItems:"center",gap:8}}>
-                            <span style={{fontSize:18,fontFamily:"Manrope,sans-serif",fontWeight:800,color:"#a3aac4",textDecoration:"line-through"}}>{p.oldProgress}%</span>
-                            <span style={{color:"#f59e0b",fontSize:12}}>→</span>
-                            <span style={{fontSize:22,fontFamily:"Manrope,sans-serif",fontWeight:800,color:"#22c55e"}}>{p.newProgress}%</span>
+
+                    {/* MILESTONE layout */}
+                    {isMilestone&&(
+                      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                        <div style={{background:msStatusChanged?"rgba(59,191,250,0.06)":"#141f38",border:`1px solid ${msStatusChanged?"rgba(59,191,250,0.25)":"rgba(255,255,255,0.07)"}`,borderRadius:7,padding:"10px 12px"}}>
+                          <div style={{fontSize:11,color:"#a3aac4",fontFamily:"DM Mono,monospace",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:8}}>Milestone Status</div>
+                          <div style={{display:"flex",alignItems:"center",gap:10}}>
+                            <div style={{display:"flex",alignItems:"center",gap:5}}>
+                              <div style={{width:8,height:8,borderRadius:"50%",background:MS_COLORS[p.oldStatus]||"#a3aac4",flexShrink:0}}/>
+                              <span style={{fontSize:13,fontFamily:"Manrope,sans-serif",color:"rgba(255,255,255,0.4)",textDecoration:"line-through"}}>{p.oldStatus}</span>
+                            </div>
+                            <span style={{color:"#f59e0b",fontSize:14,fontWeight:700}}>→</span>
+                            <div style={{display:"flex",alignItems:"center",gap:5}}>
+                              <div style={{width:10,height:10,borderRadius:"50%",background:MS_COLORS[p.newStatus]||"#a3aac4",flexShrink:0,boxShadow:`0 0 6px ${MS_COLORS[p.newStatus]||"#a3aac4"}80`}}/>
+                              <span style={{fontSize:15,fontWeight:700,fontFamily:"Manrope,sans-serif",color:MS_COLORS[p.newStatus]||"#a3aac4"}}>{p.newStatus}</span>
+                            </div>
                           </div>
-                        ):(
-                          <span style={{fontSize:18,fontFamily:"Manrope,sans-serif",fontWeight:800,color:"rgba(255,255,255,0.72)"}}>{p.oldProgress}% <span style={{fontSize:12,color:"#a3aac4"}}>unchanged</span></span>
-                        )}
+                        </div>
+                        <div style={{background:"#141f38",border:"1px solid rgba(255,255,255,0.07)",borderRadius:7,padding:"10px 12px"}}>
+                          <div style={{fontSize:11,color:"#a3aac4",fontFamily:"DM Mono,monospace",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6}}>Comment</div>
+                          {p.comment?<div style={{fontSize:13,color:"rgba(255,255,255,0.72)",lineHeight:1.5}}>{p.comment}</div>:<div style={{fontSize:13,color:"rgba(255,255,255,0.3)",fontStyle:"italic"}}>No comment</div>}
+                        </div>
                       </div>
-                      <div style={{background:ragChanged?"rgba(245,158,11,0.06)":"#141f38",border:`1px solid ${ragChanged?"rgba(245,158,11,0.2)":"rgba(255,255,255,0.07)"}`,borderRadius:7,padding:"10px 12px"}}>
-                        <div style={{fontSize:13,color:"#a3aac4",fontFamily:"DM Mono,monospace",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6}}>RAG Status</div>
-                        {ragChanged?(
-                          <div style={{display:"flex",alignItems:"center",gap:7,flexWrap:"wrap"}}>
-                            <span style={{fontSize:13,color:RAG[p.oldRag]?.color,fontFamily:"DM Mono,monospace",opacity:0.5,textDecoration:"line-through"}}>{RAG[p.oldRag]?.label}</span>
-                            <span style={{color:"#f59e0b",fontSize:12}}>→</span>
-                            <span style={{fontSize:13,color:RAG[p.newRag]?.color,fontFamily:"DM Mono,monospace",fontWeight:700}}>{RAG[p.newRag]?.label}</span>
-                          </div>
-                        ):(
-                          <span style={{fontSize:13,color:RAG[p.oldRag]?.color,fontFamily:"DM Mono,monospace"}}>{RAG[p.oldRag]?.label} <span style={{fontSize:12,color:"#a3aac4",color:"#a3aac4"}}>unchanged</span></span>
-                        )}
+                    )}
+
+                    {/* PROJECT layout */}
+                    {!isMilestone&&(
+                      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10}}>
+                        <div style={{background:progChanged?"rgba(245,158,11,0.06)":"#141f38",border:`1px solid ${progChanged?"rgba(245,158,11,0.2)":"rgba(255,255,255,0.07)"}`,borderRadius:7,padding:"10px 12px"}}>
+                          <div style={{fontSize:11,color:"#a3aac4",fontFamily:"DM Mono,monospace",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6}}>% Complete</div>
+                          {progChanged?(
+                            <div style={{display:"flex",alignItems:"center",gap:8}}>
+                              <span style={{fontSize:18,fontFamily:"Manrope,sans-serif",fontWeight:800,color:"#a3aac4",textDecoration:"line-through"}}>{p.oldProgress}%</span>
+                              <span style={{color:"#f59e0b",fontSize:12}}>→</span>
+                              <span style={{fontSize:22,fontFamily:"Manrope,sans-serif",fontWeight:800,color:"#22c55e"}}>{p.newProgress}%</span>
+                            </div>
+                          ):(
+                            <span style={{fontSize:18,fontFamily:"Manrope,sans-serif",fontWeight:800,color:"rgba(255,255,255,0.72)"}}>{p.oldProgress}% <span style={{fontSize:12,color:"#a3aac4"}}>unchanged</span></span>
+                          )}
+                        </div>
+                        <div style={{background:ragChanged?"rgba(245,158,11,0.06)":"#141f38",border:`1px solid ${ragChanged?"rgba(245,158,11,0.2)":"rgba(255,255,255,0.07)"}`,borderRadius:7,padding:"10px 12px"}}>
+                          <div style={{fontSize:11,color:"#a3aac4",fontFamily:"DM Mono,monospace",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6}}>RAG Status</div>
+                          {ragChanged?(
+                            <div style={{display:"flex",alignItems:"center",gap:7,flexWrap:"wrap"}}>
+                              <span style={{fontSize:13,color:RAG[p.oldRag]?.color,fontFamily:"DM Mono,monospace",opacity:0.5,textDecoration:"line-through"}}>{RAG[p.oldRag]?.label}</span>
+                              <span style={{color:"#f59e0b",fontSize:12}}>→</span>
+                              <span style={{fontSize:13,color:RAG[p.newRag]?.color,fontFamily:"DM Mono,monospace",fontWeight:700}}>{RAG[p.newRag]?.label}</span>
+                            </div>
+                          ):(
+                            <span style={{fontSize:13,color:RAG[p.oldRag]?.color,fontFamily:"DM Mono,monospace"}}>{RAG[p.oldRag]?.label} <span style={{fontSize:12,color:"#a3aac4"}}>unchanged</span></span>
+                          )}
+                        </div>
+                        <div style={{background:riskChanged?"rgba(245,158,11,0.06)":"#141f38",border:`1px solid ${riskChanged?"rgba(245,158,11,0.2)":"rgba(255,255,255,0.07)"}`,borderRadius:7,padding:"10px 12px"}}>
+                          <div style={{fontSize:11,color:"#a3aac4",fontFamily:"DM Mono,monospace",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6}}>Risk / Issue</div>
+                          {riskChanged?(
+                            <div>
+                              {p.oldRisk&&<div style={{fontSize:13,color:"#a3aac4",textDecoration:"line-through",marginBottom:3}}>{p.oldRisk}</div>}
+                              <div style={{fontSize:13,color:p.newRisk?"#f59e0b":"rgba(255,255,255,0.72)"}}>{p.newRisk||"(cleared)"}</div>
+                            </div>
+                          ):(
+                            <div style={{fontSize:13,color:"#a3aac4"}}>{p.oldRisk||"None"} <span style={{fontSize:12,color:"#a3aac4"}}>unchanged</span></div>
+                          )}
+                        </div>
+                        <div style={{background:"#141f38",border:"1px solid rgba(255,255,255,0.07)",borderRadius:7,padding:"10px 12px"}}>
+                          <div style={{fontSize:11,color:"#a3aac4",fontFamily:"DM Mono,monospace",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6}}>Comment</div>
+                          {p.comment?<div style={{fontSize:13,color:"rgba(255,255,255,0.72)",lineHeight:1.4}}>{p.comment}</div>:<div style={{fontSize:13,color:"rgba(255,255,255,0.35)",fontStyle:"italic"}}>No comment</div>}
+                        </div>
                       </div>
-                      <div style={{background:riskChanged?"rgba(245,158,11,0.06)":"#141f38",border:`1px solid ${riskChanged?"rgba(245,158,11,0.2)":"rgba(255,255,255,0.07)"}`,borderRadius:7,padding:"10px 12px"}}>
-                        <div style={{fontSize:13,color:"#a3aac4",fontFamily:"DM Mono,monospace",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6}}>Risk / Issue</div>
-                        {riskChanged?(
-                          <div>
-                            {p.oldRisk&&<div style={{fontSize:13,color:"#a3aac4",textDecoration:"line-through",marginBottom:3}}>{p.oldRisk}</div>}
-                            <div style={{fontSize:13,color:p.newRisk?"#f59e0b":"rgba(255,255,255,0.72)"}}>{p.newRisk||"(cleared)"}</div>
-                          </div>
-                        ):(
-                          <div style={{fontSize:13,color:"#a3aac4"}}>{p.oldRisk||"None"} <span style={{fontSize:12,color:"#a3aac4"}}>unchanged</span></div>
-                        )}
-                      </div>
-                      <div style={{background:"#141f38",border:"1px solid rgba(255,255,255,0.07)",borderRadius:7,padding:"10px 12px"}}>
-                        <div style={{fontSize:13,color:"#a3aac4",fontFamily:"DM Mono,monospace",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6}}>Comments</div>
-                        {p.comment
-                          ?<div style={{fontSize:13,color:"rgba(255,255,255,0.72)",lineHeight:1.4}}>{p.comment}</div>
-                          :<div style={{fontSize:13,color:"rgba(255,255,255,0.35)",fontStyle:"italic"}}>No comment</div>
-                        }
-                      </div>
-                    </div>
+                    )}
                   </div>
                 );
               })}
