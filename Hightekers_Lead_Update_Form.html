@@ -106,28 +106,52 @@ function parseRowsForWS(rows, wsCode){
 }
 
 // Write proposals tab
-// Proposals columns:
-// A=Timestamp B=SubmittedBy C=LeadEmail D=WSCode E=ProjectID F=ProjectName
-// G=Old% H=New% I=OldRAG J=NewRAG K=OldRisk L=NewRisk M=Status(Pending)
+// Proposals columns (after RowType column added to col A):
+// A=RowType B=Timestamp C=SubmittedBy D=LeadEmail E=WSCode F=ProjectID G=ProjectName
+// Project rows: H=Old% I=New% J=OldRAG K=NewRAG L=OldRisk M=NewRisk N=Status O=Comment
+// Milestone rows: H=MilestoneName I=— J=— K=— L=OldStatus M=NewStatus N=Status O=Comment
 async function submitProposals(proposals, accessToken, submitterEmail, wsCode){
   const {SHEET_ID,PROPOSALS_TAB,WEBHOOK_URL}=CONFIG;
   const ts=new Date().toISOString();
-  const rows=proposals.map(p=>[
-    ts,
-    p.submitterName||"—",
-    submitterEmail,
-    wsCode,
-    p.projectId,
-    p.projectName,
-    String(p.oldProgress),
-    String(p.newProgress),
-    p.oldRag,
-    p.newRag,
-    p.oldRisk||"",
-    p.newRisk||"",
-    "Pending",
-    p.comment||"",
-  ]);
+  const rows=proposals.map(p=>{
+    if(p.rowType==="milestone"){
+      return[
+        "milestone",
+        ts,
+        p.submitterName||"—",
+        submitterEmail,
+        wsCode,
+        p.projectId,
+        p.projectName,
+        p.milestoneName,
+        "",
+        "",
+        "",
+        p.oldStatus||"",
+        p.newStatus||"",
+        "Pending",
+        p.comment||"",
+      ];
+    }
+    // default: project row
+    return[
+      "project",
+      ts,
+      p.submitterName||"—",
+      submitterEmail,
+      wsCode,
+      p.projectId,
+      p.projectName,
+      String(p.oldProgress),
+      String(p.newProgress),
+      p.oldRag,
+      p.newRag,
+      p.oldRisk||"",
+      p.newRisk||"",
+      "Pending",
+      p.comment||"",
+    ];
+  });
   // If a Web App webhook URL is configured, POST to it (triggers email notification)
   if(WEBHOOK_URL&&WEBHOOK_URL!=="YOUR_WEBHOOK_URL_HERE"){
    const res=// no-cors bypasses CORS preflight — Google Apps Script does not support OPTIONS requests
@@ -152,6 +176,154 @@ async function submitProposals(proposals, accessToken, submitterEmail, wsCode){
 // ─────────────────────────────────────────────────────────────────────────────
 // OAUTH
 // ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// PROJECT CARDS — load from ProjectCards and Milestones tabs
+// ─────────────────────────────────────────────────────────────────────────────
+async function loadProjectCards(){
+  const {SHEET_ID,API_KEY}=CONFIG;
+  if(!SHEET_ID||SHEET_ID==="YOUR_SHEET_ID_HERE") return {cards:{},milestones:{}};
+  try{
+    const cr=encodeURIComponent("ProjectCards!A2:F500");
+    const mr=encodeURIComponent("Milestones!A2:D500");
+    const [cr2,mr2]=await Promise.all([
+      fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${cr}?key=${API_KEY}`).then(r=>r.json()),
+      fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${mr}?key=${API_KEY}`).then(r=>r.json()),
+    ]);
+    const cards={};
+    (cr2.values||[]).forEach(row=>{
+      const [id,desc,scope,outputs,kpis,deps]=row;
+      if(id?.trim()) cards[id.trim()]={description:desc||"",scope:scope||"",outputs:outputs||"",kpis:kpis||"",dependencies:deps||""};
+    });
+    const milestones={};
+    (mr2.values||[]).forEach(row=>{
+      const [pid,name,date,status]=row;
+      if(!pid?.trim()) return;
+      if(!milestones[pid.trim()]) milestones[pid.trim()]=[];
+      milestones[pid.trim()].push({name:name||"",date:date||"",status:status||"Not Started"});
+    });
+    return {cards,milestones};
+  }catch(e){
+    console.warn("Project cards load failed:",e.message);
+    return {cards:{},milestones:{}};
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MILESTONE STATUS PICKER
+// ─────────────────────────────────────────────────────────────────────────────
+const MS_STATUSES=["Not Started","In Progress","Complete"];
+const MS_COLORS={"Complete":"#22c55e","In Progress":"#f59e0b","Not Started":"#a3aac4"};
+function MilestoneStatusPicker({value,onChange}){
+  return(
+    <div style={{display:"flex",gap:5}}>
+      {MS_STATUSES.map(s=>{
+        const active=value===s;
+        const col=MS_COLORS[s];
+        return(
+          <button key={s} onClick={()=>onChange(s)}
+            style={{flex:1,padding:"5px 6px",borderRadius:6,cursor:"pointer",
+              fontSize:11,fontFamily:"DM Mono,monospace",fontWeight:600,
+              border:`2px solid ${active?col:"rgba(255,255,255,0.12)"}`,
+              background:active?`${col}22`:"transparent",
+              color:active?col:"rgba(255,255,255,0.5)",transition:"all .15s",
+              whiteSpace:"nowrap"}}>
+            {s}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PROJECT CARD MODAL — with milestone status editing
+// ─────────────────────────────────────────────────────────────────────────────
+function ProjectCardModal({project,card,milestones,wsColor,msEdits,onMsChange,onClose}){
+  const pplan=plannedPct(project.start,project.end);
+  const fmtMD=str=>{if(!str)return"—";const d=new Date(str);return isNaN(d)?str:d.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"});};
+  const hasCard=card&&(card.description||card.scope||card.outputs||card.kpis||card.dependencies);
+  const ragColors={G:"#22c55e",A:"#f59e0b",R:"#ef4444"};
+  const ragLabels={G:"On Track",A:"At Risk",R:"Off Track"};
+  const ragColor=ragColors[project.rag]||"#22c55e";
+  return(
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000,padding:20}} onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
+      <div style={{background:"#13171f",border:`1px solid ${wsColor}35`,borderRadius:14,width:"100%",maxWidth:660,maxHeight:"90vh",overflow:"hidden",display:"flex",flexDirection:"column"}}>
+        {/* Header */}
+        <div style={{padding:"18px 22px 14px",borderBottom:"1px solid rgba(255,255,255,0.07)",background:`linear-gradient(135deg,${wsColor}12 0%,transparent 60%)`}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12,marginBottom:10}}>
+            <div style={{flex:1}}>
+              <div style={{fontSize:12,color:wsColor,fontFamily:"DM Mono,monospace",letterSpacing:"0.1em",marginBottom:4}}>{project.id}</div>
+              <div style={{fontSize:17,fontWeight:700,color:"#fff",lineHeight:1.3,marginBottom:8}}>{project.name}</div>
+              <div style={{display:"flex",gap:12,flexWrap:"wrap",alignItems:"center"}}>
+                <span style={{fontSize:12,padding:"2px 8px",borderRadius:20,background:`${ragColor}18`,border:`1px solid ${ragColor}40`,color:ragColor,fontWeight:600,fontFamily:"DM Mono,monospace"}}>{ragLabels[project.rag]||"—"}</span>
+                <span style={{fontSize:12,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>Owner: <span style={{color:"rgba(255,255,255,0.82)"}}>{project.owner}</span></span>
+                <span style={{fontSize:12,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>{fmtDate(project.start)} → {fmtDate(project.end)}</span>
+              </div>
+            </div>
+            <button onClick={onClose} style={{background:"transparent",border:"1px solid rgba(255,255,255,0.12)",borderRadius:6,color:"rgba(255,255,255,0.6)",fontSize:14,padding:"4px 10px",cursor:"pointer",flexShrink:0}}>✕</button>
+          </div>
+          {/* Progress bars */}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+            <div>
+              <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{fontSize:11,color:"rgba(255,255,255,0.5)",fontFamily:"DM Mono,monospace"}}>ACTUAL</span><span style={{fontSize:11,color:wsColor,fontFamily:"DM Mono,monospace",fontWeight:700}}>{project.progress}%</span></div>
+              <div style={{height:5,background:"rgba(255,255,255,0.06)",borderRadius:9999,overflow:"hidden"}}><div style={{height:"100%",width:`${project.progress}%`,background:wsColor,borderRadius:9999}}/></div>
+            </div>
+            <div>
+              <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{fontSize:11,color:"rgba(255,255,255,0.5)",fontFamily:"DM Mono,monospace"}}>PLANNED</span><span style={{fontSize:11,color:"rgba(255,255,255,0.5)",fontFamily:"DM Mono,monospace"}}>{pplan}%</span></div>
+              <div style={{height:5,background:"rgba(255,255,255,0.06)",borderRadius:9999,overflow:"hidden"}}><div style={{height:"100%",width:`${pplan}%`,background:"rgba(255,255,255,0.2)",borderRadius:9999}}/></div>
+            </div>
+          </div>
+        </div>
+        {/* Body */}
+        <div style={{flex:1,overflowY:"auto",padding:"18px 22px"}}>
+          {/* Card details */}
+          {!hasCard?(
+            <div style={{textAlign:"center",padding:"20px 0",color:"rgba(255,255,255,0.35)",fontSize:13}}>No project card details have been added yet.</div>
+          ):(
+            <div style={{marginBottom:20}}>
+              {card.description&&<div style={{marginBottom:14}}><div style={{fontSize:11,color:"rgba(255,255,255,0.5)",fontFamily:"DM Mono,monospace",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:6}}>Description</div><div style={{fontSize:13,color:"rgba(255,255,255,0.78)",lineHeight:1.6,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:7,padding:"9px 12px"}}>{card.description}</div></div>}
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
+                {card.scope&&<div><div style={{fontSize:11,color:"rgba(255,255,255,0.5)",fontFamily:"DM Mono,monospace",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:6}}>Scope</div><div style={{fontSize:13,color:"rgba(255,255,255,0.78)",lineHeight:1.6,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:7,padding:"9px 12px"}}>{card.scope}</div></div>}
+                {card.outputs&&<div><div style={{fontSize:11,color:"rgba(255,255,255,0.5)",fontFamily:"DM Mono,monospace",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:6}}>Outputs</div><div style={{fontSize:13,color:"rgba(255,255,255,0.78)",lineHeight:1.6,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:7,padding:"9px 12px"}}>{card.outputs}</div></div>}
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+                {card.kpis&&<div><div style={{fontSize:11,color:"rgba(255,255,255,0.5)",fontFamily:"DM Mono,monospace",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:6}}>KPIs</div><div style={{fontSize:13,color:"rgba(255,255,255,0.78)",lineHeight:1.6,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:7,padding:"9px 12px"}}>{card.kpis}</div></div>}
+                {card.dependencies&&<div><div style={{fontSize:11,color:"rgba(255,255,255,0.5)",fontFamily:"DM Mono,monospace",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:6}}>Dependencies</div><div style={{fontSize:13,color:"rgba(255,255,255,0.78)",lineHeight:1.6,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:7,padding:"9px 12px"}}>{card.dependencies}</div></div>}
+              </div>
+            </div>
+          )}
+          {/* Milestones — editable status */}
+          {milestones&&milestones.length>0&&(
+            <div>
+              <div style={{fontSize:11,color:"rgba(255,255,255,0.5)",fontFamily:"DM Mono,monospace",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:10}}>Milestones — update status</div>
+              <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                {milestones.map((ms,i)=>{
+                  const key=`${project.id}__${ms.name}`;
+                  const currentStatus=msEdits[key]?.newStatus||ms.status;
+                  const changed=msEdits[key]?.dirty;
+                  return(
+                    <div key={i} style={{background:changed?"rgba(245,158,11,0.04)":"rgba(255,255,255,0.02)",border:changed?"1px solid rgba(245,158,11,0.25)":"1px solid rgba(255,255,255,0.07)",borderLeft:changed?"3px solid #f59e0b":"3px solid transparent",borderRadius:8,padding:"10px 12px"}}>
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8,gap:10}}>
+                        <div style={{flex:1}}>
+                          <div style={{fontSize:13,color:"rgba(255,255,255,0.85)",fontWeight:600,marginBottom:2}}>{ms.name}</div>
+                          <div style={{fontSize:11,color:"rgba(255,255,255,0.45)",fontFamily:"DM Mono,monospace"}}>Due: {fmtMD(ms.date)}</div>
+                        </div>
+                        {changed&&<span style={{fontSize:11,color:"#f59e0b",fontFamily:"DM Mono,monospace",background:"rgba(245,158,11,0.1)",border:"1px solid rgba(245,158,11,0.25)",borderRadius:4,padding:"2px 6px",flexShrink:0}}>CHANGED</span>}
+                      </div>
+                      <MilestoneStatusPicker value={currentStatus} onChange={v=>onMsChange(project.id,ms.name,ms.status,v)}/>
+                      {changed&&<div style={{fontSize:11,color:"rgba(255,255,255,0.4)",fontFamily:"DM Mono,monospace",marginTop:5}}>Was: {ms.status}</div>}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function signIn(){
   return new Promise((resolve,reject)=>{
     let attempts=0;
@@ -307,10 +479,9 @@ function SuccessScreen({count,wsName,onBack}){
 // ─────────────────────────────────────────────────────────────────────────────
 // MAIN UPDATE FORM
 // ─────────────────────────────────────────────────────────────────────────────
-function UpdateForm({user,wsCode,wsData,onSubmitDone,onSignOut}){
+function UpdateForm({user,wsCode,wsData,cardData,onSubmitDone,onSignOut}){
   const ws=WS_META[wsCode];
   const [edits,setEdits]=useState(()=>{
-    // Build initial edit state from loaded data — one entry per project
     const map={};
     wsData.forEach(init=>{
       init.projects.forEach(pr=>{
@@ -319,23 +490,32 @@ function UpdateForm({user,wsCode,wsData,onSubmitDone,onSignOut}){
     });
     return map;
   });
+  const [msEdits,setMsEdits]=useState({});  // key: "projId__msName" → {oldStatus,newStatus,dirty}
+  const [openCard,setOpenCard]=useState(null); // {projectId, project}
   const [submitting,setSubmitting]=useState(false);
   const [error,setError]=useState(null);
   const [openInit,setOpenInit]=useState(wsData[0]?.id||null);
+
+  const setMsField=(projId,msName,oldStatus,newStatus)=>{
+    const key=`${projId}__${msName}`;
+    setMsEdits(prev=>({...prev,[key]:{oldStatus,newStatus,dirty:newStatus!==oldStatus}}));
+  };
 
   const setField=(projId,field,value)=>{
     setEdits(prev=>({...prev,[projId]:{...prev[projId],[field]:value,dirty:true}}));
   };
 
-  const dirtyCount=Object.values(edits).filter(e=>e.dirty).length;
+  const dirtyCount=Object.values(edits).filter(e=>e.dirty).length+Object.values(msEdits).filter(e=>e.dirty).length;
 
   const handleSubmit=async()=>{
     const changed=[];
+    // Project updates
     wsData.forEach(init=>{
       init.projects.forEach(pr=>{
         const e=edits[pr.id];
         if(!e||!e.dirty)return;
         changed.push({
+          rowType:"project",
           projectId:pr.id,projectName:pr.name,
           oldProgress:pr.progress,newProgress:e.progress,
           oldRag:pr.rag,newRag:e.rag,
@@ -343,6 +523,22 @@ function UpdateForm({user,wsCode,wsData,onSubmitDone,onSignOut}){
           comment:e.comment||"",
           submitterName:user.name,
         });
+      });
+    });
+    // Milestone status updates
+    Object.entries(msEdits).forEach(([key,ms])=>{
+      if(!ms.dirty) return;
+      const [projId,msName]=key.split("__");
+      // Find project name
+      let projName="";
+      wsData.forEach(init=>init.projects.forEach(pr=>{if(pr.id===projId)projName=pr.name;}));
+      changed.push({
+        rowType:"milestone",
+        projectId:projId,projectName:projName,
+        milestoneName:msName,
+        oldStatus:ms.oldStatus,newStatus:ms.newStatus,
+        comment:"",
+        submitterName:user.name,
       });
     });
     if(!changed.length){setError("No changes to submit.");return;}
@@ -424,8 +620,11 @@ function UpdateForm({user,wsCode,wsData,onSubmitDone,onSignOut}){
                         <div key={pr.id} style={{padding:"14px 16px",borderBottom:pi<init.projects.length-1?"1px solid rgba(255,255,255,0.07)":"none",background:changed?"rgba(245,158,11,0.04)":"transparent",borderLeft:changed?"3px solid #f59e0b":"3px solid transparent",transition:"all .15s"}}>
                           {/* project title row */}
                           <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:12,gap:12}}>
-                            <div>
-                              <div style={{fontSize:13,fontWeight:600,color:"#fff",marginBottom:2}}>{pr.name}</div>
+                            <div style={{flex:1}}>
+                              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:2}}>
+                                <div style={{fontSize:13,fontWeight:600,color:"#fff"}}>{pr.name}</div>
+                                <button onClick={()=>setOpenCard({projectId:pr.id,project:pr})} style={{fontSize:11,padding:"2px 8px",borderRadius:5,background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.12)",color:"rgba(255,255,255,0.6)",cursor:"pointer",fontFamily:"DM Mono,monospace",flexShrink:0,whiteSpace:"nowrap"}}>📋 View Card</button>
+                              </div>
                               <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
                                 <span style={{fontSize:12,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>Owner: <span style={{color:"rgba(255,255,255,0.82)"}}>{pr.owner}</span></span>
                                 <span style={{fontSize:12,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace"}}>{fmtDate(pr.start)} → {fmtDate(pr.end)}</span>
@@ -466,7 +665,7 @@ function UpdateForm({user,wsCode,wsData,onSubmitDone,onSignOut}){
                           {/* Comment */}
                           <div style={{marginTop:10}}>
                             <div style={{fontSize:13,color:"rgba(255,255,255,0.62)",fontFamily:"DM Mono,monospace",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:6}}>Comments / Notes <span style={{fontSize:11,color:"rgba(255,255,255,0.35)",textTransform:"none",letterSpacing:0}}>(optional — visible to programme manager)</span></div>
-                            <textarea rows={2} value={e.comment||""} onChange={ev=>setField(pr.id,"comment",ev.target.value)} placeholder="Any context or notes for the programme manager..." style={{width:"100%",resize:"vertical",fontSize:12,padding:"6px 8px",boxSizing:"border-box"}}/>
+                            <textarea rows={2} value={e.comment||""} onChange={ev=>setField(pr.id,"comment",ev.target.value)} placeholder="Provide any context or notes for the programme manager to explain the reason for the changes ..." style={{width:"100%",resize:"vertical",fontSize:12,padding:"6px 8px",boxSizing:"border-box"}}/>
                           </div>
                         </div>
                       );
@@ -477,6 +676,22 @@ function UpdateForm({user,wsCode,wsData,onSubmitDone,onSignOut}){
             );
           })}
         </div>
+
+        {/* Project Card Modal */}
+        {openCard&&(()=>{
+          const {projectId,project}=openCard;
+          const card=cardData?.cards?.[projectId]||null;
+          const milestones=cardData?.milestones?.[projectId]||[];
+          return <ProjectCardModal
+            project={project}
+            card={card}
+            milestones={milestones}
+            wsColor={ws.color}
+            msEdits={msEdits}
+            onMsChange={setMsField}
+            onClose={()=>setOpenCard(null)}
+          />;
+        })()}
 
         {/* Bottom submit */}
         {dirtyCount>0&&(
@@ -501,6 +716,7 @@ function App(){
   const [wsCode,setWsCode]=useState(null);
   const [wsCodes,setWsCodes]=useState([]);
   const [wsData,setWsData]=useState([]);
+  const [cardData,setCardData]=useState({cards:{},milestones:{}});
   const [error,setError]=useState(null);
   const [successCount,setSuccessCount]=useState(0);
 
@@ -514,9 +730,9 @@ function App(){
       setUser(u);
       if(allMatched.length===1){
         const code=allMatched[0][0];
-        const rows=await loadDashboard();
+        const [rows,cd]=await Promise.all([loadDashboard(),loadProjectCards()]);
         const initiatives=parseRowsForWS(rows,code);
-        setWsCode(code);setWsData(initiatives);setPhase("form");
+        setCardData(cd);setWsCode(code);setWsData(initiatives);setPhase("form");
       } else {
         // Multiple workstreams — show picker
         setWsCodes(allMatched.map(([ws])=>ws));setPhase("pick");
@@ -527,9 +743,9 @@ function App(){
   const handlePickWS=async(code)=>{
     setError(null);setPhase("loading");
     try{
-      const rows=await loadDashboard();
+      const [rows,cd]=await Promise.all([loadDashboard(),loadProjectCards()]);
       const initiatives=parseRowsForWS(rows,code);
-      setWsCode(code);setWsData(initiatives);setPhase("form");
+      setCardData(cd);setWsCode(code);setWsData(initiatives);setPhase("form");
     }catch(e){setError(e.message);setPhase("pick");}
   };
   const handleSubmitDone=count=>{setSuccessCount(count);setPhase("success");};
@@ -540,7 +756,7 @@ function App(){
   if(phase==="unauth") return <UnauthorisedScreen email={user.email} onSignOut={handleSignOut}/>;
   if(phase==="success") return <SuccessScreen count={successCount} wsName={WS_META[wsCode]?.name} onBack={handleBack}/>;
   if(phase==="pick") return <WSPickerScreen user={user} wsCodes={wsCodes} onPick={handlePickWS} onSignOut={handleSignOut}/>;
-  if(phase==="form") return <UpdateForm user={user} wsCode={wsCode} wsData={wsData} onSubmitDone={handleSubmitDone} onSignOut={handleSignOut}/>;
+  if(phase==="form") return <UpdateForm user={user} wsCode={wsCode} wsData={wsData} cardData={cardData} onSubmitDone={handleSubmitDone} onSignOut={handleSignOut}/>;
   return null;
 }
 
