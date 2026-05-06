@@ -685,14 +685,23 @@ function EditModal({title,fields,onSave,onDelete,onClose,deleteLabel}){
 // ─────────────────────────────────────────────────────────────────────────────
 // CONFIRM DIALOG
 // ─────────────────────────────────────────────────────────────────────────────
-function Confirm({message,onConfirm,onClose}){
+function Confirm({message,onConfirm,onClose,blocked}){
   return(
     <div className="overlay" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
-      <div className="modal" style={{maxWidth:380}}>
-        <div style={{fontSize:14,color:"#dee5ff",marginBottom:20,lineHeight:1.5}}>{message}</div>
+      <div className="modal" style={{maxWidth:400}}>
+        <div style={{fontSize:14,color:blocked?"#f59e0b":"#dee5ff",marginBottom:20,lineHeight:1.6,whiteSpace:"pre-line"}}>
+          {blocked&&<div style={{fontSize:18,marginBottom:10}}>⚠</div>}
+          {message}
+        </div>
         <div style={{display:"flex",justifyContent:"flex-end",gap:8}}>
-          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
-          <button className="btn btn-danger" onClick={()=>{onConfirm();onClose();}}>Confirm Delete</button>
+          {blocked?(
+            <button className="btn btn-ghost" onClick={onClose}>OK</button>
+          ):(
+            <>
+              <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+              <button className="btn btn-danger" onClick={()=>{onConfirm();onClose();}}>Confirm Delete</button>
+            </>
+          )}
         </div>
       </div>
     </div>
@@ -921,6 +930,15 @@ function WSDash({ws,onUpdate,markDirty,cardData,onCardOpen,riskData}){
     markDirty();
   };
   const deleteInit=initId=>{
+    const init=ws.initiatives.find(i=>i.id===initId);
+    if(init&&init.projects.length>0){
+      setConfirm({
+        msg:`"${init.name}" still has ${init.projects.length} project${init.projects.length>1?"s":""}.  Delete all projects first before deleting this initiative.`,
+        blocked:true,
+        fn:null,
+      });
+      return;
+    }
     onUpdate({...ws,initiatives:ws.initiatives.filter(i=>i.id!==initId)});
     markDirty();setOpenInit(null);
   };
@@ -929,7 +947,7 @@ function WSDash({ws,onUpdate,markDirty,cardData,onCardOpen,riskData}){
     markDirty();
   };
   const addInit=()=>{
-    const newId=`${ws.id}.${ws.initiatives.length+1}_${uid()}`;
+    const newId=`${ws.id}.${ws.initiatives.length+1}_new`;
     const newInit={id:newId,name:"New Initiative",owner:"TBC",projects:[]};
     onUpdate({...ws,initiatives:[...ws.initiatives,newInit]});
     markDirty();
@@ -937,7 +955,7 @@ function WSDash({ws,onUpdate,markDirty,cardData,onCardOpen,riskData}){
   };
   const addProj=initId=>{
     const init=ws.initiatives.find(i=>i.id===initId);
-    const newId=`${initId}.${init.projects.length+1}_${uid()}`;
+    const newId=`${initId}.${init.projects.length+1}_new`;
     const newProj={id:newId,name:"New Project",owner:"TBC",progress:0,rag:"G",risk:null,start:"2026-03-01",end:"2026-06-30"};
     onUpdate({...ws,initiatives:ws.initiatives.map(i=>i.id!==initId?i:{...i,projects:[...i.projects,newProj]})});
     markDirty();
@@ -975,7 +993,7 @@ function WSDash({ws,onUpdate,markDirty,cardData,onCardOpen,riskData}){
           onDelete={()=>setConfirm({msg:`Delete project "${modal.proj.name}"?`,fn:()=>deleteProj(modal.initId,modal.proj.id)})}
           deleteLabel="Delete Project" onClose={()=>setModal(null)}/>
       )}
-      {confirm&&<Confirm message={confirm.msg} onConfirm={confirm.fn} onClose={()=>setConfirm(null)}/>}
+      {confirm&&<Confirm message={confirm.msg} onConfirm={confirm.fn} onClose={()=>setConfirm(null)} blocked={confirm.blocked}/>}
 
       <SummaryPanels
         actual={act}
@@ -2269,6 +2287,15 @@ function App(){
 
   const saveToSheets=async()=>{
     if(!oauthReady){setError("OAuth Client ID not configured. See setup guide.");return;}
+    // Block save if any initiative has no projects
+    const empty=[];
+    wsList.forEach(ws=>ws.initiatives.forEach(init=>{
+      if(init.projects.length===0) empty.push(`${init.id} — ${init.name} (${ws.code})`);
+    }));
+    if(empty.length){
+      setError(`Cannot save: the following initiatives have no projects. Add at least one project to each before saving:\n• ${empty.join("\n• ")}`);
+      return;
+    }
     setSaving(true);setError(null);
     try{
       const token=await signInWithGoogle();
