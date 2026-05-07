@@ -930,15 +930,6 @@ function WSDash({ws,onUpdate,markDirty,cardData,onCardOpen,riskData}){
     markDirty();
   };
   const deleteInit=initId=>{
-    const init=ws.initiatives.find(i=>i.id===initId);
-    if(init&&init.projects.length>0){
-      setConfirm({
-        msg:`"${init.name}" still has ${init.projects.length} project${init.projects.length>1?"s":""}.  Delete all projects first before deleting this initiative.`,
-        blocked:true,
-        fn:null,
-      });
-      return;
-    }
     onUpdate({...ws,initiatives:ws.initiatives.filter(i=>i.id!==initId)});
     markDirty();setOpenInit(null);
   };
@@ -984,7 +975,14 @@ function WSDash({ws,onUpdate,markDirty,cardData,onCardOpen,riskData}){
       {modal?.type==="init"&&(
         <EditModal title="Edit Initiative" fields={initFields(modal.init)}
           onSave={f=>patchInit(modal.init.id,f)}
-          onDelete={()=>setConfirm({msg:`Delete initiative "${modal.init.name}" and all its projects?`,fn:()=>deleteInit(modal.init.id)})}
+          onDelete={()=>{
+            const init=ws.initiatives.find(i=>i.id===modal.init.id);
+            if(init&&init.projects.length>0){
+              setConfirm({msg:`"${init.name}" has ${init.projects.length} project${init.projects.length>1?"s":""}.\n\nYou must delete each project first before you can delete the initiative.`,blocked:true,fn:null});
+            } else {
+              setConfirm({msg:`Delete initiative "${modal.init.name}"?`,fn:()=>{deleteInit(modal.init.id);setModal(null);}});
+            }
+          }}
           deleteLabel="Delete Initiative" onClose={()=>setModal(null)}/>
       )}
       {modal?.type==="proj"&&(
@@ -1120,7 +1118,13 @@ function WSDash({ws,onUpdate,markDirty,cardData,onCardOpen,riskData}){
                 {/* initiative controls */}
                 <div style={{display:"flex",gap:5,flexShrink:0,alignItems:"center"}}>
                   <button className="icon-btn" onClick={()=>setModal({type:"init",init})}>✎ Edit</button>
-                  <button className="icon-btn danger" onClick={()=>setConfirm({msg:`Delete initiative "${init.name}" and all its projects?`,fn:()=>deleteInit(init.id)})}>✕</button>
+                  <button className="icon-btn danger" onClick={()=>{
+                    if(init.projects.length>0){
+                      setConfirm({msg:`"${init.name}" has ${init.projects.length} project${init.projects.length>1?"s":""}.\n\nYou must delete each project first before you can delete the initiative.`,blocked:true,fn:null});
+                    } else {
+                      setConfirm({msg:`Delete initiative "${init.name}"?`,fn:()=>deleteInit(init.id)});
+                    }
+                  }}>✕</button>
                   <span onClick={()=>setOpenInit(open?null:init.id)} style={{cursor:"pointer",padding:"3px 6px",display:"inline-flex",alignItems:"center"}}><span className="material-symbols-outlined" style={{fontSize:16,color:"#6d758c"}}>{open?"expand_less":"expand_more"}</span></span>
                 </div>
               </div>
