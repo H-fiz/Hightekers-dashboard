@@ -955,7 +955,7 @@ function WSDash({ws,onUpdate,markDirty,cardData,onCardOpen,riskData}){
   };
   const addProj=initId=>{
     const init=ws.initiatives.find(i=>i.id===initId);
-    const newId=`${initId}.${init.projects.length+1}_new`;
+    const newId=`${initId.replace(/_new$/,"")}.${init.projects.length+1}_new`;
     const newProj={id:newId,name:"New Project",owner:"TBC",progress:0,rag:"G",risk:null,start:"2026-03-01",end:"2026-06-30"};
     onUpdate({...ws,initiatives:ws.initiatives.map(i=>i.id!==initId?i:{...i,projects:[...i.projects,newProj]})});
     markDirty();
@@ -2257,6 +2257,7 @@ function App(){
   const [loading,setLoading]=useState(false);
   const [saving,setSaving]=useState(false);
   const [error,setError]=useState(null);
+  const [blockModal,setBlockModal]=useState(null); // {title, lines[]} for blocking popup
   const [successMsg,setSuccessMsg]=useState(null);
   const [lastRefresh,setLastRefresh]=useState(null);
   const [usingSheets,setUsingSheets]=useState(false);
@@ -2293,7 +2294,10 @@ function App(){
       if(init.projects.length===0) empty.push(`${init.id} — ${init.name} (${ws.code})`);
     }));
     if(empty.length){
-      setError(`Cannot save: the following initiatives have no projects. Add at least one project to each before saving:\n• ${empty.join("\n• ")}`);
+      setBlockModal({
+        title:"Cannot Save — Initiatives Without Projects",
+        lines:empty,
+      });
       return;
     }
     setSaving(true);setError(null);
@@ -2337,6 +2341,28 @@ function App(){
 
   return(
     <>
+      {/* Save-block popup */}
+      {blockModal&&(
+        <div className="overlay" onClick={()=>setBlockModal(null)}>
+          <div className="modal" style={{maxWidth:460}}>
+            <div style={{display:"flex",alignItems:"flex-start",gap:12,marginBottom:16}}>
+              <span style={{fontSize:24,flexShrink:0}}>⚠</span>
+              <div>
+                <div style={{fontSize:15,fontWeight:700,color:"#f59e0b",fontFamily:"Manrope,sans-serif",marginBottom:6}}>{blockModal.title}</div>
+                <div style={{fontSize:13,color:"#a3aac4",fontFamily:"Manrope,sans-serif",marginBottom:12,lineHeight:1.5}}>Each initiative must have at least one project before it can be saved to Google Sheets. Please add a project to the following:</div>
+                <div style={{background:"rgba(245,158,11,0.06)",border:"1px solid rgba(245,158,11,0.2)",borderRadius:8,padding:"10px 14px"}}>
+                  {blockModal.lines.map((l,i)=>(
+                    <div key={i} style={{fontSize:13,color:"#dee5ff",fontFamily:"DM Mono,monospace",marginBottom:i<blockModal.lines.length-1?6:0}}>• {l}</div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div style={{display:"flex",justifyContent:"flex-end"}}>
+              <button onClick={()=>setBlockModal(null)} style={{padding:"7px 20px",borderRadius:7,background:"transparent",border:"1px solid rgba(64,72,93,0.4)",color:"#dee5ff",fontSize:13,cursor:"pointer",fontFamily:"Manrope,sans-serif"}}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
       <div style={{minHeight:"100vh",background:"#060e20",fontFamily:"Manrope,sans-serif",color:"#fff"}}>
         <div style={{display:"flex",height:"100vh",overflow:"hidden"}}>
 
