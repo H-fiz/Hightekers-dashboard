@@ -2155,7 +2155,7 @@ function RiskRegisterView({riskData,onUpdateRisk,riskDirty,onSaveRisk,savingRisk
 // AUTH — Google OAuth gate (admin only)
 // ─────────────────────────────────────────────────────────────────────────────
 const OAUTH_CLIENT_ID="687744761187-itmnd1nhhtjv53t5ce8gopgnva68lrjv.apps.googleusercontent.com";
-const ADMIN_EMAIL="hafiz.ladha@hightekers.com";
+const ADMIN_EMAILS=["hafiz.ladha@hightekers.com","maria.rivas@hightekers.com"];
 
 function signIn(){
   return new Promise((resolve,reject)=>{
@@ -2233,7 +2233,7 @@ function AuthGate({children}){
     setError(null);setPhase("loading");
     try{
       const u=await signIn();
-      const allowed=u.email.toLowerCase()===ADMIN_EMAIL.toLowerCase();
+      const allowed=ADMIN_EMAILS.map(e=>e.toLowerCase()).includes(u.email.toLowerCase());
       if(!allowed){setUser(u);setPhase("unauth");return;}
       setUser(u);setPhase("app");
     }catch(e){setError(e.message);setPhase("signin");}
